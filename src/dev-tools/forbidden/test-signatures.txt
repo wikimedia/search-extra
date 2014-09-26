@@ -1,0 +1,1 @@
+#Almost Elasticsearch's configuration.  We use this here because we have access to everything in Elasticsearch so we should play by its rules.
