@@ -1,4 +1,4 @@
-package org.wikimedia.search.extra;
+package org.wikimedia.search.extra.regex;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.filteredQuery;
