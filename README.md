@@ -13,9 +13,9 @@ Queries:
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 0.0.1 -> master                  | 1.3.2 -> master |
+| master                           | 1.3.2 -> master |
 
 Install it like so:
 ```bash
-./bin/plugin --install org.wikimedia.search.highlighter/experimental-highlighter-elasticsearch-plugin/0.0.11
+./bin/plugin --install org.wikimedia.search/extra/0.0.1
 ```
