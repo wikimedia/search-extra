@@ -25,19 +25,28 @@ public class ExpressionTest {
 
     @Test
     public void extract() {
-        assertEquals(new And<String>(foo, new Or<String>(bar, baz)),
-                new Or<String>(
-                        new And<String>(foo, bar),
-                        new And<String>(foo, baz)
+        assertEquals(new And<>(foo, new Or<>(bar, baz)),
+                new Or<>(
+                        new And<>(foo, bar),
+                        new And<>(foo, baz)
                 ).simplify());
     }
 
     @Test
     public void extractToEmpty() {
-        assertEquals(new And<String>(foo, bar),
-                new Or<String>(
-                        new And<String>(foo, bar),
-                        new And<String>(foo, bar, baz)
+        assertEquals(new And<>(foo, bar),
+                new Or<>(
+                        new And<>(foo, bar),
+                        new And<>(foo, bar, baz)
+                ).simplify());
+    }
+
+    @Test
+    public void extractSingle() {
+        assertEquals(foo,
+                new Or<>(
+                        new And<>(foo, bar),
+                        foo
                 ).simplify());
     }
 }

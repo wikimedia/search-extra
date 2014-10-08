@@ -1,9 +1,7 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.elasticsearch.common.base.Joiner;
@@ -20,6 +18,11 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
         this.components = components;
     }
 
+    /**
+     * Transform the components of this composite expression.  Used by subclasses when implementing transform.
+     * @param transformer transformer to use
+     * @return result of transforming components
+     */
     protected <J> ImmutableSet<J> transformComponents(Expression.Transformer<T, J> transformer) {
         ImmutableSet.Builder<J> builder = ImmutableSet.builder();
         for (Expression<T> component : components) {
@@ -62,7 +65,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
     @Override
     public Expression<T> simplify() {
         Iterator<Expression<T>> componentsItr = components.iterator();
-        List<Expression<T>> newComponents = new ArrayList<>();
+        Set<Expression<T>> newComponents = new HashSet<>();
         boolean changed = false;
         while (componentsItr.hasNext()) {
             Expression<T> expression = componentsItr.next();
@@ -76,7 +79,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
             if (forcedOutcome != null) {
                 return forcedOutcome;
             }
-            if (simplified.getClass() == this.getClass()) {
+            if (simplified.getClass() == getClass()) {
                 newComponents.addAll(((AbstractCompositeExpression<T>) simplified).components);
                 continue;
             }
@@ -86,50 +89,110 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
         case 0:
             return True.instance();
         case 1:
-            return newComponents.get(0);
+            return newComponents.iterator().next();
         default:
         }
-        boolean composedOfSameComposites = newComponents.get(0).isComposite();
-        if (composedOfSameComposites) {
-            Class<?> componentClass = newComponents.get(0).getClass();
-            for (int i = 1; composedOfSameComposites && i < newComponents.size(); i++) {
-                composedOfSameComposites &= newComponents.get(i).isComposite() && (componentClass == newComponents.get(i).getClass());
+
+        // Are all composite subexpressions of the same type?
+        boolean allCompositesOfSameType = true;
+        // Are all the non-composite subexpressions of this type the same?
+        boolean nonCompositesAreSame = true;
+        // First non-composite subexpression.
+        Expression<T> firstNonComposite = null;
+        // If all composite subexpressions are of the same type then what is that type?
+        Class<?> compositesClass = null;
+        for (Expression<T> current : newComponents) {
+            if (current.isComposite()) {
+                if (compositesClass == null) {
+                    compositesClass = current.getClass();
+                } else {
+                    allCompositesOfSameType &= compositesClass == current.getClass();
+                }
+            } else {
+                if (firstNonComposite == null) {
+                    firstNonComposite = current;
+                } else {
+                    nonCompositesAreSame &= firstNonComposite.equals(current);
+                }
             }
         }
-        if (composedOfSameComposites) {
-            // If this component is composed of composite components we can
-            // attempt to factor out any equivalent parts
-            AbstractCompositeExpression<T> first = (AbstractCompositeExpression<T>) newComponents.get(0);
-            Set<Expression<T>> sharedComponents = null;
-            for (Expression<T> component : first.components) {
-                boolean shared = true;
-                for (int i = 1; i < newComponents.size(); i++) {
-                    shared &= ((AbstractCompositeExpression<T>) newComponents.get(i)).components.contains(component);
-                }
-                if (shared) {
-                    if (sharedComponents == null) {
-                        sharedComponents = new HashSet<Expression<T>>();
+
+        if (firstNonComposite == null) {
+            // Everything is composite and they are all of the same type.
+            if (allCompositesOfSameType) {
+                // If this component is composed of composite components we can
+                // attempt to factor out any equivalent parts
+                AbstractCompositeExpression<T> first = (AbstractCompositeExpression<T>) newComponents.iterator().next();
+                Set<Expression<T>> sharedComponents = null;
+                for (Expression<T> component : first.components) {
+                    boolean shared = true;
+                    Iterator<Expression<T>> current = newComponents.iterator();
+                    while (shared && current.hasNext()) {
+                        shared &= ((AbstractCompositeExpression<T>) current.next()).components.contains(component);
                     }
-                    sharedComponents.add(component);
+                    if (shared) {
+                        if (sharedComponents == null) {
+                            sharedComponents = new HashSet<>();
+                        }
+                        sharedComponents.add(component);
+                    }
+                }
+                if (sharedComponents != null) {
+                    // Build all the subcomponents with the common part extracted
+                    ImmutableSet.Builder<Expression<T>> extractedComponents = ImmutableSet.builder();
+                    AbstractCompositeExpression<T> composite = null;
+                    for (Expression<T> component : newComponents) {
+                        composite = (AbstractCompositeExpression<T>) component;
+                        extractedComponents.add(composite.newFrom(ImmutableSet.copyOf(Sets.difference(composite.components, sharedComponents)))
+                                .simplify());
+                    }
+                    sharedComponents.add(newFrom(extractedComponents.build()).simplify());
+                    return composite.newFrom(ImmutableSet.copyOf(sharedComponents)).simplify();
                 }
             }
-            if (sharedComponents != null) {
-                // Build all the subcomponents with the common part extracted
-                ImmutableSet.Builder<Expression<T>> extractedComponents = ImmutableSet.builder();
+        } else {
+            if (allCompositesOfSameType && nonCompositesAreSame && canFactorOut(newComponents, firstNonComposite)) {
+                Set<Expression<T>> sharedComponents = new HashSet<>();
+                sharedComponents.add(firstNonComposite);
                 AbstractCompositeExpression<T> composite = null;
+                ImmutableSet.Builder<Expression<T>> extractedComponents = ImmutableSet.builder();
                 for (Expression<T> component : newComponents) {
-                    composite = ((AbstractCompositeExpression<T>) component);
+                    if (!component.isComposite()) {
+                        continue;
+                    }
+                    composite = (AbstractCompositeExpression<T>) component;
                     extractedComponents.add(composite.newFrom(ImmutableSet.copyOf(Sets.difference(composite.components, sharedComponents)))
                             .simplify());
                 }
+                // Add True to represent the extracted common component
+                extractedComponents.add(True.<T>instance());
                 sharedComponents.add(newFrom(extractedComponents.build()).simplify());
                 return composite.newFrom(ImmutableSet.copyOf(sharedComponents)).simplify();
             }
         }
+
         if (!changed) {
             return this;
         }
         return newFrom(ImmutableSet.copyOf(newComponents));
+    }
+
+    /**
+     * Can we factor commonComposite out of all subexpressions?
+     */
+    private boolean canFactorOut(Set<Expression<T>> subexpressions, Expression<T> commonComposite) {
+        for (Expression<T> current : subexpressions) {
+            if (!current.equals(commonComposite)) {
+                if (!current.isComposite()) {
+                    return false;
+                }
+                AbstractCompositeExpression<T> composite = (AbstractCompositeExpression<T>) current;
+                if (!composite.components.contains(commonComposite)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
