@@ -11,6 +11,9 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.wikimedia.search.extra.util.FieldValues;
 
+/**
+ * Parses source_regex filters.
+ */
 public class SourceRegexFilterParser implements org.elasticsearch.index.query.FilterParser {
     private static final String[] NAMES = new String[] { "source_regex", "source-regex", "sourceRegex" };
 
@@ -32,6 +35,7 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
         int maxInspect = Integer.MAX_VALUE;
         boolean caseSensitive = false;
         Locale locale = Locale.ROOT;
+        boolean rejectUnaccelerated = false;
 
         // Stuff all filters have
         String filterName = null;
@@ -69,6 +73,8 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
                     caseSensitive = parser.booleanValue();
                 } else if ("locale".equals(currentFieldName)) {
                     locale = LocaleUtils.parse(parser.text());
+                } else if ("reject_unaccelerated".equals(currentFieldName) || "rejectUnaccelerated".equals(currentFieldName)) {
+                    rejectUnaccelerated = parser.booleanValue();
                 } else if ("_cache".equals(currentFieldName)) {
                     cache = parser.booleanValue();
                 } else if ("_name".equals(currentFieldName)) {
@@ -82,14 +88,14 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
             }
         }
 
-        if (regex == null) {
+        if (regex == null || "".equals(regex)) {
             throw new QueryParsingException(parseContext.index(), "[source-regex] filter must specify [regex]");
         }
         if (fieldPath == null) {
             throw new QueryParsingException(parseContext.index(), "[source-regex] filter must specify [field]");
         }
         Filter filter = new SourceRegexFilter(fieldPath, loader, regex, ngramFieldPath, gramSize, maxExpand, maxStatesTraced, maxInspect,
-                caseSensitive, locale);
+                caseSensitive, locale, rejectUnaccelerated);
         if (cache) {
             filter = parseContext.cacheFilter(filter, cacheKey);
         }

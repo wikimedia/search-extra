@@ -6,6 +6,9 @@ import java.util.Locale;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.BaseFilterBuilder;
 
+/**
+ * Builds source_regex filters.
+ */
 public class SourceRegexFilterBuilder extends BaseFilterBuilder {
     private final String field;
     private final String regex;
@@ -17,22 +20,43 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
     private Integer maxInspect;
     private Boolean caseSensitive;
     private Locale locale;
+    private Boolean rejectUnaccelerated;
 
+    /**
+     * Start building.
+     * @param field the field to load and run the regex against
+     * @param regex the regex to run
+     */
     public SourceRegexFilterBuilder(String field, String regex) {
         this.field = field;
         this.regex = regex;
     }
 
+    /**
+     * @param loadFromSource should field be loaded from source (true) or from a
+     *            stored field (false)?
+     * @return this for chaining
+     */
     public SourceRegexFilterBuilder loadFromSource(boolean loadFromSource) {
         this.loadFromSource = loadFromSource;
         return this;
     }
 
+    /**
+     * @param ngramField field containing ngrams used to prefilter checked
+     *            documents.  If not set then no ngram acceleration is performed.
+     * @return this for chaining
+     */
     public SourceRegexFilterBuilder ngramField(String ngramField) {
         this.ngramField = ngramField;
         return this;
     }
 
+    /**
+     * @param gramSize size of the gram. Defaults to 3 because everyone loves
+     *            trigrams.
+     * @return this for chaining
+     */
     public SourceRegexFilterBuilder gramSize(int gramSize) {
         this.gramSize = gramSize;
         return this;
@@ -79,6 +103,16 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
         return this;
     }
 
+    /**
+     * @param rejectUnaccelerated should the filter reject regexes it cannot
+     *            accelerate?
+     * @return this for chaining
+     */
+    public SourceRegexFilterBuilder rejectUnaccelerated(boolean rejectUnaccelerated) {
+        this.rejectUnaccelerated = rejectUnaccelerated;
+        return this;
+    }
+
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject("source-regex");
@@ -108,6 +142,9 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
         }
         if (locale != null) {
             builder.field("locale", locale);
+        }
+        if (rejectUnaccelerated != null) {
+            builder.field("reject_unaccelerated", rejectUnaccelerated);
         }
 
         builder.endObject();

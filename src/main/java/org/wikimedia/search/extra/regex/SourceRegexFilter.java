@@ -33,13 +33,14 @@ public class SourceRegexFilter extends Filter {
     private final int maxInspect;
     private final boolean caseSensitive;
     private final Locale locale;
+    private final boolean rejectUnaccelerated;
     private int inspected = 0;
     private Filter prefilter;
     private CharacterRunAutomaton charRun;
 
 
     public SourceRegexFilter(String fieldPath, FieldValues.Loader loader, String regex, String ngramFieldPath, int gramSize, int maxExpand,
-            int maxStatesTraced, int maxInspect, boolean caseSensitive, Locale locale) {
+            int maxStatesTraced, int maxInspect, boolean caseSensitive, Locale locale, boolean rejectUnaccelerated) {
         this.fieldPath = fieldPath;
         this.loader = loader;
         this.regex = regex;
@@ -50,6 +51,7 @@ public class SourceRegexFilter extends Filter {
         this.maxInspect = maxInspect;
         this.caseSensitive = caseSensitive;
         this.locale = locale;
+        this.rejectUnaccelerated = rejectUnaccelerated;
     }
 
     @Override
@@ -73,6 +75,9 @@ public class SourceRegexFilter extends Filter {
                 Automaton automaton = new RegExp(regex.toLowerCase(locale), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton();
                 Expression<String> expression = new NGramExtractor(gramSize, maxExpand, maxStatesTraced).extract(automaton).simplify();
                 if (expression.alwaysTrue()) {
+                    if (rejectUnaccelerated) {
+                        throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
+                    }
                     prefilter = Queries.MATCH_ALL_FILTER;
                 } else if (expression.alwaysFalse()) {
                     prefilter = Queries.MATCH_NO_FILTER;
@@ -103,6 +108,7 @@ public class SourceRegexFilter extends Filter {
         @Override
         protected boolean match(int docid) {
             if (inspected >= maxInspect) {
+                // TODO hook into the generic timeout mechanism when it is ready
                 return false;
             }
             inspected++;
