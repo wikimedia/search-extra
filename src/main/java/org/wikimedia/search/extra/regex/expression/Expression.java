@@ -7,6 +7,8 @@ import org.elasticsearch.common.collect.ImmutableSet;
  * transformed. Simplifying expressions eliminates extraneous terms and factors
  * out common terms.  Transformation allows client code to convert the expression
  * to some other (maybe evaluable) form.
+ *
+ * @param <T> type stored in leaves
  */
 public interface Expression<T> {
     /**
@@ -38,14 +40,51 @@ public interface Expression<T> {
 
     /**
      * Transform this expression into another form.
+     *
+     * @param <T> type stored in leaves
+     * @param <J> result of the transformation.
      */
     <J> J transform(Transformer<T, J> transformer);
 
+    /**
+     * Transformer for expression components.
+     *
+     * @param <T> type stored in leaves
+     * @param <J> result of the transformation.
+     */
     interface Transformer<T, J> {
+        /**
+         * Transform an expression that is always true.
+         */
         J alwaysTrue();
+
+        /**
+         * Transform an expression that is always false.
+         */
         J alwaysFalse();
+
+        /**
+         * Transform a leaf expression.
+         *
+         * @param t data stored in the leaf
+         * @return result of the transform
+         */
         J leaf(T t);
+
+        /**
+         * Transform an and expression.
+         *
+         * @param js transformed sub-expressions
+         * @return result of the transform
+         */
         J and(ImmutableSet<J> js);
+
+        /**
+         * Transform an or expression.
+         *
+         * @param js transformed sub-expressions
+         * @return result of the transform
+         */
         J or(ImmutableSet<J> js);
     }
 }

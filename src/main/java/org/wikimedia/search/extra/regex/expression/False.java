@@ -6,6 +6,9 @@ package org.wikimedia.search.extra.regex.expression;
 public class False<T> implements Expression<T> {
     private static final False<Object> TRUE = new False<>();
 
+    /**
+     * There is only one false.
+     */
     @SuppressWarnings("unchecked")
     public static <T> False<T> instance() {
         return (False<T>) TRUE;
