@@ -155,19 +155,37 @@ public class NGramAutomatonTest {
     }
 
     /**
+     * This would periodically fail when we were removing cycles rather
+     * preventing them from being added to the expression.
+     */
+    @Test
+    public void bigramFailsSometimes() {
+        assertExpression("te.*me", 2, new And<String>(leaves("te", "me")));
+    }
+
+    /**
      * Asserts that the provided regex extracts the expected expression when
      * configured to extract trigrams. Uses 4 as maxExpand just because I had to
      * pick something and 4 seemed pretty good.
      */
     private void assertTrigramExpression(String regex, Expression<String> expected) {
+        assertExpression(regex, 3, expected);
+    }
+
+    /**
+     * Asserts that the provided regex extracts the expected expression when
+     * configured to extract ngrams. Uses 4 as maxExpand just because I had to
+     * pick something and 4 seemed pretty good.
+     */
+    private void assertExpression(String regex, int gramSize, Expression<String> expected) {
         Automaton automaton = new RegExp(regex).toAutomaton();
         // System.err.println(automaton.toDot());
-        NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, 3, 4, 10000);
+        NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000);
         // System.err.println(ngramAutomaton.toDot());
         Expression<String> expression = ngramAutomaton.expression();
-        // System.err.println(expression);
+//         System.err.println(expression);
         expression = expression.simplify();
-        // System.err.println(expression);
+//         System.err.println(expression);
         assertEquals(expected, expression);
     }
 }

@@ -2,12 +2,9 @@ package org.wikimedia.search.extra.regex.ngram;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.State;
@@ -16,13 +13,14 @@ import org.elasticsearch.common.collect.ImmutableSet;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.ExpressionSource;
+import org.wikimedia.search.extra.regex.expression.False;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
 /**
  * A finite automaton who's transitions are ngrams that must be in the string or
- * ngrams we can't check for. Unlikely to be thread safe.
+ * ngrams we can't check for. Not thread safe one bit.
  */
 public class NGramAutomaton {
     private final State[] source;
@@ -33,6 +31,18 @@ public class NGramAutomaton {
     private final List<NGramState> acceptStates = new ArrayList<>();
     private final Map<NGramState, NGramState> states = new HashMap<>();
 
+    /**
+     * Build it.
+     * @param source automaton to convert into an ngram automaton
+     * @param gramSize size of the grams to extract
+     * @param maxExpand Maximum size of range transitions to expand into single
+     *            transitions. Its roughly analogous to the number of character
+     *            in a character class before it is considered a wildcard for
+     *            optimization purposes.
+     * @param maxStatesTraced maximum number of states traced during automaton
+     *            functions. Higher number allow more complex automata to be
+     *            converted to ngram expressions at the cost of more time.
+     */
     public NGramAutomaton(Automaton source, int gramSize, int maxExpand, int maxStatesTraced) {
         this.source = source.getNumberedStates();
         this.gramSize = gramSize;
@@ -42,7 +52,6 @@ public class NGramAutomaton {
         int[] codePoints = new int[gramSize - 1];
         buildInitial(codePoints, 0, source.getInitialState());
         traceRemainingStates();
-        removeCycles();
     }
 
     /**
@@ -163,58 +172,8 @@ public class NGramAutomaton {
                     }
                     NGramTransition ngramTransition = new NGramTransition(from, next, ngram);
                     from.outgoingTransitions.add(ngramTransition);
+                    ngramTransition.to.incomingTransitions.add(ngramTransition);
                 }
-            }
-        }
-    }
-
-    /**
-     * Depth first traversal to break cycles and build the incomingTransitions
-     * list. Note that this snaps the cycle off at the last position and doesn't
-     * add the backwards transition - it doesn't eat all the (potentially)
-     * useless states. The reason we need to remove cycles is because the code
-     * that converts the automata into an expression tree doesn't detect cycles.
-     */
-    private void removeCycles() {
-        // Walks each state twice - once marking it and pushing its outgoing
-        // states and pushing itself. When it pops a marked state it knows its
-        // done with all its children so it can be unmarked.
-
-        // TODO I'm not sure the this it the right way to go at all - it just
-        // feels wrong even if it comes up with the right answer.
-
-        // Has this state been seen from this state?
-        Set<NGramState> added = new HashSet<>();
-        int statesTraced = 0;
-        for (NGramState initial : initialStates) {
-            LinkedList<NGramState> leftToProcess = new LinkedList<NGramState>();
-            leftToProcess.push(initial);
-            while (!leftToProcess.isEmpty()) {
-                if (statesTraced >= maxStatesTraced) {
-                    throw new AutomatonTooComplexException();
-                }
-                statesTraced++;
-                NGramState state = leftToProcess.pop();
-                if (state.marked) {
-                    state.marked = false;
-                    continue;
-                }
-                state.marked = true;
-                leftToProcess.push(state);
-                Iterator<NGramTransition> outgoingItr = state.outgoingTransitions.iterator();
-                while (outgoingItr.hasNext()) {
-                    NGramTransition transition = outgoingItr.next();
-                    if (transition.to.marked) {
-                        outgoingItr.remove();
-                        continue;
-                    }
-                    if (!added.contains(transition.to)) {
-                        leftToProcess.push(transition.to);
-                        added.add(transition.to);
-                    }
-                    transition.to.incomingTransitions.add(transition);
-                }
-                added.clear();
             }
         }
     }
@@ -273,8 +232,10 @@ public class NGramAutomaton {
          * state.
          */
         private Expression<String> expression;
-
-        private boolean marked = false;
+        /**
+         * Is this state in the path being turned into an expression.
+         */
+        private boolean inPath = false;
 
         private NGramState(int sourceState, String prefix, boolean initial) {
             this.sourceState = sourceState;
@@ -301,7 +262,9 @@ public class NGramAutomaton {
                 if (initial) {
                     expression = True.instance();
                 } else {
+                    inPath = true;
                     expression = Or.fromExpressionSources(incomingTransitions);
+                    inPath = false;
                 }
             }
             return expression;
@@ -350,6 +313,9 @@ public class NGramAutomaton {
 
         @Override
         public Expression<String> expression() {
+            if (from.inPath) {
+                return False.<String>instance();
+            }
             if (ngram == null) {
                 return from.expression();
             }
