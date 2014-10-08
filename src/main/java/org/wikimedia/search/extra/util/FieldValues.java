@@ -14,11 +14,17 @@ import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.fieldvisitor.CustomFieldsVisitor;
 import org.elasticsearch.index.fieldvisitor.JustSourceFieldsVisitor;
 
+/**
+ * Hub for fetching field values.
+ */
 public abstract class FieldValues {
     /**
      * Loads field values.
      */
     public interface Loader {
+        /**
+         * Load the value of the string at path from reader for docId.
+         */
         List<String> load(String path, IndexReader reader, int docId) throws IOException;
     }
 
