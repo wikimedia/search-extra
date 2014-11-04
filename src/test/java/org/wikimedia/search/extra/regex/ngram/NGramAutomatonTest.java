@@ -3,16 +3,15 @@ package org.wikimedia.search.extra.regex.ngram;
 import static org.junit.Assert.assertEquals;
 import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
-import org.apache.lucene.util.automaton.Automaton;
-import org.apache.lucene.util.automaton.RegExp;
+import org.apache.lucene.util.automaton.XAutomaton;
+import org.apache.lucene.util.automaton.XRegExp;
+import org.apache.lucene.util.automaton.XTooComplexToDeterminizeException;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
-import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
-import org.wikimedia.search.extra.regex.ngram.NGramAutomaton;
 
 public class NGramAutomatonTest {
     @Test
@@ -163,6 +162,24 @@ public class NGramAutomatonTest {
         assertExpression("te.*me", 2, new And<String>(leaves("te", "me")));
     }
 
+    @Test(expected=XTooComplexToDeterminizeException.class)
+    public void tooBig() {
+        assertTrigramExpression("\\[\\[(Datei|File|Bild|Image):[^]]*alt=[^]|}]{50,200}",
+                null /* ignored */);
+    }
+
+    @Test(expected=XTooComplexToDeterminizeException.class)
+    public void tooBigToo() {
+        assertTrigramExpression("[^]]*alt=[^]\\|}]{80,}",
+                null /* ignored */);
+    }
+
+    @Test
+    public void bigButNotTooBig() {
+        // TODO this should really be much more efficient.
+        assertTrigramExpression("[^]]*alt=[^]\\|}]{10,20}", new And<>(leaves("alt", "lt=")));
+    }
+
     /**
      * Asserts that the provided regex extracts the expected expression when
      * configured to extract trigrams. Uses 4 as maxExpand just because I had to
@@ -178,10 +195,10 @@ public class NGramAutomatonTest {
      * pick something and 4 seemed pretty good.
      */
     private void assertExpression(String regex, int gramSize, Expression<String> expected) {
-        Automaton automaton = new RegExp(regex).toAutomaton();
-        // System.err.println(automaton.toDot());
+        XAutomaton automaton = new XRegExp(regex).toAutomaton(10000);
+//         System.err.println(automaton.toDot());
         NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000);
-        // System.err.println(ngramAutomaton.toDot());
+//         System.err.println(ngramAutomaton.toDot());
         Expression<String> expression = ngramAutomaton.expression();
 //         System.err.println(expression);
         expression = expression.simplify();

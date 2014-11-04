@@ -17,6 +17,7 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
     private Integer gramSize;
     private Integer maxExpand;
     private Integer maxStatesTraced;
+    private Integer maxDeterminizedStates;
     private Integer maxInspect;
     private Boolean caseSensitive;
     private Locale locale;
@@ -83,6 +84,19 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
     }
 
     /**
+     * @param maxDeterminizedStates the maximum number of automaton states that
+     *            Lucene will create at a time when compiling the regex to a
+     *            DFA. Higher numbers allow the regex compilation phase to run
+     *            for longer and use more memory needed to compile more complex
+     *            regexes.
+     * @return this for chaining
+     */
+    public SourceRegexFilterBuilder maxDeterminizedStates(int maxDeterminizedStates) {
+        this.maxDeterminizedStates = maxDeterminizedStates;
+        return this;
+    }
+
+    /**
      * @param maxInspect the maximum number of source documents to run the regex
      *            against per shard. All others after that are assumed not to
      *            match.  Defaults to Integer.MAX_VALUE.
@@ -133,6 +147,9 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
         }
         if (maxStatesTraced != null) {
             builder.field("max_states_traced", maxStatesTraced);
+        }
+        if (maxDeterminizedStates != null) {
+            builder.field("max_determinized_states", maxDeterminizedStates);
         }
         if (maxInspect != null) {
             builder.field("max_inspect", maxInspect);

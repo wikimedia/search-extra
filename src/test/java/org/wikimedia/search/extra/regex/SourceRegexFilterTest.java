@@ -24,10 +24,7 @@ import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
-
-import com.carrotsearch.randomizedtesting.annotations.Seed;
 @ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, transportClientRatio = 0.0)
-@Seed("4C8F88ED171E3EFF:9D11B2405D5A2278")
 public class SourceRegexFilterTest extends ElasticsearchIntegrationTest {
     @Test
     public void basicUnacceleratedRegex() throws InterruptedException, ExecutionException, IOException {
@@ -79,15 +76,32 @@ public class SourceRegexFilterTest extends ElasticsearchIntegrationTest {
     public void maxStatesTracedLimitsComplexityOfRegexes() throws InterruptedException, ExecutionException, IOException {
         setup();
         indexRandom(true, doc("findme", "test"));
-        SearchResponse response = search(filter("te[st]t").maxStatesTraced(10)).get();
+        SearchResponse response = search(filter("te[st]t").maxStatesTraced(30)).get();
         assertHitCount(response, 1);
-        // maxStatesTraced isn't used when the regex is just a sequence of
+        // maxStatesTraced is used when the regex is just a sequence of
         // characters
-        response = search(filter("test").maxStatesTraced(0)).get();
-        assertHitCount(response, 1);
-        // But it is used when there are any complex things in it
+        assertFailures(search(filter("test").maxStatesTraced(0)),
+                RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
+        // And when there are more complex things in the regex
         assertFailures(search(filter("te[st]t").maxStatesTraced(0)),
                 RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
+    }
+
+    @Test
+    public void maxDeterminizedStatesLimitsComplexityOfRegexes() throws InterruptedException, ExecutionException, IOException {
+        setup();
+        indexRandom(true, doc("findme", "test"));
+        // It also limits the complexity explosion when determinizing regexes
+        // The default is good enough to prevent craziness
+        assertFailures(search(filter("[^]]*alt=[^]\\|}]{80,}")),
+                RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing automaton would result in more than"));
+        // Some regexes with explosive state growth still run because they
+        // don't explode into too many states.
+        SearchResponse response = search(filter("te*s[tabclse]{1,16}")).get();
+        assertHitCount(response, 1);
+        // But you can stop them by lowering maxStatesTraced
+        assertFailures(search(filter("te*s[tabcse]{1,16}").maxDeterminizedStates(100)),
+                RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing automaton would result in more than 100"));
         // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
         // I can't find any way from here to mark it otherwise.
     }

@@ -11,9 +11,9 @@ import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.FilteredDocIdSet;
 import org.apache.lucene.util.Bits;
-import org.apache.lucene.util.automaton.Automaton;
-import org.apache.lucene.util.automaton.CharacterRunAutomaton;
-import org.apache.lucene.util.automaton.RegExp;
+import org.apache.lucene.util.automaton.XAutomaton;
+import org.apache.lucene.util.automaton.XCharacterRunAutomaton;
+import org.apache.lucene.util.automaton.XRegExp;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.lucene.docset.AllDocIdSet;
 import org.elasticsearch.common.lucene.search.Queries;
@@ -30,17 +30,18 @@ public class SourceRegexFilter extends Filter {
     private final int gramSize;
     private final int maxExpand;
     private final int maxStatesTraced;
+    private final int maxDeterminizedStates;
     private final int maxInspect;
     private final boolean caseSensitive;
     private final Locale locale;
     private final boolean rejectUnaccelerated;
     private int inspected = 0;
     private Filter prefilter;
-    private CharacterRunAutomaton charRun;
+    private XCharacterRunAutomaton charRun;
 
 
     public SourceRegexFilter(String fieldPath, FieldValues.Loader loader, String regex, String ngramFieldPath, int gramSize, int maxExpand,
-            int maxStatesTraced, int maxInspect, boolean caseSensitive, Locale locale, boolean rejectUnaccelerated) {
+            int maxStatesTraced, int maxDeterminizedStates, int maxInspect, boolean caseSensitive, Locale locale, boolean rejectUnaccelerated) {
         this.fieldPath = fieldPath;
         this.loader = loader;
         this.regex = regex;
@@ -48,6 +49,7 @@ public class SourceRegexFilter extends Filter {
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
+        this.maxDeterminizedStates = maxDeterminizedStates;
         this.maxInspect = maxInspect;
         this.caseSensitive = caseSensitive;
         this.locale = locale;
@@ -72,7 +74,7 @@ public class SourceRegexFilter extends Filter {
         if (prefilter == null) {
             try {
                 // The accelerating filter is always assumed to be case insensitive/always lowercased
-                Automaton automaton = new RegExp(regex.toLowerCase(locale), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton();
+                XAutomaton automaton = new XRegExp(regex.toLowerCase(locale), XRegExp.ALL ^ XRegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
                 Expression<String> expression = new NGramExtractor(gramSize, maxExpand, maxStatesTraced).extract(automaton).simplify();
                 if (expression.alwaysTrue()) {
                     if (rejectUnaccelerated) {
@@ -117,8 +119,8 @@ public class SourceRegexFilter extends Filter {
                 if (!caseSensitive) {
                     regexString = regexString.toLowerCase(locale);
                 }
-                Automaton automaton = new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton();
-                charRun = new CharacterRunAutomaton(automaton);
+                XAutomaton automaton = new XRegExp(".*" + regexString + ".*", XRegExp.ALL ^ XRegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
+                charRun = new XCharacterRunAutomaton(automaton);
             }
             List<String> values = load(docid);
             for (String value : values) {

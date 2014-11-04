@@ -6,9 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.util.automaton.Automaton;
-import org.apache.lucene.util.automaton.State;
-import org.apache.lucene.util.automaton.Transition;
+import org.apache.lucene.util.automaton.XAutomaton;
+import org.apache.lucene.util.automaton.XTransition;
 import org.elasticsearch.common.collect.ImmutableSet;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
@@ -23,7 +22,8 @@ import org.wikimedia.search.extra.regex.expression.True;
  * ngrams we can't check for. Not thread safe one bit.
  */
 public class NGramAutomaton {
-    private final State[] source;
+    // TODO this whole class could save a ton of memory by switching from NGramState objects to some int array
+    private final XAutomaton source;
     private final int gramSize;
     private final int maxExpand;
     private final int maxStatesTraced;
@@ -43,14 +43,14 @@ public class NGramAutomaton {
      *            functions. Higher number allow more complex automata to be
      *            converted to ngram expressions at the cost of more time.
      */
-    public NGramAutomaton(Automaton source, int gramSize, int maxExpand, int maxStatesTraced) {
-        this.source = source.getNumberedStates();
+    public NGramAutomaton(XAutomaton source, int gramSize, int maxExpand, int maxStatesTraced) {
+        this.source = source;
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
         // Build the initial states using the first gramSize transitions
         int[] codePoints = new int[gramSize - 1];
-        buildInitial(codePoints, 0, source.getInitialState());
+        buildInitial(codePoints, 0, 0);
         traceRemainingStates();
     }
 
@@ -64,7 +64,7 @@ public class NGramAutomaton {
         b.append("  initial [shape=plaintext,label=\"\"];\n");
         for (NGramState state : states.keySet()) {
             b.append("  ").append(state.dotName());
-            if (source[state.sourceState].isAccept()) {
+            if (source.isAccept(state.sourceState)) {
                 b.append(" [shape=doublecircle,label=\"").append(state).append("\"];\n");
             } else {
                 b.append(" [shape=circle,label=\"").append(state).append("\"];\n");
@@ -95,11 +95,11 @@ public class NGramAutomaton {
      *            during the walk
      * @param codePoints work array holding codePoints
      * @param offset offset into work array/depth in tree
-     * @param current current source state
+     * @param currentState current source state
      * @return true to continue, false if we hit a dead end
      */
-    private boolean buildInitial(int[] codePoints, int offset, State current) {
-        if (current.isAccept()) {
+    private boolean buildInitial(int[] codePoints, int offset, int currentState) {
+        if (source.isAccept(currentState)) {
             // Hit an accept state before finishing a trigram - meaning you
             // could match this without using any of the trigrams we might find
             // later. In that case we just give up.
@@ -109,7 +109,7 @@ public class NGramAutomaton {
         }
         if (offset == gramSize - 1) {
             // We've walked deeply enough to find an initial state.
-            NGramState state = new NGramState(current.getNumber(), new String(codePoints, 0, gramSize - 1), true);
+            NGramState state = new NGramState(currentState, new String(codePoints, 0, gramSize - 1), true);
             // Only add one copy of each state - if we've already seen this
             // state just ignore it.
             if (states.containsKey(state)) {
@@ -119,17 +119,23 @@ public class NGramAutomaton {
             states.put(state, state);
             return true;
         }
-        for (Transition transition : current.getTransitions()) {
-            int min = transition.getMin();
-            int max = transition.getMax();
-            if (max - min >= maxExpand) {
+        // TODO build fewer of these
+        XTransition transition = new XTransition();
+        int totalLeavingState = source.initTransition(currentState, transition);
+        for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
+            source.getNextTransition(transition);
+            int min, max;
+            if (transition.max - transition.min >= maxExpand) {
                 // Consider this transition useless.
-                max = 0;
                 min = 0;
+                max = 0;
+            } else {
+                min = transition.min;
+                max = transition.max;
             }
             for (int c = min; c <= max; c++) {
                 codePoints[offset] = c;
-                if (!buildInitial(codePoints, offset + 1, transition.getDest())) {
+                if (!buildInitial(codePoints, offset + 1, transition.dest)) {
                     return false;
                 }
             }
@@ -148,23 +154,29 @@ public class NGramAutomaton {
             }
             statesTraced++;
             NGramState from = leftToProcess.pop();
-            if (source[from.sourceState].isAccept()) {
+            if (source.isAccept(from.sourceState)) {
                 // Any transitions out of accept states aren't interesting for
                 // finding required ngrams
                 continue;
             }
-            for (Transition transition : source[from.sourceState].getTransitions()) {
-                int min = transition.getMin();
-                int max = transition.getMax();
-                if (max - min >= maxExpand) {
+            // TODO build fewer of these
+            XTransition transition = new XTransition();
+            int totalLeavingState = source.initTransition(from.sourceState, transition);
+            for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
+                source.getNextTransition(transition);
+                int min, max;
+                if (transition.max - transition.min >= maxExpand) {
                     // Consider this transition useless.
-                    max = 0;
                     min = 0;
+                    max = 0;
+                } else {
+                    min = transition.min;
+                    max = transition.max;
                 }
                 for (int c = min; c <= max; c++) {
                     codePoint[0] = c;
                     String ngram = from.prefix + new String(codePoint, 0, 1);
-                    NGramState next = buildOrFind(leftToProcess, transition.getDest().getNumber(), ngram.substring(1));
+                    NGramState next = buildOrFind(leftToProcess, transition.dest, ngram.substring(1));
                     // Transitions containing an invalid character contain no
                     // prefix.
                     if (ngram.indexOf(0) >= 0) {
@@ -184,7 +196,7 @@ public class NGramAutomaton {
         if (found != null) {
             return found;
         }
-        if (source[sourceState].isAccept()) {
+        if (source.isAccept(sourceState)) {
             acceptStates.add(built);
         }
         states.put(built, built);
@@ -249,7 +261,10 @@ public class NGramAutomaton {
 
         public String dotName() {
             // Spaces become ___ because __ was taken by null.
-            return prettyPrefix().replace(" ", "___") + sourceState;
+            return prettyPrefix().replace(" ", "___").replace("`", "_bt_")
+                    .replace("^", "_caret_").replace("|", "_pipe_")
+                    .replace("{", "_lcb_").replace("}", "_rcb_")
+                    .replace("=", "_eq_") + sourceState;
         }
 
         public String prettyPrefix() {
