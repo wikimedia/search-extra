@@ -85,13 +85,14 @@ public class SourceRegexFilterTest extends ElasticsearchIntegrationTest {
         // And when there are more complex things in the regex
         assertFailures(search(filter("te[st]t").maxStatesTraced(0)),
                 RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
+        // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
+        // I can't find any way from here to mark it otherwise.
     }
 
     @Test
     public void maxDeterminizedStatesLimitsComplexityOfRegexes() throws InterruptedException, ExecutionException, IOException {
         setup();
         indexRandom(true, doc("findme", "test"));
-        // It also limits the complexity explosion when determinizing regexes
         // The default is good enough to prevent craziness
         assertFailures(search(filter("[^]]*alt=[^]\\|}]{80,}")),
                 RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing automaton would result in more than"));

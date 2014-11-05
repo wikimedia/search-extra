@@ -112,6 +112,10 @@ the trigrams index in the example had the lowercase filter.  That is important!
 Without that you can't switch freely from case sensitive to insensitive.
 * ```locale``` Locale used for case conversions.  Must match the locale used in
 the lowercase filter of the index.  Defaults to ```Locale.ROOT```.
+* ```max_determinized_states``` Limits the complexity explosion that comes from
+compiling Lucene Regular Expressions into DFAs.  It defaults to 20,000 states.
+Increasing it allows more complex regexes to take the memory and time that they
+need to compile.  The default allows for reasonably complex regexes.
 
 Also supports the standard Elasticsearch filter options:
 * ```_cache```
