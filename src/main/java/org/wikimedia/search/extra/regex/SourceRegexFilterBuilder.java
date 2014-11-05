@@ -18,6 +18,7 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
     private Integer maxExpand;
     private Integer maxStatesTraced;
     private Integer maxDeterminizedStates;
+    private Integer maxNgramsExtracted;
     private Integer maxInspect;
     private Boolean caseSensitive;
     private Locale locale;
@@ -97,6 +98,20 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
     }
 
     /**
+     * @param maxNgramsExtracted the maximum number of ngrams extracted from the
+     *            regex.  This is pretty much the maximum number of term queries that
+     *            are exectued per regex.  If any more are required to accurately
+     *            limit the regex to some document set they are all assumed to match
+     *            all documents that match so far.  Its crude, but it limits the number
+     *            of term queries while degrading reasonably well.
+     * @return this for chaining
+     */
+    public SourceRegexFilterBuilder maxNgramsExtracted(int maxNgramsExtracted) {
+        this.maxNgramsExtracted = maxNgramsExtracted;
+        return this;
+    }
+
+    /**
      * @param maxInspect the maximum number of source documents to run the regex
      *            against per shard. All others after that are assumed not to
      *            match.  Defaults to Integer.MAX_VALUE.
@@ -150,6 +165,9 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
         }
         if (maxDeterminizedStates != null) {
             builder.field("max_determinized_states", maxDeterminizedStates);
+        }
+        if (maxNgramsExtracted != null) {
+            builder.field("max_ngrams_extracted", maxNgramsExtracted);
         }
         if (maxInspect != null) {
             builder.field("max_inspect", maxInspect);

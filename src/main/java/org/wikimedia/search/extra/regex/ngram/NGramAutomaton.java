@@ -22,11 +22,11 @@ import org.wikimedia.search.extra.regex.expression.True;
  * ngrams we can't check for. Not thread safe one bit.
  */
 public class NGramAutomaton {
-    // TODO this whole class could save a ton of memory by switching from NGramState objects to some int array
     private final XAutomaton source;
     private final int gramSize;
     private final int maxExpand;
     private final int maxStatesTraced;
+    private final int maxTransitions;
     private final List<NGramState> initialStates = new ArrayList<>();
     private final List<NGramState> acceptStates = new ArrayList<>();
     private final Map<NGramState, NGramState> states = new HashMap<>();
@@ -43,11 +43,12 @@ public class NGramAutomaton {
      *            functions. Higher number allow more complex automata to be
      *            converted to ngram expressions at the cost of more time.
      */
-    public NGramAutomaton(XAutomaton source, int gramSize, int maxExpand, int maxStatesTraced) {
+    public NGramAutomaton(XAutomaton source, int gramSize, int maxExpand, int maxStatesTraced, int maxTransitions) {
         this.source = source;
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
+        this.maxTransitions = maxTransitions;
         // Build the initial states using the first gramSize transitions
         int[] codePoints = new int[gramSize - 1];
         buildInitial(codePoints, 0, 0);
@@ -64,7 +65,7 @@ public class NGramAutomaton {
         b.append("  initial [shape=plaintext,label=\"\"];\n");
         for (NGramState state : states.keySet()) {
             b.append("  ").append(state.dotName());
-            if (source.isAccept(state.sourceState)) {
+            if (acceptStates.contains(state)) {
                 b.append(" [shape=doublecircle,label=\"").append(state).append("\"];\n");
             } else {
                 b.append(" [shape=circle,label=\"").append(state).append("\"];\n");
@@ -149,18 +150,23 @@ public class NGramAutomaton {
         int[] codePoint = new int[1];
         int statesTraced = 0;
         XTransition transition = new XTransition();
+        int currentTransitions = 0;
         while (!leftToProcess.isEmpty()) {
             if (statesTraced >= maxStatesTraced) {
                 throw new AutomatonTooComplexException();
             }
             statesTraced++;
             NGramState from = leftToProcess.pop();
-            if (source.isAccept(from.sourceState)) {
+            if (acceptStates.contains(from)) {
                 // Any transitions out of accept states aren't interesting for
                 // finding required ngrams
                 continue;
             }
             int totalLeavingState = source.initTransition(from.sourceState, transition);
+            if (currentTransitions >= maxTransitions) {
+                acceptStates.add(from);
+                continue;
+            }
             for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
                 source.getNextTransition(transition);
                 int min, max;
@@ -181,6 +187,11 @@ public class NGramAutomaton {
                     if (ngram.indexOf(0) >= 0) {
                         ngram = null;
                     }
+                    if (currentTransitions >= maxTransitions) {
+                        acceptStates.add(from);
+                        continue;
+                    }
+                    currentTransitions++;
                     NGramTransition ngramTransition = new NGramTransition(from, next, ngram);
                     from.outgoingTransitions.add(ngramTransition);
                     ngramTransition.to.incomingTransitions.add(ngramTransition);

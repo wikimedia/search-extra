@@ -33,6 +33,7 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
         int maxExpand = 4;
         int maxStatesTraced = 10000;
         int maxDeterminizedStates = 20000;
+        int maxNgramsExtracted = 100;
         int maxInspect = Integer.MAX_VALUE;
         boolean caseSensitive = false;
         Locale locale = Locale.ROOT;
@@ -72,6 +73,9 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
                     maxInspect = parser.intValue();
                 } else if ("max_determinized_states".equals(currentFieldName) || "maxDeterminizedStates".equals(currentFieldName)) {
                     maxDeterminizedStates = parser.intValue();
+                } else if ("max_ngrams_extracted".equals(currentFieldName) || "maxNgramsExtracted".equals(currentFieldName) ||
+                        "maxNGramsExtracted".equals(currentFieldName)) {
+                    maxNgramsExtracted = parser.intValue();
                 } else if ("case_sensitive".equals(currentFieldName) || "caseSensitive".equals(currentFieldName)) {
                     caseSensitive = parser.booleanValue();
                 } else if ("locale".equals(currentFieldName)) {
@@ -97,8 +101,8 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
         if (fieldPath == null) {
             throw new QueryParsingException(parseContext.index(), "[source-regex] filter must specify [field]");
         }
-        Filter filter = new SourceRegexFilter(fieldPath, loader, regex, ngramFieldPath, gramSize, maxExpand, maxStatesTraced, maxDeterminizedStates,
-                maxInspect, caseSensitive, locale, rejectUnaccelerated);
+        Filter filter = new SourceRegexFilter(fieldPath, loader, regex, ngramFieldPath, gramSize, maxExpand, maxStatesTraced,
+                maxDeterminizedStates, maxNgramsExtracted, maxInspect, caseSensitive, locale, rejectUnaccelerated);
         if (cache) {
             filter = parseContext.cacheFilter(filter, cacheKey);
         }

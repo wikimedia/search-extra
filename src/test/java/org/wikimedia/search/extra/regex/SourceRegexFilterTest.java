@@ -108,6 +108,15 @@ public class SourceRegexFilterTest extends ElasticsearchIntegrationTest {
     }
 
     @Test
+    public void maxNgramsExtractedLimitsFilters() throws IOException, InterruptedException, ExecutionException {
+        setup();
+        indexRandom(true, doc("findme", "test"));
+        // Basically the assertion here is that this doesn't run _forever_
+        SearchResponse response = search(filter("[ac]*a[de]{50,200}")).get();
+        assertHitCount(response, 0);
+    }
+
+    @Test
     public void maxInspectLimitsNumberOfMatches() throws InterruptedException, ExecutionException, IOException {
         setup();
         indexRandom(true, doc("findme", "test"));

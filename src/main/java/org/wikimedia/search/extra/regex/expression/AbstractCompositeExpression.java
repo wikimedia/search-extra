@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.elasticsearch.common.base.Joiner;
 import org.elasticsearch.common.collect.ImmutableSet;
 import org.elasticsearch.common.collect.Sets;
 
@@ -14,7 +13,11 @@ import org.elasticsearch.common.collect.Sets;
  * Abstract parent for composite expressions like And and Or.
  */
 public abstract class AbstractCompositeExpression<T> implements Expression<T> {
+    private static final int MAX_COMPONENT_STRING_LENGTH = 1000;
+    private static final int MAX_COMPONENTS_SIZE_FOR_TO_STRING = 10;
     private final ImmutableSet<Expression<T>> components;
+    private boolean simplified;
+    private String toString = null;
 
     public AbstractCompositeExpression(ImmutableSet<Expression<T>> components) {
         this.components = components;
@@ -37,7 +40,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
      * Build an expression of this type with a list of components. Used in
      * simplification.
      */
-    protected abstract Expression<T> newFrom(ImmutableSet<Expression<T>> components);
+    protected abstract AbstractCompositeExpression<T> newFrom(ImmutableSet<Expression<T>> components);
 
     /**
      * Does this component of this expression affect the outcome of the overall
@@ -66,6 +69,9 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
 
     @Override
     public Expression<T> simplify() {
+        if (simplified) {
+            return this;
+        }
         Iterator<Expression<T>> componentsItr = components.iterator();
         List<Expression<T>> newComponentsBuilder = null;
         boolean changed = false;
@@ -108,9 +114,12 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
         }
 
         if (!changed) {
+            this.simplified = true;
             return this;
         }
-        return newFrom(changed ? ImmutableSet.copyOf(newComponentsBuilder) : components);
+        AbstractCompositeExpression<T> result = newFrom(changed ? ImmutableSet.copyOf(newComponentsBuilder) : components);
+        result.simplified = true;
+        return result;
     }
 
     private Expression<T> extractCommon(Iterable<Expression<T>> newComponents) {
@@ -218,7 +227,31 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
 
     @Override
     public String toString() {
-        return "(" + Joiner.on(toStringJoiner()).join(components) + ")";
+        if (toString != null) {
+            return toString;
+        }
+        if (components.size() > MAX_COMPONENTS_SIZE_FOR_TO_STRING) {
+            toString = "(lots of " + toStringJoiner() + "s)";
+            return toString;
+        }
+        StringBuilder b = new StringBuilder();
+        b.append('(');
+        boolean first = true;
+        for (Expression<T> component: components) {
+            if (first) {
+                first = false;
+            } else {
+                b.append(toStringJoiner());
+            }
+            b.append(component.toString());
+        }
+        b.append(')');
+        if (b.length() > MAX_COMPONENT_STRING_LENGTH) {
+            toString = "TOO_BIG";
+        } else {
+            toString = b.toString();
+        }
+        return toString;
     }
 
     @Override

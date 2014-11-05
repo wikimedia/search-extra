@@ -116,6 +116,11 @@ the lowercase filter of the index.  Defaults to ```Locale.ROOT```.
 compiling Lucene Regular Expressions into DFAs.  It defaults to 20,000 states.
 Increasing it allows more complex regexes to take the memory and time that they
 need to compile.  The default allows for reasonably complex regexes.
+* ```max_ngrams_extracted``` The number of ngrams extracted from the regex to
+accelerate it.  If the regex contains more than that many ngrams they are
+ignored.  Defaults to 100 which makes a lot of term filters but its not _too_
+many.  Without this even simple little regexes like /[abc]{20,80}/ would make
+thousands of term filters.
 
 Also supports the standard Elasticsearch filter options:
 * ```_cache```

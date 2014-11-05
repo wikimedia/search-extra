@@ -14,7 +14,7 @@ import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 public class NGramExtractorTest extends ElasticsearchTestCase {
     @Test
     public void simple() {
-        NGramExtractor gram = new NGramExtractor(3, 4, 10000);
+        NGramExtractor gram = new NGramExtractor(3, 4, 10000, 100);
         XAutomaton automaton = new XRegExp("hero of legend").toAutomaton();
         assertEquals(
                 new And<String>(leaves("her", "ero", "ro ", "o o", " of",
@@ -28,5 +28,14 @@ public class NGramExtractorTest extends ElasticsearchTestCase {
         assertEquals(True.<String> instance(), gram.extract(automaton));
         automaton = new XRegExp("her").toAutomaton();
         assertEquals(new Leaf<>("her"), gram.extract(automaton));
+    }
+
+    @Test
+    public void maxNgrams() {
+        NGramExtractor gram = new NGramExtractor(3, 4, 10000, 3);
+        XAutomaton automaton = new XRegExp("hero of legend").toAutomaton();
+        assertEquals(
+                new And<String>(leaves("her", "ero", "ro ")),
+                gram.extract(automaton));
     }
 }

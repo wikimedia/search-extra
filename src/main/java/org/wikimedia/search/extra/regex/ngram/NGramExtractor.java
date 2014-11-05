@@ -11,6 +11,7 @@ public class NGramExtractor {
     private final int gramSize;
     private final int maxExpand;
     private final int maxStatesTraced;
+    private final int maxNgrams;
 
     /**
      * Build it.
@@ -23,11 +24,14 @@ public class NGramExtractor {
      * @param maxStatesTraced maximum number of states traced during automaton
      *            functions. Higher number allow more complex automata to be
      *            converted to ngram expressions at the cost of more time.
+     * @param maxNgrams the maximum number of ngrams extracted from the regex.
+     *            If more could be exracted from the regex they are ignored.
      */
-    public NGramExtractor(int gramSize, int maxExpand, int maxStatesTraced) {
+    public NGramExtractor(int gramSize, int maxExpand, int maxStatesTraced, int maxNgrams) {
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
+        this.maxNgrams = maxNgrams;
     }
 
     /**
@@ -37,6 +41,6 @@ public class NGramExtractor {
         if (automaton.isAccept(0)) {
             return True.<String> instance();
         }
-        return new NGramAutomaton(automaton, gramSize, maxExpand, maxStatesTraced).expression().simplify();
+        return new NGramAutomaton(automaton, gramSize, maxExpand, maxStatesTraced, maxNgrams).expression().simplify();
     }
 }

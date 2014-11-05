@@ -31,6 +31,7 @@ public class SourceRegexFilter extends Filter {
     private final int maxExpand;
     private final int maxStatesTraced;
     private final int maxDeterminizedStates;
+    private final int maxNgramsExtracted;
     private final int maxInspect;
     private final boolean caseSensitive;
     private final Locale locale;
@@ -41,7 +42,8 @@ public class SourceRegexFilter extends Filter {
 
 
     public SourceRegexFilter(String fieldPath, FieldValues.Loader loader, String regex, String ngramFieldPath, int gramSize, int maxExpand,
-            int maxStatesTraced, int maxDeterminizedStates, int maxInspect, boolean caseSensitive, Locale locale, boolean rejectUnaccelerated) {
+            int maxStatesTraced, int maxDeterminizedStates, int maxNgramsExtracted, int maxInspect, boolean caseSensitive, Locale locale,
+            boolean rejectUnaccelerated) {
         this.fieldPath = fieldPath;
         this.loader = loader;
         this.regex = regex;
@@ -50,6 +52,7 @@ public class SourceRegexFilter extends Filter {
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
         this.maxDeterminizedStates = maxDeterminizedStates;
+        this.maxNgramsExtracted = maxNgramsExtracted;
         this.maxInspect = maxInspect;
         this.caseSensitive = caseSensitive;
         this.locale = locale;
@@ -75,7 +78,7 @@ public class SourceRegexFilter extends Filter {
             try {
                 // The accelerating filter is always assumed to be case insensitive/always lowercased
                 XAutomaton automaton = new XRegExp(regex.toLowerCase(locale), XRegExp.ALL ^ XRegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
-                Expression<String> expression = new NGramExtractor(gramSize, maxExpand, maxStatesTraced).extract(automaton).simplify();
+                Expression<String> expression = new NGramExtractor(gramSize, maxExpand, maxStatesTraced, maxNgramsExtracted).extract(automaton).simplify();
                 if (expression.alwaysTrue()) {
                     if (rejectUnaccelerated) {
                         throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
