@@ -176,7 +176,9 @@ public class NGramAutomatonTest {
 
     @Test
     public void bigButNotTooBig() {
-        // TODO this should really be much more efficient.
+        // I'd like to verify that this _doesn't_ take 26 seconds to run and
+        // instead takes .26 seconds but such assertions are foolhardy in unit
+        // tests.
         assertTrigramExpression("[^]]*alt=[^]\\|}]{10,20}", new And<>(leaves("alt", "lt=")));
     }
 

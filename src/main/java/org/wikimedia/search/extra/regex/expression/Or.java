@@ -19,7 +19,7 @@ public final class Or<T> extends AbstractCompositeExpression<T> {
             for (ExpressionSource<T> source : sources) {
                 or.add(source.expression());
             }
-            return new Or<>(or.build());
+            return new Or<>(or.build()).simplify();
         }
     }
 
@@ -46,7 +46,7 @@ public final class Or<T> extends AbstractCompositeExpression<T> {
     }
 
     @Override
-    protected Expression<T> newFrom(ImmutableSet<Expression<T>> components) {
+    protected AbstractCompositeExpression<T> newFrom(ImmutableSet<Expression<T>> components) {
         return new Or<>(components);
     }
 

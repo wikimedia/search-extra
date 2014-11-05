@@ -29,7 +29,7 @@ public final class And<T> extends AbstractCompositeExpression<T> {
     }
 
     @Override
-    protected Expression<T> newFrom(ImmutableSet<Expression<T>> components) {
+    protected AbstractCompositeExpression<T> newFrom(ImmutableSet<Expression<T>> components) {
         return new And<>(components);
     }
 

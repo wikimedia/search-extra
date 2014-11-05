@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import static org.elasticsearch.common.Preconditions.*;
 import org.elasticsearch.common.collect.ImmutableSet;
 
 /**
@@ -16,9 +17,10 @@ public final class Leaf<T> implements Expression<T> {
     }
 
     private final T t;
+    private int hashCode;
 
     public Leaf(T t) {
-        this.t = t;
+        this.t = checkNotNull(t);
     }
 
     public String toString() {
@@ -50,13 +52,12 @@ public final class Leaf<T> implements Expression<T> {
         return transformer.leaf(t);
     }
 
-    // Equals and hashcode from Eclipse.
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((t == null) ? 0 : t.hashCode());
-        return result;
+        if (hashCode == 0) {
+            hashCode = t.hashCode();
+        }
+        return hashCode;
     }
 
     @Override
@@ -69,11 +70,6 @@ public final class Leaf<T> implements Expression<T> {
             return false;
         @SuppressWarnings("rawtypes")
         Leaf other = (Leaf) obj;
-        if (t == null) {
-            if (other.t != null)
-                return false;
-        } else if (!t.equals(other.t))
-            return false;
-        return true;
+        return t.equals(other.t);
     }
 }

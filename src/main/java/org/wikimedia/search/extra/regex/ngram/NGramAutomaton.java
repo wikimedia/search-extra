@@ -148,6 +148,7 @@ public class NGramAutomaton {
         leftToProcess.addAll(initialStates);
         int[] codePoint = new int[1];
         int statesTraced = 0;
+        XTransition transition = new XTransition();
         while (!leftToProcess.isEmpty()) {
             if (statesTraced >= maxStatesTraced) {
                 throw new AutomatonTooComplexException();
@@ -159,8 +160,6 @@ public class NGramAutomaton {
                 // finding required ngrams
                 continue;
             }
-            // TODO build fewer of these
-            XTransition transition = new XTransition();
             int totalLeavingState = source.initTransition(from.sourceState, transition);
             for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
                 source.getNextTransition(transition);
@@ -334,7 +333,7 @@ public class NGramAutomaton {
             if (ngram == null) {
                 return from.expression();
             }
-            return new And<String>(ImmutableSet.of(from.expression(), new Leaf<String>(ngram)));
+            return new And<>(ImmutableSet.of(from.expression(), new Leaf<>(ngram)));
         }
 
         public String toString() {

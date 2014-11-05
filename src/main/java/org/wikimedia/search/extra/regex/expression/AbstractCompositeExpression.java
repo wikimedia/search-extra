@@ -1,7 +1,9 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.elasticsearch.common.base.Joiner;
@@ -65,7 +67,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
     @Override
     public Expression<T> simplify() {
         Iterator<Expression<T>> componentsItr = components.iterator();
-        Set<Expression<T>> newComponents = new HashSet<>();
+        List<Expression<T>> newComponentsBuilder = null;
         boolean changed = false;
         while (componentsItr.hasNext()) {
             Expression<T> expression = componentsItr.next();
@@ -79,20 +81,39 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
             if (forcedOutcome != null) {
                 return forcedOutcome;
             }
+            if (newComponentsBuilder == null) {
+                newComponentsBuilder = new ArrayList<>(components.size());
+            }
             if (simplified.getClass() == getClass()) {
-                newComponents.addAll(((AbstractCompositeExpression<T>) simplified).components);
+                changed |= true;
+                newComponentsBuilder.addAll(((AbstractCompositeExpression<T>) simplified).components);
                 continue;
             }
-            newComponents.add(simplified);
+            newComponentsBuilder.add(simplified);
         }
-        switch (newComponents.size()) {
+        if (newComponentsBuilder == null) {
+            // Nothing left in the expression!
+            return True.instance();
+        }
+        switch (newComponentsBuilder.size()) {
         case 0:
             return True.instance();
         case 1:
-            return newComponents.iterator().next();
+            return newComponentsBuilder.get(0);
         default:
         }
+        Expression<T> commonExtracted = extractCommon(changed ? newComponentsBuilder : components);
+        if (commonExtracted != null) {
+            return commonExtracted;
+        }
 
+        if (!changed) {
+            return this;
+        }
+        return newFrom(changed ? ImmutableSet.copyOf(newComponentsBuilder) : components);
+    }
+
+    private Expression<T> extractCommon(Iterable<Expression<T>> newComponents) {
         // Are all composite subexpressions of the same type?
         boolean allCompositesOfSameType = true;
         // Are all the non-composite subexpressions of this type the same?
@@ -170,17 +191,12 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
                 return composite.newFrom(ImmutableSet.copyOf(sharedComponents)).simplify();
             }
         }
-
-        if (!changed) {
-            return this;
-        }
-        return newFrom(ImmutableSet.copyOf(newComponents));
+        return null;
     }
-
     /**
      * Can we factor commonComposite out of all subexpressions?
      */
-    private boolean canFactorOut(Set<Expression<T>> subexpressions, Expression<T> commonComposite) {
+    private boolean canFactorOut(Iterable<Expression<T>> subexpressions, Expression<T> commonComposite) {
         for (Expression<T> current : subexpressions) {
             if (!current.equals(commonComposite)) {
                 if (!current.isComposite()) {
@@ -205,13 +221,9 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
         return "(" + Joiner.on(toStringJoiner()).join(components) + ")";
     }
 
-    // Equals and hashcode from Eclipse.
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((components == null) ? 0 : components.hashCode());
-        return result;
+        return components.hashCode();
     }
 
     @Override
@@ -224,11 +236,6 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
             return false;
         @SuppressWarnings("rawtypes")
         AbstractCompositeExpression other = (AbstractCompositeExpression) obj;
-        if (components == null) {
-            if (other.components != null)
-                return false;
-        } else if (!components.equals(other.components))
-            return false;
-        return true;
+        return components.equals(other.components);
     }
 }
