@@ -41,7 +41,6 @@ public interface Expression<T> {
     /**
      * Transform this expression into another form.
      *
-     * @param <T> type stored in leaves
      * @param <J> result of the transformation.
      */
     <J> J transform(Transformer<T, J> transformer);

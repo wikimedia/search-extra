@@ -49,4 +49,10 @@ public class ExpressionTest {
                         foo
                 ).simplify());
     }
+
+    @Test
+    public void extractDuplicates() {
+        assertEquals(foo, new Or<>(foo, new And<>(foo)).simplify());
+    }
+
 }

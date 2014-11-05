@@ -97,12 +97,12 @@ public class TestOperations extends LuceneTestCase {
     final int ITER2 = atLeast(100);
     for(int i=0;i<ITER1;i++) {
 
-      final XRegExp re = new XRegExp(AutomatonTestUtil.randomRegexp(random()), XRegExp.NONE);
+      final XRegExp re = new XRegExp(XAutomatonTestUtil.randomRegexp(random()), XRegExp.NONE);
       //System.out.println("TEST i=" + i + " re=" + re);
       final XAutomaton a = XOperations.determinize(re.toAutomaton(), DEFAULT_MAX_DETERMINIZED_STATES);
       assertFalse(XOperations.isEmpty(a));
 
-      final AutomatonTestUtil.RandomAcceptedStrings rx = new AutomatonTestUtil.RandomAcceptedStrings(a);
+      final XAutomatonTestUtil.RandomAcceptedStrings rx = new XAutomatonTestUtil.RandomAcceptedStrings(a);
       for(int j=0;j<ITER2;j++) {
         //System.out.println("TEST: j=" + j);
         int[] acc = null;
@@ -130,8 +130,8 @@ public class TestOperations extends LuceneTestCase {
   public void testIsFinite() {
     int num = atLeast(200);
     for (int i = 0; i < num; i++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
-      assertEquals(AutomatonTestUtil.isFiniteSlow(a), XOperations.isFinite(a));
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
+      assertEquals(XAutomatonTestUtil.isFiniteSlow(a), XOperations.isFinite(a));
     }
   }
 
@@ -140,7 +140,7 @@ public class TestOperations extends LuceneTestCase {
   private Set<IntsRef> getFiniteStrings(XAutomaton a, int limit, boolean testRecursive) {
     Set<IntsRef> result = XOperations.getFiniteStrings(a, limit);
     if (testRecursive) {
-      assertEquals(AutomatonTestUtil.getFiniteStringsRecursive(a, limit), result);
+      assertEquals(XAutomatonTestUtil.getFiniteStringsRecursive(a, limit), result);
     }
     return result;
   }
@@ -258,7 +258,7 @@ public class TestOperations extends LuceneTestCase {
     // automaton:
     int iters = atLeast(100);
     for(int i=0;i<iters;i++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
       try {
         // Must pass a limit because the random automaton
         // can accept MANY strings:
@@ -273,7 +273,7 @@ public class TestOperations extends LuceneTestCase {
   }
 
   public void testInvalidLimit() {
-    XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+    XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
     try {
       XOperations.getFiniteStrings(a, -7);
       fail("did not hit exception");
@@ -283,7 +283,7 @@ public class TestOperations extends LuceneTestCase {
   }
 
   public void testInvalidLimit2() {
-    XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+    XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
     try {
       XOperations.getFiniteStrings(a, 0);
       fail("did not hit exception");

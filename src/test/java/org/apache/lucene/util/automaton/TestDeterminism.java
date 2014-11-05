@@ -31,7 +31,7 @@ public class TestDeterminism extends LuceneTestCase {
   public void testRegexps() throws Exception {
       int num = atLeast(500);
       for (int i = 0; i < num; i++) {
-        assertAutomaton(new XRegExp(AutomatonTestUtil.randomRegexp(random()), XRegExp.NONE).toAutomaton());
+        assertAutomaton(new XRegExp(XAutomatonTestUtil.randomRegexp(random()), XRegExp.NONE).toAutomaton());
       }
   }
   
@@ -39,8 +39,8 @@ public class TestDeterminism extends LuceneTestCase {
   public void testAgainstSimple() throws Exception {
     int num = atLeast(200);
     for (int i = 0; i < num; i++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
-      a = AutomatonTestUtil.determinizeSimple(a);
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
+      a = XAutomatonTestUtil.determinizeSimple(a);
       XAutomaton b = XOperations.determinize(a, DEFAULT_MAX_DETERMINIZED_STATES);
       // TODO: more verifications possible?
       assertTrue(XOperations.sameLanguage(a, b));

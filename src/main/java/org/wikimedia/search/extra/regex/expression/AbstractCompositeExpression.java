@@ -194,6 +194,12 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
                     extractedComponents.add(composite.newFrom(ImmutableSet.copyOf(Sets.difference(composite.components, sharedComponents)))
                             .simplify());
                 }
+                // In the rare case that there aren't any composites but all the
+                // non-composits are the same we should just return that
+                // non-composite
+                if (composite == null) {
+                    return firstNonComposite;
+                }
                 // Add True to represent the extracted common component
                 extractedComponents.add(True.<T>instance());
                 sharedComponents.add(newFrom(extractedComponents.build()).simplify());

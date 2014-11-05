@@ -29,7 +29,7 @@ public class TestMinimize extends LuceneTestCase {
   public void testBasic() {
     int num = atLeast(200);
     for (int i = 0; i < num; i++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
       XAutomaton la = XOperations.determinize(XOperations.removeDeadStates(a),
         DEFAULT_MAX_DETERMINIZED_STATES);
       XAutomaton lb = XMinimizationOperations.minimize(a,
@@ -44,8 +44,8 @@ public class TestMinimize extends LuceneTestCase {
   public void testAgainstBrzozowski() {
     int num = atLeast(200);
     for (int i = 0; i < num; i++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
-      a = AutomatonTestUtil.minimizeSimple(a);
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
+      a = XAutomatonTestUtil.minimizeSimple(a);
       XAutomaton b = XMinimizationOperations.minimize(a,
         DEFAULT_MAX_DETERMINIZED_STATES);
       assertTrue(XOperations.sameLanguage(a, b));

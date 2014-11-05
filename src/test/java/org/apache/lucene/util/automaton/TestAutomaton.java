@@ -33,7 +33,7 @@ import org.apache.lucene.util.XIntsRefBuilder;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
 import org.apache.lucene.util.XUnicodeUtil;
-import org.apache.lucene.util.automaton.AutomatonTestUtil.RandomAcceptedStrings;
+import org.apache.lucene.util.automaton.XAutomatonTestUtil.RandomAcceptedStrings;
 import org.apache.lucene.util.fst.XUtil;
 
 import static org.apache.lucene.util.automaton.XOperations.DEFAULT_MAX_DETERMINIZED_STATES;
@@ -256,7 +256,7 @@ public class TestAutomaton extends LuceneTestCase {
   public void testReverseRandom1() throws Exception {
     int ITERS = atLeast(100);
     for(int i=0;i<ITERS;i++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
       XAutomaton ra = XOperations.reverse(a);
       XAutomaton rra = XOperations.reverse(ra);
       assertTrue(XOperations.sameLanguage(
@@ -269,7 +269,7 @@ public class TestAutomaton extends LuceneTestCase {
     int ITERS = atLeast(100);
     for(int iter=0;iter<ITERS;iter++) {
       //System.out.println("TEST: iter=" + iter);
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
       if (random().nextBoolean()) {
         a = XOperations.removeDeadStates(a);
       }
@@ -336,7 +336,7 @@ public class TestAutomaton extends LuceneTestCase {
   public void testBuilderRandom() throws Exception {
     int ITERS = atLeast(100);
     for(int iter=0;iter<ITERS;iter++) {
-      XAutomaton a = AutomatonTestUtil.randomAutomaton(random());
+      XAutomaton a = XAutomatonTestUtil.randomAutomaton(random());
 
       // Just get all transitions, shuffle, and build a new automaton with the same transitions:
       List<XTransition> allTrans = new ArrayList<>();
@@ -1031,7 +1031,7 @@ public class TestAutomaton extends LuceneTestCase {
       }
 
       assertSame(terms, a);
-      assertEquals(AutomatonTestUtil.isDeterministicSlow(a), a.isDeterministic());
+      assertEquals(XAutomatonTestUtil.isDeterministicSlow(a), a.isDeterministic());
     }
 
     assertSame(terms, a);

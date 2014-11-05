@@ -49,6 +49,9 @@ public class NGramAutomaton {
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
         this.maxTransitions = maxTransitions;
+        if (source.getNumStates() == 0) {
+            return;
+        }
         // Build the initial states using the first gramSize transitions
         int[] codePoints = new int[gramSize - 1];
         buildInitial(codePoints, 0, 0);

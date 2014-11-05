@@ -39,7 +39,7 @@ import org.apache.lucene.util.XUnicodeUtil;
  * and automata, and also provides a number of very
  * basic unoptimized implementations (*slow) for testing.
  */
-public class AutomatonTestUtil {
+public class XAutomatonTestUtil {
   /**
    * Default maximum number of states that {@link XOperations#determinize} should create.
    */
@@ -260,12 +260,12 @@ public class AutomatonTestUtil {
   /** return a random NFA/DFA for testing */
   public static XAutomaton randomAutomaton(Random random) {
     // get two random Automata from regexps
-    XAutomaton a1 = new XRegExp(AutomatonTestUtil.randomRegexp(random), XRegExp.NONE).toAutomaton();
+    XAutomaton a1 = new XRegExp(XAutomatonTestUtil.randomRegexp(random), XRegExp.NONE).toAutomaton();
     if (random.nextBoolean()) {
       a1 = XOperations.complement(a1, DEFAULT_MAX_DETERMINIZED_STATES);
     }
     
-    XAutomaton a2 = new XRegExp(AutomatonTestUtil.randomRegexp(random), XRegExp.NONE).toAutomaton();
+    XAutomaton a2 = new XRegExp(XAutomatonTestUtil.randomRegexp(random), XRegExp.NONE).toAutomaton();
     if (random.nextBoolean()) {
       a2 = XOperations.complement(a2, DEFAULT_MAX_DETERMINIZED_STATES);
     }

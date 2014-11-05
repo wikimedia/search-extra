@@ -1,11 +1,12 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import static org.junit.Assert.assertEquals;
 import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
 import org.apache.lucene.util.automaton.XAutomaton;
+import org.apache.lucene.util.automaton.XAutomatonTestUtil;
 import org.apache.lucene.util.automaton.XRegExp;
 import org.apache.lucene.util.automaton.XTooComplexToDeterminizeException;
+import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
@@ -13,7 +14,9 @@ import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
-public class NGramAutomatonTest {
+import com.carrotsearch.randomizedtesting.annotations.Repeat;
+
+public class NGramAutomatonTest extends ElasticsearchTestCase {
     @Test
     public void simple() {
         assertTrigramExpression("cat", new Leaf<>("cat"));
@@ -188,6 +191,31 @@ public class NGramAutomatonTest {
         assertTrigramExpression("[ac]*a[de]{50,80}", null);
     }
 
+    @Test
+    @Repeat(iterations=100)
+    public void randomRegexp() {
+        // Some of the regex strings don't actually compile so just retry until we get a good one.
+        String str;
+        while (true) {
+            try {
+                str = XAutomatonTestUtil.randomRegexp(getRandom());
+                new XRegExp(str);
+                break;
+            } catch (Exception e) {
+                // retry now
+            }
+        }
+        assertTrigramExpression(str, null);
+    }
+
+    @Test
+    @Repeat(iterations=100)
+    public void randomAutomaton() {
+        NGramAutomaton ngramAutomaton = new NGramAutomaton(XAutomatonTestUtil.randomAutomaton(getRandom()), between(2, 7), 4, 10000, 500);
+        Expression<String> expression = ngramAutomaton.expression();
+        expression = expression.simplify();
+    }
+
     /**
      * Asserts that the provided regex extracts the expected expression when
      * configured to extract trigrams. Uses 4 as maxExpand just because I had to
@@ -203,6 +231,7 @@ public class NGramAutomatonTest {
      * pick something and 4 seemed pretty good.
      */
     private void assertExpression(String regex, int gramSize, Expression<String> expected) {
+//         System.err.println(regex);
         XAutomaton automaton = new XRegExp(regex).toAutomaton(20000);
 //         System.err.println(automaton.toDot());
         NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000, 500);
