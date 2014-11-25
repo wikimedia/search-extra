@@ -10,10 +10,14 @@ expression filter that is generally much much faster than sequentially checking
 all documents.
 
 Queries:
+* [safer](docs/safer.md) - Wraps other queries and analyzes them for
+potentially expensive constructs.  Expensive constructs either cause errors to
+be sent back to the user or are degraded into cheaper, less precise constructs.
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 0.0.1 -> master                  | 1.3.2 -> master |
+| master                           | 1.3.4 -> 1.3.X  |
+| 0.0.1 -> 0.0.2                   | 1.3.2 -> 1.3.3  |
 
 Install it like so:
 ```bash

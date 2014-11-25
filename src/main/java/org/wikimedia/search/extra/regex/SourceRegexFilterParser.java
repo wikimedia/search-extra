@@ -51,44 +51,72 @@ public class SourceRegexFilterParser implements org.elasticsearch.index.query.Fi
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if ("regex".equals(currentFieldName)) {
+                switch (currentFieldName) {
+                case "regex":
                     regex = parser.text();
-                } else if ("field".equals(currentFieldName)) {
+                    break;
+                case "field":
                     fieldPath = parser.text();
-                } else if ("load_from_source".equals(currentFieldName) || "loadFromSource".equals(currentFieldName)) {
+                    break;
+                case "load_from_source":
+                case "loadFromSource":
                     if (parser.booleanValue()) {
                         loader = FieldValues.loadFromSource();
                     } else {
                         loader = FieldValues.loadFromStoredField();
                     }
-                } else if ("ngram_field".equals(currentFieldName) || "ngramField".equals(currentFieldName)) {
+                    break;
+                case "ngram_field":
+                case "ngramField":
                     ngramFieldPath = parser.text();
-                } else if ("gram_size".equals(currentFieldName) || "gramSize".equals(currentFieldName)) {
+                    break;
+                case "gram_size":
+                case "gramSize":
                     gramSize = parser.intValue();
-                } else if ("max_expand".equals(currentFieldName) || "maxExpand".equals(currentFieldName)) {
+                    break;
+                case "max_expand":
+                case "maxExpand":
                     maxExpand = parser.intValue();
-                } else if ("max_states_traced".equals(currentFieldName) || "maxStatesTraced".equals(currentFieldName)) {
+                    break;
+                case "max_states_traced":
+                case "maxStatesTraced":
                     maxStatesTraced = parser.intValue();
-                } else if ("max_inspect".equals(currentFieldName) || "maxInspect".equals(currentFieldName)) {
+                    break;
+                case "max_inspect":
+                case "maxInspect":
                     maxInspect = parser.intValue();
-                } else if ("max_determinized_states".equals(currentFieldName) || "maxDeterminizedStates".equals(currentFieldName)) {
+                    break;
+                case "max_determinized_states":
+                case "maxDeterminizedStates":
                     maxDeterminizedStates = parser.intValue();
-                } else if ("max_ngrams_extracted".equals(currentFieldName) || "maxNgramsExtracted".equals(currentFieldName) ||
-                        "maxNGramsExtracted".equals(currentFieldName)) {
+                    break;
+                case "max_ngrams_extracted":
+                case "maxNgramsExtracted":
+                case "maxNGramsExtracted":
                     maxNgramsExtracted = parser.intValue();
-                } else if ("case_sensitive".equals(currentFieldName) || "caseSensitive".equals(currentFieldName)) {
+                    break;
+                case "case_sensitive":
+                case "caseSensitive":
                     caseSensitive = parser.booleanValue();
-                } else if ("locale".equals(currentFieldName)) {
+                    break;
+                case "locale":
                     locale = LocaleUtils.parse(parser.text());
-                } else if ("reject_unaccelerated".equals(currentFieldName) || "rejectUnaccelerated".equals(currentFieldName)) {
+                    break;
+                case "reject_unaccelerated":
+                case "rejectUnaccelerated":
                     rejectUnaccelerated = parser.booleanValue();
-                } else if ("_cache".equals(currentFieldName)) {
+                    break;
+                case "_cache":
                     cache = parser.booleanValue();
-                } else if ("_name".equals(currentFieldName)) {
+                    break;
+                case "_name":
                     filterName = parser.text();
-                } else if ("_cache_key".equals(currentFieldName) || "_cacheKey".equals(currentFieldName)) {
+                     break;
+                case "_cache_key":
+                case "_cacheKey":
                     cacheKey = new CacheKeyFilter.Key(parser.text());
-                } else {
+                    break;
+                default:
                     throw new QueryParsingException(parseContext.index(), "[source-regex] filter does not support [" + currentFieldName
                             + "]");
                 }

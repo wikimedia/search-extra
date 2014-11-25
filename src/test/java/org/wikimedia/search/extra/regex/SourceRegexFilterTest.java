@@ -17,15 +17,12 @@ import java.util.concurrent.ExecutionException;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.plugins.PluginsService;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, transportClientRatio = 0.0)
-public class SourceRegexFilterTest extends ElasticsearchIntegrationTest {
+import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
+
+public class SourceRegexFilterTest extends AbstractPluginIntegrationTest {
     @Test
     public void basicUnacceleratedRegex() throws InterruptedException, ExecutionException, IOException {
         setup();
@@ -335,14 +332,5 @@ public class SourceRegexFilterTest extends ElasticsearchIntegrationTest {
         settings.field("min_gram", size);
         settings.field("max_gram", size);
         settings.endObject();
-    }
-
-    /**
-     * Enable plugin loading.
-     */
-    @Override
-    protected Settings nodeSettings(int nodeOrdinal) {
-        return ImmutableSettings.builder().put(super.nodeSettings(nodeOrdinal))
-                .put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, true).build();
     }
 }
