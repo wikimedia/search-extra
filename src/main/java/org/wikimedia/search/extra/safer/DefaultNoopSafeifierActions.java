@@ -4,11 +4,13 @@ import org.apache.lucene.queries.CommonTermsQuery;
 import org.apache.lucene.queries.ExtendedCommonTermsQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiPhraseQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.payloads.PayloadNearQuery;
 import org.apache.lucene.search.payloads.PayloadTermQuery;
@@ -38,6 +40,8 @@ public class DefaultNoopSafeifierActions {
         safeifier.register(ExtendedCommonTermsQuery.class, NOOP);
         // XConstantScoreQuery only contains filters and we don't safeify them right now
         safeifier.register(XConstantScoreQuery.class, NOOP);
+        safeifier.register(TermRangeQuery.class, NOOP);
+        safeifier.register(NumericRangeQuery.class, NOOP);
 
         safeifier.register(PhraseQuery.class, NOOP);
         safeifier.register(MultiPhraseQuery.class, NOOP);

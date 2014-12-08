@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeAction;
+import org.wikimedia.search.extra.safer.simple.SimpleActionModule.Option;
 
 /**
  * Tests the safer query wrapping query_string queries similar to how <a >CirrusSearch</a> works.
@@ -230,5 +231,15 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         assertSearchHits(search.get(), "1");
         b.maxTermsPerPhraseQuery(5);
         assertHitCount(search.get(), 4);
+    }
+
+    @Test
+    public void degradeTermRangeQuery() {
+        QueryStringQueryBuilder qs = queryString("<Z");
+        SaferQueryBuilder b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_MATCH_ALL_QUERY);
+        SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
+        assertSearchHits(search.get(), "1", "2", "delimited1", "delimited2");
+        b.termRangeQuery(Option.DEGRADE);
+        assertHitCount(search.get(), 0);
     }
 }

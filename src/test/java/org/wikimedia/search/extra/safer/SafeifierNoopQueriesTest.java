@@ -11,10 +11,12 @@ import org.apache.lucene.queries.ExtendedCommonTermsQuery;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.payloads.MaxPayloadFunction;
 import org.apache.lucene.search.payloads.PayloadNearQuery;
@@ -48,6 +50,8 @@ public class SafeifierNoopQueriesTest extends ElasticsearchTestCase {
                 new CommonTermsQuery(Occur.SHOULD, Occur.MUST, .5f),
                 new ExtendedCommonTermsQuery(Occur.SHOULD, Occur.MUST, .5f, false, null),
                 new XConstantScoreQuery(new TermFilter(t)),
+                TermRangeQuery.newStringRange("foo", "a", "z", true, true),
+                NumericRangeQuery.newLongRange("foo", null, 1L, false, true),
 
                 pq("1", "2", "3"),
                 mpq(new String[] {"1", "2"}, new String[] {"3"}, new String[] {"a", "Adsfa"}),

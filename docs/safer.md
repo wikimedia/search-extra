@@ -15,6 +15,7 @@ Filters are not currently processed by ```safer``` so a ```filtered``` query
 containing a ```query``` filter containing a phrase query would be silently
 ignored.
 
+
 Options
 -------
 
@@ -22,6 +23,17 @@ Options
 * ```query``` The query to wrap.  Required.
 * ```error_on_unknown``` Should an error be thrown back to the user if the we
     encounter a query that we don't understand?  Defaults to true.
+* ```simple``` Configuration for simple rules for handling queries.  The
+    configuration consists of fields who's names are query types and who's
+    values are what actions to take on that query type.
+    * Possible field nanes:
+        * ```term_range```
+        * ```numeric_range```
+    * Possible field values:
+        * ```none```, the default, means do nothing when encountering these
+            queries.
+        * ```error``` these queries cause errors to be thrown back to the user.
+        * ```degrade``` these queries are degraded into term queries.
 * ```phrase``` Configuration for handling phrase queries with too many clauses.
     It can contain:
     * ```max_terms_per_query``` The maximum number of terms a phrase query
@@ -48,7 +60,8 @@ Note on phrases:
 phrase that pushed the count over the limit.  The other phrases are not
 modified.
 
-Example
+
+Examples
 -------
 ```bash
 curl -XPOST localhost:9200/wiki/_search  -d'{
@@ -56,8 +69,25 @@ curl -XPOST localhost:9200/wiki/_search  -d'{
         "safer": {
             "query": {
                 "query_string": {
-                    "query": "\"I am a long long long long long long long long long phrase query\"",
-                    "default_field": "text"
+                    "query": "<Z"
+                }
+            },
+            "simple": {
+                "term_range": error
+            }
+        }
+    }
+}'
+```
+
+
+```bash
+curl -XPOST localhost:9200/wiki/_search  -d'{
+    "query": {
+        "safer": {
+            "query": {
+                "query_string": {
+                    "query": "\"I am a long long long long long long long long long phrase query\""
                 }
             },
             "phrase": {
@@ -68,16 +98,44 @@ curl -XPOST localhost:9200/wiki/_search  -d'{
 }'
 ```
 
+
 Default-ness
 ------------
 Elasticsearch doesn't allow plugins to create wrap all queries so it wouldn't
 be possible to wrap ```safer``` around all queries by default.  It also
 probably would be the wrong thing to do from a feature standpoint as well
 because:
-# It'd add extra overhead for simple queries that are known safe like term
+* It'd add extra overhead for simple queries that are known safe like term
 and match queries.
-# You'd just get the default configuration.  While the default configuration is
+* You'd just get the default configuration.  While the default configuration is
 pretty good, its probably worth thinking about.
-# It'd be a breaking change to Elasticsearch.  Stuff that worked before
+* It'd be a breaking change to Elasticsearch.  Stuff that worked before
 installing the plugin could fail afterwords.  That's just too surprising for a
 plugin.
+
+
+Integrating
+-----------
+This query was designed to allow other plugins to hook into it.  Doing so looks
+like this:
+```java
+public class MyPlugin extends AbstractPlugin {
+    @Override
+    public Collection<Class<? extends Module>> modules() {
+        return ImmutableList.<Class<? extends Module>>of(MySafeifierActionsModule.class);
+    }
+
+    public static class MySafeifierActionsModule extends AbstractModule {
+        public SafeifierActionsModule(Settings settings) {
+        }
+
+        @Override
+        @SuppressWarnings("rawtypes")
+        protected void configure() {
+            Multibinder<ActionModuleParser> moduleParsers = Multibinder.newSetBinder(binder(), ActionModuleParser.class);
+            moduleParsers.addBinding().to(MyActionModuleParser.class).asEagerSingleton();
+        }
+    }
+}
+```
+

@@ -14,6 +14,7 @@ import org.wikimedia.search.extra.regex.SourceRegexFilterParser;
 import org.wikimedia.search.extra.safer.ActionModuleParser;
 import org.wikimedia.search.extra.safer.SaferQueryParser;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeActionModuleParser;
+import org.wikimedia.search.extra.safer.simple.SimpleActionModuleParser;
 
 /**
  * Setup the Elasticsearch plugin.
@@ -52,6 +53,7 @@ public class ExtraPlugin extends AbstractPlugin {
         protected void configure() {
             Multibinder<ActionModuleParser> moduleParsers = Multibinder.newSetBinder(binder(), ActionModuleParser.class);
             moduleParsers.addBinding().to(PhraseTooLargeActionModuleParser.class).asEagerSingleton();
+            moduleParsers.addBinding().to(SimpleActionModuleParser.class).asEagerSingleton();
         }
     }
 }
