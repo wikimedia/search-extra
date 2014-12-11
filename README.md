@@ -16,10 +16,17 @@ be sent back to the user or are degraded into cheaper, less precise constructs.
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| master                           | 1.3.4 -> 1.3.X  |
+| 1.4.0, master branch             | 1.4.1 -> 1.4.X  |
+| 1.3.0, 1.3 branch                | 1.3.4 -> 1.3.X  |
 | 0.0.1 -> 0.0.2                   | 1.3.2 -> 1.3.3  |
 
-Install it like so:
+
+Install it like so for Elasticsearch 1.4.x:
 ```bash
-./bin/plugin --install org.wikimedia.search/extra/0.0.2
+./bin/plugin --install org.wikimedia.search/extra/1.4.0
+```
+
+and for Elasticsearch 1.3.x:
+```bash
+./bin/plugin --install org.wikimedia.search/extra/1.3.0
 ```
