@@ -1,4 +1,4 @@
-Extra Queries and Filters
+Extra Queries and Filters [![Build Status](https://integration.wikimedia.org/ci/buildStatus/icon?job=search-extra)](https://integration.wikimedia.org/ci/job/search-extra)
 =========================
 
 The plan is for this to include any extra queries and filters we end up
