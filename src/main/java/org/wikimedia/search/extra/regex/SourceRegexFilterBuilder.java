@@ -144,7 +144,7 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
 
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject("source-regex");
+        builder.startObject(SourceRegexFilterParser.NAMES[0]);
         builder.field("field", field);
         builder.field("regex", regex);
 
