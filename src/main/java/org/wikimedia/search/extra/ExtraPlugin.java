@@ -10,6 +10,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.indices.query.IndicesQueriesModule;
 import org.elasticsearch.plugins.AbstractPlugin;
+import org.wikimedia.search.extra.idhashmod.IdHashModFilterParser;
 import org.wikimedia.search.extra.regex.SourceRegexFilterParser;
 import org.wikimedia.search.extra.safer.ActionModuleParser;
 import org.wikimedia.search.extra.safer.SaferQueryParser;
@@ -36,6 +37,7 @@ public class ExtraPlugin extends AbstractPlugin {
     @SuppressWarnings("unchecked")
     public void onModule(IndicesQueriesModule module) {
         module.addFilter(new SourceRegexFilterParser());
+        module.addFilter(new IdHashModFilterParser());
         module.addQuery((Class<QueryParser>) (Class<?>)SaferQueryParser.class);
     }
 

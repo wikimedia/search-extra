@@ -7,6 +7,7 @@ import org.apache.lucene.search.Filter;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.cache.filter.support.CacheKeyFilter;
+import org.elasticsearch.index.query.FilterParser;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.wikimedia.search.extra.util.FieldValues;
@@ -14,8 +15,8 @@ import org.wikimedia.search.extra.util.FieldValues;
 /**
  * Parses source_regex filters.
  */
-public class SourceRegexFilterParser implements org.elasticsearch.index.query.FilterParser {
-    private static final String[] NAMES = new String[] { "source_regex", "source-regex", "sourceRegex" };
+public class SourceRegexFilterParser implements FilterParser {
+    public static final String[] NAMES = new String[] { "source_regex", "source-regex", "sourceRegex" };
 
     @Override
     public String[] names() {
