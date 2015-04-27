@@ -126,7 +126,7 @@ public class MyPlugin extends AbstractPlugin {
     }
 
     public static class MySafeifierActionsModule extends AbstractModule {
-        public SafeifierActionsModule(Settings settings) {
+        public MySafeifierActionsModule(Settings settings) {
         }
 
         @Override
