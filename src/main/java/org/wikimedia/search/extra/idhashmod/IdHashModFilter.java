@@ -13,11 +13,11 @@ import org.elasticsearch.index.fielddata.IndexFieldData;
 import org.elasticsearch.index.fielddata.ScriptDocValues;
 
 /**
- * Filters to fields who's _uid's hash matches a number mod some other number.
+ * Filters to document's whose _uid's hash matches a number mod some other number.
  * Its a simple way of slicing the index into chunks that can be processed
  * totally independently. Its used by CirrusSearch to reindex in multiple
  * Independent processes. Its the same as the following script:
- * 
+ *
  * <pre>
  * {@code
  * "filter" : {
@@ -31,7 +31,7 @@ import org.elasticsearch.index.fielddata.ScriptDocValues;
  * }
  * }
  * </pre>
- * 
+ *
  * Note that using the reader's native docIds won't give you a consistent view
  * across all shards but would be faster. It might work in a scroll context
  * which is how you'd use this query anyway. On the other hand this is fast
