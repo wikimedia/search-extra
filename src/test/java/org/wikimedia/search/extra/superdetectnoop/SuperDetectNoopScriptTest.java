@@ -4,13 +4,13 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertThrows;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 
 import java.io.IOException;
 import java.util.Map;
 
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -211,15 +211,16 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     }
 
     private Map<String, Object> update(XContentBuilder b, boolean shouldUpdate) {
-        long beforeNoops = client().admin().indices().prepareStats("test").get().getTotal().indexing.getTotal().getIndexCount();
+        long beforeUpdateVersion = client().prepareGet("test", "test", "1").get().getVersion();
         toUpdateRequest(b).get();
-        long afterNoops = client().admin().indices().prepareStats("test").get().getTotal().indexing.getTotal().getIndexCount();
+        GetResponse g = client().prepareGet("test", "test", "1").get();
+        long afterUpdateVersion = g.getVersion();
         if (shouldUpdate) {
-            assertThat("there have not been updates but we expected some", afterNoops, greaterThan(beforeNoops));
+            assertEquals("Should have updated", beforeUpdateVersion + 1, afterUpdateVersion);
         } else {
-            assertEquals("there have been updates and we don't expect them", beforeNoops, afterNoops);
+            assertEquals("Shouldn't have updated", beforeUpdateVersion, afterUpdateVersion);
         }
-        return client().prepareGet("test", "test", "1").get().getSource();
+        return g.getSource();
     }
 
     private UpdateRequestBuilder toUpdateRequest(XContentBuilder b) {

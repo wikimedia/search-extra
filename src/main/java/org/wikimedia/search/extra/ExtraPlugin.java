@@ -8,9 +8,11 @@ import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryParser;
+import org.elasticsearch.index.query.functionscore.FunctionScoreModule;
 import org.elasticsearch.indices.query.IndicesQueriesModule;
 import org.elasticsearch.plugins.AbstractPlugin;
 import org.elasticsearch.script.ScriptModule;
+import org.wikimedia.search.extra.fieldvaluefactor.FieldValueFactorFunctionWithDefaultParser;
 import org.wikimedia.search.extra.idhashmod.IdHashModFilterParser;
 import org.wikimedia.search.extra.regex.SourceRegexFilterParser;
 import org.wikimedia.search.extra.safer.ActionModuleParser;
@@ -51,6 +53,13 @@ public class ExtraPlugin extends AbstractPlugin {
      */
     public void onModule(ScriptModule module) {
         module.registerScript("super_detect_noop", SuperDetectNoopScript.Factory.class);
+    }
+
+    /**
+     * Register our function scores.
+     */
+    public void onModule(FunctionScoreModule module) {
+        module.registerParser(FieldValueFactorFunctionWithDefaultParser.class);
     }
 
     @Override

@@ -13,7 +13,7 @@ import org.elasticsearch.index.fielddata.IndexFieldData;
 import org.elasticsearch.index.fielddata.ScriptDocValues;
 
 /**
- * Filters to fields who's _uid's hash matches a number mod some other number.
+ * Filters to document's whose _uid's hash matches a number mod some other number.
  * Its a simple way of slicing the index into chunks that can be processed
  * totally independently. Its used by CirrusSearch to reindex in multiple
  * Independent processes. Its the same as the following script:
