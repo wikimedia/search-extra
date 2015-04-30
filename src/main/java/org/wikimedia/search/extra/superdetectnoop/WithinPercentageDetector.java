@@ -37,6 +37,9 @@ public class WithinPercentageDetector implements CloseEnoughDetector<Number> {
 
     @Override
     public boolean isCloseEnough(Number oldValue, Number newValue) {
+        if (oldValue.doubleValue() == 0) {
+            return newValue.doubleValue() == 0;
+        }
         return abs((newValue.doubleValue() - oldValue.doubleValue()) / oldValue.doubleValue()) < absoluteDifference;
     }
 }
