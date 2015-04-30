@@ -87,6 +87,22 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     }
 
     @Test
+    public void withinPercentageZeroMatch() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("zero", 0, "within 200%");
+        Map<String, Object> r = update(b, false);
+        assertThat(r, hasEntry("zero", (Object) 0));
+    }
+
+    @Test
+    public void withinPercentageZeroChanged() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("zero", 1, "within 200%");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry("zero", (Object) 1));
+    }
+
+    @Test
     public void percentageOnString() throws IOException {
         indexSeedData();
         XContentBuilder b = x("string", "cat", "within 200%");
@@ -198,6 +214,7 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
         XContentBuilder b = jsonBuilder().startObject();
         {
             b.field("int", 3);
+            b.field("zero", 0);
             b.field("string", "cake");
             b.startObject("foo");
             {
