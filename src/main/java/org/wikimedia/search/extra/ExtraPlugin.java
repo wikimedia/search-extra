@@ -19,10 +19,11 @@ import org.wikimedia.search.extra.safer.ActionModuleParser;
 import org.wikimedia.search.extra.safer.SaferQueryParser;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeActionModuleParser;
 import org.wikimedia.search.extra.safer.simple.SimpleActionModuleParser;
-import org.wikimedia.search.extra.superdetectnoop.CloseEnoughDetector;
+import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
+import org.wikimedia.search.extra.superdetectnoop.SetHandler;
 import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
-import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteDetector;
-import org.wikimedia.search.extra.superdetectnoop.WithinPercentageDetector;
+import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
+import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
 
 /**
  * Setup the Elasticsearch plugin.
@@ -86,11 +87,12 @@ public class ExtraPlugin extends AbstractPlugin {
 
         @Override
         protected void configure() {
-            Multibinder<CloseEnoughDetector.Recognizer> detectors = Multibinder
-                    .newSetBinder(binder(), CloseEnoughDetector.Recognizer.class);
-            detectors.addBinding().toInstance(new CloseEnoughDetector.Equal.Factory());
-            detectors.addBinding().toInstance(new WithinPercentageDetector.Factory());
-            detectors.addBinding().toInstance(new WithinAbsoluteDetector.Factory());
+            Multibinder<ChangeHandler.Recognizer> handlers = Multibinder
+                    .newSetBinder(binder(), ChangeHandler.Recognizer.class);
+            handlers.addBinding().toInstance(new ChangeHandler.Equal.Recognizer());
+            handlers.addBinding().toInstance(new WithinPercentageHandler.Recognizer());
+            handlers.addBinding().toInstance(new WithinAbsoluteHandler.Recognizer());
+            handlers.addBinding().toInstance(new SetHandler.Recognizer());
         }
     }
 }

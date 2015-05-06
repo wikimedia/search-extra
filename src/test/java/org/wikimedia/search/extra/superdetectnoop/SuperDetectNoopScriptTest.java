@@ -8,15 +8,20 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
+import org.elasticsearch.common.base.Splitter;
+import org.elasticsearch.common.collect.ImmutableList;
+import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.ScriptService.ScriptType;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
@@ -39,7 +44,7 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     }
 
     @Test
-    public void setToNull() throws IOException {
+    public void assignToNull() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", null);
         Map<String, Object> r = update(b, true);
@@ -153,6 +158,88 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     }
 
     @Test
+    public void setNewField() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("another_set", ImmutableMap.of("add", ImmutableList.of("cat", "tree")), "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry("another_set", (Object) ImmutableList.of("cat", "tree")));
+    }
+
+    @Test
+    public void setNewFieldRemoveDoesntAddField() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("another_set", ImmutableMap.of("remove", "cat"), "set");
+        Map<String, Object> r = update(b, false);
+        assertThat(r, not(hasEntry(equalTo("another_set"), anything())));
+    }
+
+    @Test
+    public void setNullRemovesField() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("set", null, "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, not(hasEntry(equalTo("set"), anything())));
+    }
+
+    @Test
+    public void setNoop() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("set", ImmutableMap.of("add", "cat"), "set");
+        Map<String, Object> r = update(b, false);
+        assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "fish")));
+    }
+
+    @Test
+    public void setNoopFromRemove() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("set", ImmutableMap.of("remove", "tree"), "set");
+        Map<String, Object> r = update(b, false);
+        assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "fish")));
+    }
+
+    @Test
+    public void setAdd() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("set", ImmutableMap.of("add", "cow"), "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "fish", "cow")));
+    }
+
+    @Test
+    public void setRemove() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("set", ImmutableMap.of("remove", "fish"), "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog")));
+    }
+
+    @Test
+    public void setAddAndRemove() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("set", ImmutableMap.of("add", "cow", "remove", "fish"), "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "cow")));
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void setNewFieldDeep() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("o.new_set", ImmutableMap.of("add", "cow", "remove", "fish"), "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry(equalTo("o"), (Matcher<Object>) (Matcher) hasEntry("new_set", ImmutableList.of("cow"))));
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void setAddFieldDeep() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("o.set", ImmutableMap.of("add", "cow", "remove", "fish"), "set");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry(equalTo("o"), (Matcher<Object>) (Matcher) hasEntry("set", ImmutableList.of("cow", "bat"))));
+    }
+
+    @Test
     public void garbageDetector() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", "cat", "not a valid detector");
@@ -163,26 +250,12 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
      * Tests path matching.
      */
     @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void path() throws IOException {
         indexSeedData();
-        XContentBuilder b = jsonBuilder().startObject();
-        b.startObject("source");
-        {
-            b.startObject("foo");
-            {
-                b.field("bar", 10);
-            }
-            b.endObject();
-        }
-        b.endObject();
-        b.startObject("detectors");
-        {
-            b.field("foo.bar", "within 10");
-        }
-        b.endObject();
-        b.endObject();
+        XContentBuilder b = x("o.bar", 9, "within 10");
         Map<String, Object> r = update(b, false);
-        assertThat(r, hasEntry("int", (Object) 3));
+        assertThat(r, hasEntry(equalTo("o"), (Matcher<Object>) (Matcher) hasEntry("bar", 10)));
     }
 
     private XContentBuilder x(String field, Object value) throws IOException {
@@ -195,12 +268,10 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     private XContentBuilder x(String field, Object value, String detector) throws IOException {
         XContentBuilder b = jsonBuilder().startObject();
         b.startObject("source");
-        {
-            b.field(field, value);
-        }
+        xInPath(Splitter.on('.').split(field).iterator(), b, value);
         b.endObject();
         if (detector != null) {
-            b.startObject("detectors");
+            b.startObject("handlers");
             {
                 b.field(field, detector);
             }
@@ -210,15 +281,28 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
         return b;
     }
 
+    private void xInPath(Iterator<String> path, XContentBuilder b, Object value) throws IOException {
+        b.field(path.next());
+        if (path.hasNext()) {
+            b.startObject();
+            xInPath(path, b, value);
+            b.endObject();
+        } else {
+            b.value(value);
+        }
+    }
+
     private void indexSeedData() throws IOException {
         XContentBuilder b = jsonBuilder().startObject();
         {
             b.field("int", 3);
             b.field("zero", 0);
             b.field("string", "cake");
-            b.startObject("foo");
+            b.field("set", "cat", "dog", "fish");
+            b.startObject("o");
             {
                 b.field("bar", 10);
+                b.field("set", "cow", "fish", "bat");
             }
             b.endObject();
         }

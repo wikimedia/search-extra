@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.superdetectnoop;
 import static org.elasticsearch.common.base.Preconditions.checkNotNull;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,52 +21,52 @@ import org.elasticsearch.script.NativeScriptFactory;
  */
 public class SuperDetectNoopScript extends AbstractExecutableScript {
     public static class Factory implements NativeScriptFactory {
-        private final List<CloseEnoughDetector.Recognizer> closeEnoughFactories;
+        private final List<ChangeHandler.Recognizer> changeHandlerRecognizers;
 
         @Inject
-        public Factory(Set<CloseEnoughDetector.Recognizer> factories) {
-            // Note that detectors are tried in a random order....
-            this.closeEnoughFactories = ImmutableList.copyOf(factories);
+        public Factory(Set<ChangeHandler.Recognizer> recognizers) {
+            // Note that recognizers are tried in a random order....
+            this.changeHandlerRecognizers = ImmutableList.copyOf(recognizers);
         }
 
         @Override
         public ExecutableScript newScript(Map<String, Object> params) {
             @SuppressWarnings("unchecked")
             Map<String, Object> source = (Map<String, Object>) params.get("source");
-            return new SuperDetectNoopScript(source, detectors(params));
+            return new SuperDetectNoopScript(source, handlers(params));
         }
 
-        private Map<String, CloseEnoughDetector<Object>> detectors(Map<String, Object> params) {
+        private Map<String, ChangeHandler<Object>> handlers(Map<String, Object> params) {
             @SuppressWarnings("unchecked")
-            Map<String, String> detectorConfigs = (Map<String, String>) params.get("detectors");
+            Map<String, String> detectorConfigs = (Map<String, String>) params.get("handlers");
             if (detectorConfigs == null) {
                 return Collections.emptyMap();
             }
-            ImmutableMap.Builder<String, CloseEnoughDetector<Object>> detectors = ImmutableMap.builder();
+            ImmutableMap.Builder<String, ChangeHandler<Object>> handlers = ImmutableMap.builder();
             for (Map.Entry<String, String> detectorConfig : detectorConfigs.entrySet()) {
-                detectors.put(detectorConfig.getKey(), detector(detectorConfig.getValue()));
+                handlers.put(detectorConfig.getKey(), handler(detectorConfig.getValue()));
             }
-            return detectors.build();
+            return handlers.build();
         }
 
-        private CloseEnoughDetector<Object> detector(String config) {
-            for (CloseEnoughDetector.Recognizer factory : closeEnoughFactories) {
-                CloseEnoughDetector<Object> detector = factory.build(config);
+        private ChangeHandler<Object> handler(String config) {
+            for (ChangeHandler.Recognizer factory : changeHandlerRecognizers) {
+                ChangeHandler<Object> detector = factory.build(config);
                 if (detector != null) {
                     return detector;
                 }
             }
-            throw new IllegalArgumentException("Don't recognize this type of detector:  " + config);
+            throw new IllegalArgumentException("Don't recognize this type of change handler:  " + config);
         }
     }
 
     private final Map<String, Object> source;
-    private final Map<String, CloseEnoughDetector<Object>> pathToDetector;
+    private final Map<String, ChangeHandler<Object>> pathToHandler;
     private Map<String, Object> ctx;
 
-    public SuperDetectNoopScript(Map<String, Object> source, Map<String, CloseEnoughDetector<Object>> pathToDetector) {
+    public SuperDetectNoopScript(Map<String, Object> source, Map<String, ChangeHandler<Object>> pathToDetector) {
         this.source = checkNotNull(source, "source must be specified");
-        this.pathToDetector = checkNotNull(pathToDetector, "detectors must be specified");
+        this.pathToHandler = checkNotNull(pathToDetector, "handler must be specified");
     }
 
     @Override
@@ -91,47 +92,44 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
     /**
      * Update old with the source and detector configuration of this script.
      */
-    boolean update(Map<String, Object> old, Map<String, Object> updateSource, String path) {
+    boolean update(Map<String, Object> source, Map<String, Object> updateSource, String path) {
         boolean modified = false;
         for (Map.Entry<String, Object> sourceEntry : updateSource.entrySet()) {
             String nextPath = path + sourceEntry.getKey();
-            Object oldValue = old.get(sourceEntry.getKey());
-            if (oldValue instanceof Map && sourceEntry.getValue() instanceof Map) {
-                // recursive merge maps
-                @SuppressWarnings("unchecked")
-                Map<String, Object> nextOld = (Map<String, Object>) old.get(sourceEntry.getKey());
-                @SuppressWarnings("unchecked")
-                Map<String, Object> nextUpdateSource = (Map<String, Object>) sourceEntry.getValue();
-                modified |= update(nextOld, nextUpdateSource, nextPath);
+            Object sourceValue = source.get(sourceEntry.getKey());
+            ChangeHandler<Object> handler = pathToHandler.get(nextPath);
+            if (handler == null) {
+                if (sourceEntry.getValue() instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> nextSource = (Map<String, Object>) sourceValue;
+                    if (nextSource == null) {
+                        nextSource = new LinkedHashMap<>();
+                        source.put(sourceEntry.getKey(), nextSource);
+                    }
+                    // recursive merge maps
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> nextUpdateSource = (Map<String, Object>) sourceEntry.getValue();
+                    modified |= update(nextSource, nextUpdateSource, nextPath + ".");
+                    continue;
+                }
+                handler = ChangeHandler.EQUALS;
+            }
+            ChangeHandler.Result result = handler.handle(sourceValue, sourceEntry.getValue());
+            if (result.isCloseEnough()) {
                 continue;
             }
-            if (detector(nextPath).isCloseEnough(oldValue, sourceEntry.getValue())) {
-                continue;
-            }
-            if (sourceEntry.getValue() == null) {
-                old.remove(sourceEntry.getKey());
+            if (result.newValue() == null) {
+                source.remove(sourceEntry.getKey());
             } else {
-                old.put(sourceEntry.getKey(), sourceEntry.getValue());
+                source.put(sourceEntry.getKey(), result.newValue());
             }
             modified = true;
-            continue;
         }
         /*
          * Right now if a field isn't in the source passed to the script the
-         * close enough detectors never get a chance to look at it - the field
-         * is never changed.
+         * change handlers never get a chance to look at it - the field is never
+         * changed.
          */
         return modified;
-    }
-
-    /**
-     * Get the close enough detector for a path, defaulting to EQUALS.
-     */
-    private CloseEnoughDetector<Object> detector(String path) {
-        CloseEnoughDetector<Object> d = pathToDetector.get(path);
-        if (d == null) {
-            return CloseEnoughDetector.EQUALS;
-        }
-        return d;
     }
 }
