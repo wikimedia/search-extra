@@ -1,18 +1,18 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
 import static java.lang.Math.abs;
-import static org.wikimedia.search.extra.superdetectnoop.CloseEnoughDetector.TypeSafe.nullAndTypeSafe;
+import static org.wikimedia.search.extra.superdetectnoop.ChangeHandler.TypeSafe.nullAndTypeSafe;
 
 /**
  * Checks if a number is different by some percentage.
  */
-public class WithinPercentageDetector implements CloseEnoughDetector<Number> {
-    public static class Factory implements CloseEnoughDetector.Recognizer {
+public class WithinPercentageHandler implements ChangeHandler<Number> {
+    public static class Recognizer implements ChangeHandler.Recognizer {
         private static final String PREFIX = "within ";
         private static final String SUFFIX = "%";
 
         @Override
-        public CloseEnoughDetector<Object> build(String description) {
+        public ChangeHandler<Object> build(String description) {
             if (!description.startsWith(PREFIX)) {
                 return null;
             }
@@ -21,7 +21,7 @@ public class WithinPercentageDetector implements CloseEnoughDetector<Number> {
             }
             try {
                 double percentage = Double.parseDouble(description.substring(PREFIX.length(), description.length() - SUFFIX.length()));
-                return nullAndTypeSafe(Number.class, new WithinPercentageDetector(percentage / 100));
+                return nullAndTypeSafe(Number.class, new WithinPercentageHandler(percentage / 100));
             } catch (NumberFormatException e) {
                 // Not a valid number even with the % sign....
                 return null;
@@ -31,15 +31,16 @@ public class WithinPercentageDetector implements CloseEnoughDetector<Number> {
 
     private final double absoluteDifference;
 
-    public WithinPercentageDetector(double absoluteDifference) {
+    public WithinPercentageHandler(double absoluteDifference) {
         this.absoluteDifference = absoluteDifference;
     }
 
     @Override
-    public boolean isCloseEnough(Number oldValue, Number newValue) {
+    public ChangeHandler.Result handle(Number oldValue, Number newValue) {
         if (oldValue.doubleValue() == 0) {
-            return newValue.doubleValue() == 0;
+            return ChangeHandler.Changed.forBoolean(newValue.doubleValue() == 0, newValue);
         }
-        return abs((newValue.doubleValue() - oldValue.doubleValue()) / oldValue.doubleValue()) < absoluteDifference;
+        return ChangeHandler.Changed.forBoolean(
+                abs((newValue.doubleValue() - oldValue.doubleValue()) / oldValue.doubleValue()) < absoluteDifference, newValue);
     }
 }
