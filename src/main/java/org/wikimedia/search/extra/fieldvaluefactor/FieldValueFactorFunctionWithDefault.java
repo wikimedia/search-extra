@@ -60,11 +60,11 @@ public class FieldValueFactorFunctionWithDefault extends ScoreFunction {
     }
 
     @Override
-    public Explanation explainScore(int docId, float subQueryScore) {
+    public Explanation explainScore(int docId, Explanation subQueryScore) {
         Explanation exp = new Explanation();
         String modifierStr = modifier != null ? modifier.toString() : "";
         String defaultStr = missing != null ? "?:" + missing : "";
-        double score = score(docId, subQueryScore);
+        double score = score(docId, subQueryScore.getValue());
         exp.setValue(CombineFunction.toFloat(score));
         exp.setDescription(String.format(Locale.ROOT, "field value function: %s(doc['%s'].value%s * factor=%s)", modifierStr, field,
                 defaultStr, boostFactor));
