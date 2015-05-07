@@ -29,19 +29,27 @@ Just like field_value_factor except it supports a ```missing``` parameter that
 is the value used if the field is missing from the document being scored. Added
 in 1.5.0, 1.4.1, and 1.3.0.
 
+Installation
+------------
+
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 1.4.0, master branch             | 1.4.1 -> 1.4.X  |
-| 1.3.0, 1.3 branch                | 1.3.4 -> 1.3.X  |
+| 1.5.0, master branch             | 1.5.X           |
+| 1.4.0 -> 1.4.1, 1.4 branch       | 1.4.X           |
+| 1.3.0 -> 1.3.1, 1.3 branch       | 1.3.4 -> 1.3.X  |
 | 0.0.1 -> 0.0.2                   | 1.3.2 -> 1.3.3  |
 
+Install it like so for Elasticsearch 1.5.x:
+```bash
+./bin/plugin --install org.wikimedia.search/extra/1.5.0
+```
 
 Install it like so for Elasticsearch 1.4.x:
 ```bash
-./bin/plugin --install org.wikimedia.search/extra/1.4.0
+./bin/plugin --install org.wikimedia.search/extra/1.4.1
 ```
 
 and for Elasticsearch 1.3.x:
 ```bash
-./bin/plugin --install org.wikimedia.search/extra/1.3.0
+./bin/plugin --install org.wikimedia.search/extra/1.3.1
 ```
