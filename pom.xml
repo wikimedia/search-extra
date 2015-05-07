@@ -330,4 +330,22 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>wmf-deploy</id>
+      <distributionManagement>
+        <repository>
+          <id>archiva.releases</id>
+          <name>Internal Release Repository</name>
+          <url>https://archiva.wikimedia.org/repository/releases/</url>
+        </repository>
+        <snapshotRepository>
+          <id>archiva.snapshots</id>
+          <name>Internal Snapshot Repository</name>
+          <url>https://archiva.wikimedia.org/repository/snapshots/</url>
+        </snapshotRepository>
+      </distributionManagement>
+    </profile>
+  </profiles>
 </project>
