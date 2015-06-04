@@ -18,7 +18,7 @@ public class NGramExtractor {
      *
      * @param gramSize size of the ngram. The "n" in ngram.
      * @param maxExpand Maximum size of range transitions to expand into single
-     *            transitions. Its roughly analogous to the number of character
+     *            transitions. Its roughly analogous to the number of characters
      *            in a character class before it is considered a wildcard for
      *            optimization purposes.
      * @param maxStatesTraced maximum number of states traced during automaton

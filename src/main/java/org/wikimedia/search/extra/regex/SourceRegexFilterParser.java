@@ -1,7 +1,6 @@
 package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
-import java.util.Locale;
 
 import org.apache.lucene.search.Filter;
 import org.elasticsearch.common.util.LocaleUtils;
@@ -10,6 +9,7 @@ import org.elasticsearch.index.cache.filter.support.CacheKeyFilter;
 import org.elasticsearch.index.query.FilterParser;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParsingException;
+import org.wikimedia.search.extra.regex.SourceRegexFilter.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
 
 /**
@@ -30,15 +30,8 @@ public class SourceRegexFilterParser implements FilterParser {
         String fieldPath = null;
         FieldValues.Loader loader = FieldValues.loadFromSource();
         String ngramFieldPath = null;
-        int gramSize = 3;
-        int maxExpand = 4;
-        int maxStatesTraced = 10000;
-        int maxDeterminizedStates = 20000;
-        int maxNgramsExtracted = 100;
-        int maxInspect = Integer.MAX_VALUE;
-        boolean caseSensitive = false;
-        Locale locale = Locale.ROOT;
-        boolean rejectUnaccelerated = false;
+        int ngramGramSize = 3;
+        Settings settings = new Settings();
 
         // Stuff all filters have
         String filterName = null;
@@ -73,51 +66,22 @@ public class SourceRegexFilterParser implements FilterParser {
                     break;
                 case "gram_size":
                 case "gramSize":
-                    gramSize = parser.intValue();
-                    break;
-                case "max_expand":
-                case "maxExpand":
-                    maxExpand = parser.intValue();
-                    break;
-                case "max_states_traced":
-                case "maxStatesTraced":
-                    maxStatesTraced = parser.intValue();
-                    break;
-                case "max_inspect":
-                case "maxInspect":
-                    maxInspect = parser.intValue();
-                    break;
-                case "max_determinized_states":
-                case "maxDeterminizedStates":
-                    maxDeterminizedStates = parser.intValue();
-                    break;
-                case "max_ngrams_extracted":
-                case "maxNgramsExtracted":
-                case "maxNGramsExtracted":
-                    maxNgramsExtracted = parser.intValue();
-                    break;
-                case "case_sensitive":
-                case "caseSensitive":
-                    caseSensitive = parser.booleanValue();
-                    break;
-                case "locale":
-                    locale = LocaleUtils.parse(parser.text());
-                    break;
-                case "reject_unaccelerated":
-                case "rejectUnaccelerated":
-                    rejectUnaccelerated = parser.booleanValue();
+                    ngramGramSize = parser.intValue();
                     break;
                 case "_cache":
                     cache = parser.booleanValue();
                     break;
                 case "_name":
                     filterName = parser.text();
-                     break;
+                    break;
                 case "_cache_key":
                 case "_cacheKey":
                     cacheKey = new CacheKeyFilter.Key(parser.text());
                     break;
                 default:
+                    if (parseInto(settings, currentFieldName, parser)) {
+                        continue;
+                    }
                     throw new QueryParsingException(parseContext.index(), "[source-regex] filter does not support [" + currentFieldName
                             + "]");
                 }
@@ -130,8 +94,7 @@ public class SourceRegexFilterParser implements FilterParser {
         if (fieldPath == null) {
             throw new QueryParsingException(parseContext.index(), "[source-regex] filter must specify [field]");
         }
-        Filter filter = new SourceRegexFilter(fieldPath, loader, regex, ngramFieldPath, gramSize, maxExpand, maxStatesTraced,
-                maxDeterminizedStates, maxNgramsExtracted, maxInspect, caseSensitive, locale, rejectUnaccelerated);
+        Filter filter = new SourceRegexFilter(fieldPath, ngramFieldPath, regex, loader, settings, ngramGramSize);
         if (cache) {
             filter = parseContext.cacheFilter(filter, cacheKey);
         }
@@ -139,5 +102,50 @@ public class SourceRegexFilterParser implements FilterParser {
             parseContext.addNamedFilter(filterName, filter);
         }
         return filter;
+    }
+
+    /**
+     * Parse a field into a settings object.
+     *
+     * @return true if the field belonged to settings, false if it didn't
+     */
+    public static boolean parseInto(SourceRegexFilter.Settings settings, String fieldName, XContentParser parser) throws IOException {
+        switch (fieldName) {
+        case "max_expand":
+        case "maxExpand":
+            settings.setMaxExpand(parser.intValue());
+            break;
+        case "max_states_traced":
+        case "maxStatesTraced":
+            settings.setMaxStatesTraced(parser.intValue());
+            break;
+        case "max_inspect":
+        case "maxInspect":
+            settings.setMaxInspect(parser.intValue());
+            break;
+        case "max_determinized_states":
+        case "maxDeterminizedStates":
+            settings.setMaxDeterminizedStates(parser.intValue());
+            break;
+        case "max_ngrams_extracted":
+        case "maxNgramsExtracted":
+        case "maxNGramsExtracted":
+            settings.setMaxNgramsExtracted(parser.intValue());
+            break;
+        case "case_sensitive":
+        case "caseSensitive":
+            settings.setCaseSensitive(parser.booleanValue());
+            break;
+        case "locale":
+            settings.setLocale(LocaleUtils.parse(parser.text()));
+            break;
+        case "reject_unaccelerated":
+        case "rejectUnaccelerated":
+            settings.setRejectUnaccelerated(parser.booleanValue());
+            break;
+        default:
+            return false;
+        }
+        return true;
     }
 }

@@ -34,7 +34,7 @@ public abstract class FieldValues {
      * into Lucene every time.
      */
     public static FieldValues.Loader loadFromSource() {
-        return new Source();
+        return Source.INSTANCE;
     }
 
     /**
@@ -43,7 +43,7 @@ public abstract class FieldValues {
      * call down into Lucene every time.
      */
     public static FieldValues.Loader loadFromStoredField() {
-        return new Stored();
+        return Stored.INSTANCE;
     }
 
     /**
@@ -58,6 +58,7 @@ public abstract class FieldValues {
     }
 
     private static class Source implements FieldValues.Loader {
+        private static final FieldValues.Loader INSTANCE = new Source();
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
             JustSourceFieldsVisitor visitor = new JustSourceFieldsVisitor();
@@ -69,6 +70,7 @@ public abstract class FieldValues {
     }
 
     private static class Stored implements FieldValues.Loader {
+        private static final FieldValues.Loader INSTANCE = new Stored();
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
             CustomFieldsVisitor visitor = new CustomFieldsVisitor(ImmutableSet.of(path), false);
