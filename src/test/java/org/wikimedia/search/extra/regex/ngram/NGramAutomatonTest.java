@@ -208,10 +208,20 @@ public class NGramAutomatonTest extends ElasticsearchTestCase {
         assertTrigramExpression(str, null);
     }
 
+    /**
+     * Tests that building the automaton doesn't blow up in unexpected ways.
+     */
     @Test
     @Repeat(iterations=100)
     public void randomAutomaton() {
-        NGramAutomaton ngramAutomaton = new NGramAutomaton(XAutomatonTestUtil.randomAutomaton(getRandom()), between(2, 7), 4, 10000, 500);
+        XAutomaton automaton = XAutomatonTestUtil.randomAutomaton(getRandom());
+        NGramAutomaton ngramAutomaton;
+        try {
+            ngramAutomaton = new NGramAutomaton(automaton, between(2, 7), 4, 10000, 500);
+        } catch (AutomatonTooComplexException e) {
+            // This is fine - some automata are genuinely too complex to ngramify.
+            return;
+        }
         Expression<String> expression = ngramAutomaton.expression();
         expression = expression.simplify();
     }
