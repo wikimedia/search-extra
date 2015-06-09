@@ -34,10 +34,16 @@ Installation
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 1.5.0, master branch             | 1.5.X           |
+| 1.6.0, master branch             | 1.6.X           |
+| 1.5.0, 1.5 branch                | 1.5.X           |
 | 1.4.0 -> 1.4.1, 1.4 branch       | 1.4.X           |
 | 1.3.0 -> 1.3.1, 1.3 branch       | 1.3.4 -> 1.3.X  |
 | 0.0.1 -> 0.0.2                   | 1.3.2 -> 1.3.3  |
+
+Install it like so for Elasticsearch 1.6.x:
+```bash
+./bin/plugin --install org.wikimedia.search/extra/1.6.0
+```
 
 Install it like so for Elasticsearch 1.5.x:
 ```bash
