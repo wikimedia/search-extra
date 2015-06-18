@@ -80,8 +80,8 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
     public Object run() {
         @SuppressWarnings("unchecked")
         Map<String, Object> oldSource = (Map<String, Object>) ctx.get("_source");
-        boolean changed = update(oldSource, source, "");
-        if (!changed) {
+        UpdateStatus changed = update(oldSource, source, "");
+        if (changed != UpdateStatus.UPDATED) {
             ctx.put("op", "none");
         }
         // The return value is ignored
@@ -96,11 +96,13 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
         }
     }
 
+    private enum UpdateStatus {UPDATED, NOT_UPDATED, NOOP_DOCUMENT}
+
     /**
      * Update old with the source and detector configuration of this script.
      */
-    boolean update(Map<String, Object> source, Map<String, Object> updateSource, String path) {
-        boolean modified = false;
+    UpdateStatus update(Map<String, Object> source, Map<String, Object> updateSource, String path) {
+        UpdateStatus modified = UpdateStatus.NOT_UPDATED;
         for (Map.Entry<String, Object> sourceEntry : updateSource.entrySet()) {
             String nextPath = path + sourceEntry.getKey();
             Object sourceValue = source.get(sourceEntry.getKey());
@@ -116,12 +118,20 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
                     // recursive merge maps
                     @SuppressWarnings("unchecked")
                     Map<String, Object> nextUpdateSource = (Map<String, Object>) sourceEntry.getValue();
-                    modified |= update(nextSource, nextUpdateSource, nextPath + ".");
+                    UpdateStatus nextModified = update(nextSource, nextUpdateSource, nextPath + ".");
+                    if (nextModified == UpdateStatus.NOOP_DOCUMENT) {
+                        return nextModified;
+                    } else if (nextModified == UpdateStatus.UPDATED) {
+                        modified = nextModified;
+                    }
                     continue;
                 }
                 handler = ChangeHandler.EQUALS;
             }
             ChangeHandler.Result result = handler.handle(sourceValue, sourceEntry.getValue());
+            if (result.isDocumentNooped()) {
+                return UpdateStatus.NOOP_DOCUMENT;
+            }
             if (result.isCloseEnough()) {
                 continue;
             }
@@ -130,7 +140,7 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
             } else {
                 source.put(sourceEntry.getKey(), result.newValue());
             }
-            modified = true;
+            modified = UpdateStatus.UPDATED;
         }
         /*
          * Right now if a field isn't in the source passed to the script the

@@ -248,6 +248,74 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
         assertThrows(toUpdateRequest(b), IllegalArgumentException.class, RestStatus.BAD_REQUEST);
     }
 
+    @Test
+    public void noopDocumentWithLowerVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("int", 1, "documentVersion");
+        update(b, false);
+    }
+
+    @Test
+    public void dontNoopDocumentWithEqualVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("int", 3, "documentVersion");
+        update(b, true);
+    }
+
+    @Test
+    public void dontNoopDocumentWithMissingPrevVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("nonexistent", 5, "documentVersion");
+        update(b, true);
+    }
+
+    @Test
+    public void dontNoopDocumentWithHigherVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("int", 5, "documentVersion");
+        update(b, true);
+    }
+
+    @Test
+    public void dontNoopDocumentWithInvalidOldVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("string", 5, "documentVersion");
+        update(b, true);
+    }
+
+    @Test
+    public void dontNoopDocumentWithMaximumVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("int", 9223372036854775807L, "documentVersion");
+        update(b, true);
+    }
+
+    @Test
+    public void noopsDocumentWithOutOfBoundsVersion() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("int", 9223372036854775807L + 1L, "documentVersion");
+        update(b, false);
+    }
+
+    @Test
+    public void noopsEntireDocumentUpdate() throws IOException {
+        indexSeedData();
+        XContentBuilder b = jsonBuilder().startObject();
+        b.startObject("source");
+        {
+            b.field("string", "food");
+            b.field("int", 1);
+        }
+        b.endObject();
+        b.startObject("handlers");
+        {
+            b.field("int", "documentVersion");
+        }
+        b.endObject();
+        b.endObject();
+        Map<String, Object> r = update(b, false);
+    }
+
     /**
      * Tests path matching.
      */

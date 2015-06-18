@@ -41,6 +41,11 @@ public interface ChangeHandler<T> {
          * returns null then the value should be removed from the source.
          */
         abstract Object newValue();
+
+        /**
+         * Should the entire document update be noop'd?
+         */
+        abstract boolean isDocumentNooped();
     }
 
     /**
@@ -154,8 +159,46 @@ public interface ChangeHandler<T> {
         public Object newValue() {
             return null;
         }
+
+        @Override
+        public boolean isDocumentNooped() {
+            return false;
+        }
     }
 
+    /**
+     * Result that shows that the entire document update should be
+     * canceled and turned into a noop.
+     */
+    class NoopDocument implements Result {
+        public static final Result INSTANCE = new NoopDocument();
+
+        public static Result forBoolean(boolean noop, Object newValue) {
+            if (noop) {
+                return INSTANCE;
+            }
+            return new Changed(newValue);
+        }
+
+        private NoopDocument() {
+            // Only a single instance is used
+        }
+
+        @Override
+        public boolean isCloseEnough() {
+            return false;
+        }
+
+        @Override
+        public Object newValue() {
+            return null;
+        }
+
+        @Override
+        public boolean isDocumentNooped() {
+            return true;
+        }
+    }
     /**
      * Result that shows that the new value is different enough from the new
      * value that its worth actually performing the update.
@@ -182,6 +225,11 @@ public interface ChangeHandler<T> {
         @Override
         public Object newValue() {
             return newValue;
+        }
+
+        @Override
+        public boolean isDocumentNooped() {
+            return false;
         }
     }
 }

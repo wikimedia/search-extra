@@ -19,6 +19,7 @@ import org.wikimedia.search.extra.regex.SourceRegexQueryParser;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
 import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
+import org.wikimedia.search.extra.superdetectnoop.VersionedDocumentHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
 
@@ -82,6 +83,7 @@ public class ExtraPlugin extends Plugin {
             handlers.addBinding().toInstance(new WithinPercentageHandler.Recognizer());
             handlers.addBinding().toInstance(new WithinAbsoluteHandler.Recognizer());
             handlers.addBinding().toInstance(new SetHandler.Recognizer());
+            handlers.addBinding().toInstance(new VersionedDocumentHandler.Recognizer());
         }
     }
 }
