@@ -2,10 +2,10 @@ package org.wikimedia.search.extra.regex.ngram;
 
 import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
-import org.apache.lucene.util.automaton.XAutomaton;
-import org.apache.lucene.util.automaton.XAutomatonTestUtil;
-import org.apache.lucene.util.automaton.XRegExp;
-import org.apache.lucene.util.automaton.XTooComplexToDeterminizeException;
+import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.AutomatonTestUtil;
+import org.apache.lucene.util.automaton.RegExp;
+import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.elasticsearch.test.ElasticsearchTestCase;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
@@ -166,13 +166,13 @@ public class NGramAutomatonTest extends ElasticsearchTestCase {
         assertExpression("te.*me", 2, new And<String>(leaves("te", "me")));
     }
 
-    @Test(expected=XTooComplexToDeterminizeException.class)
+    @Test(expected=TooComplexToDeterminizeException.class)
     public void tooBig() {
         assertTrigramExpression("\\[\\[(Datei|File|Bild|Image):[^]]*alt=[^]|}]{50,200}",
                 null /* ignored */);
     }
 
-    @Test(expected=XTooComplexToDeterminizeException.class)
+    @Test(expected=TooComplexToDeterminizeException.class)
     public void tooBigToo() {
         assertTrigramExpression("[^]]*alt=[^]\\|}]{80,}",
                 null /* ignored */);
@@ -198,8 +198,8 @@ public class NGramAutomatonTest extends ElasticsearchTestCase {
         String str;
         while (true) {
             try {
-                str = XAutomatonTestUtil.randomRegexp(getRandom());
-                new XRegExp(str);
+                str = AutomatonTestUtil.randomRegexp(getRandom());
+                new RegExp(str);
                 break;
             } catch (Exception e) {
                 // retry now
@@ -214,7 +214,7 @@ public class NGramAutomatonTest extends ElasticsearchTestCase {
     @Test
     @Repeat(iterations=100)
     public void randomAutomaton() {
-        XAutomaton automaton = XAutomatonTestUtil.randomAutomaton(getRandom());
+        Automaton automaton = AutomatonTestUtil.randomAutomaton(getRandom());
         NGramAutomaton ngramAutomaton;
         try {
             ngramAutomaton = new NGramAutomaton(automaton, between(2, 7), 4, 10000, 500);
@@ -242,7 +242,7 @@ public class NGramAutomatonTest extends ElasticsearchTestCase {
      */
     private void assertExpression(String regex, int gramSize, Expression<String> expected) {
 //         System.err.println(regex);
-        XAutomaton automaton = new XRegExp(regex).toAutomaton(20000);
+        Automaton automaton = new RegExp(regex).toAutomaton(20000);
 //         System.err.println(automaton.toDot());
         NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000, 500);
 //         System.err.println(ngramAutomaton.toDot());

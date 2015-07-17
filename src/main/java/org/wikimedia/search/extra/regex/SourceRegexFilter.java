@@ -11,10 +11,10 @@ import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.FilteredDocIdSet;
 import org.apache.lucene.util.Bits;
-import org.apache.lucene.util.automaton.XAutomaton;
-import org.apache.lucene.util.automaton.XCharacterRunAutomaton;
-import org.apache.lucene.util.automaton.XRegExp;
-import org.apache.lucene.util.automaton.XTooComplexToDeterminizeException;
+import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.CharacterRunAutomaton;
+import org.apache.lucene.util.automaton.RegExp;
+import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -35,7 +35,7 @@ public class SourceRegexFilter extends Filter {
     private final int gramSize;
     private int inspected = 0;
     private Filter prefilter;
-    private XCharacterRunAutomaton charRun;
+    private CharacterRunAutomaton charRun;
 
     public SourceRegexFilter(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
             int gramSize) {
@@ -69,8 +69,8 @@ public class SourceRegexFilter extends Filter {
             try {
                 // The accelerating filter is always assumed to be case
                 // insensitive/always lowercased
-                XAutomaton automaton = regexToAutomaton(new XRegExp(regex.toLowerCase(settings.getLocale()), XRegExp.ALL
-                        ^ XRegExp.AUTOMATON));
+                Automaton automaton = regexToAutomaton(new RegExp(regex.toLowerCase(settings.getLocale()), RegExp.ALL
+                        ^ RegExp.AUTOMATON));
                 Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(), settings.getMaxStatesTraced(),
                         settings.getMaxNgramsExtracted()).extract(automaton).simplify();
                 if (expression.alwaysTrue()) {
@@ -92,10 +92,10 @@ public class SourceRegexFilter extends Filter {
         return prefilter.getDocIdSet(context, acceptDocs);
     }
 
-    private XAutomaton regexToAutomaton(XRegExp regex) {
+    private Automaton regexToAutomaton(RegExp regex) {
         try {
             return regex.toAutomaton(settings.getMaxDeterminizedStates());
-        } catch (XTooComplexToDeterminizeException e) {
+        } catch (TooComplexToDeterminizeException e) {
             /*
              * Since we're going to lose the stack trace we give our future
              * selves an opportunity to log it in case we need it.
@@ -131,8 +131,8 @@ public class SourceRegexFilter extends Filter {
                 if (!settings.getCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
                 }
-                XAutomaton automaton = regexToAutomaton(new XRegExp(".*" + regexString + ".*", XRegExp.ALL ^ XRegExp.AUTOMATON));
-                charRun = new XCharacterRunAutomaton(automaton);
+                Automaton automaton = regexToAutomaton(new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON));
+                charRun = new CharacterRunAutomaton(automaton);
             }
             List<String> values = load(docid);
             for (String value : values) {

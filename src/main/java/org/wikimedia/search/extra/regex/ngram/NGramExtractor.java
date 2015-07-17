@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import org.apache.lucene.util.automaton.XAutomaton;
+import org.apache.lucene.util.automaton.Automaton;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.True;
 
@@ -37,7 +37,7 @@ public class NGramExtractor {
     /**
      * Extract an Expression containing ngrams from an automaton.
      */
-    public Expression<String> extract(XAutomaton automaton) {
+    public Expression<String> extract(Automaton automaton) {
         if (automaton.isAccept(0)) {
             return True.<String> instance();
         }

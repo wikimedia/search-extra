@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.util.automaton.XAutomaton;
-import org.apache.lucene.util.automaton.XTransition;
+import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.Transition;
 import org.elasticsearch.common.collect.ImmutableSet;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
@@ -22,7 +22,7 @@ import org.wikimedia.search.extra.regex.expression.True;
  * ngrams we can't check for. Not thread safe one bit.
  */
 public class NGramAutomaton {
-    private final XAutomaton source;
+    private final Automaton source;
     private final int gramSize;
     private final int maxExpand;
     private final int maxStatesTraced;
@@ -43,7 +43,7 @@ public class NGramAutomaton {
      *            functions. Higher number allow more complex automata to be
      *            converted to ngram expressions at the cost of more time.
      */
-    public NGramAutomaton(XAutomaton source, int gramSize, int maxExpand, int maxStatesTraced, int maxTransitions) {
+    public NGramAutomaton(Automaton source, int gramSize, int maxExpand, int maxStatesTraced, int maxTransitions) {
         this.source = source;
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
@@ -124,7 +124,7 @@ public class NGramAutomaton {
             return true;
         }
         // TODO build fewer of these
-        XTransition transition = new XTransition();
+        Transition transition = new Transition();
         int totalLeavingState = source.initTransition(currentState, transition);
         for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
             source.getNextTransition(transition);
@@ -152,7 +152,7 @@ public class NGramAutomaton {
         leftToProcess.addAll(initialStates);
         int[] codePoint = new int[1];
         int statesTraced = 0;
-        XTransition transition = new XTransition();
+        Transition transition = new Transition();
         int currentTransitions = 0;
         while (!leftToProcess.isEmpty()) {
             if (statesTraced >= maxStatesTraced) {
@@ -268,6 +268,7 @@ public class NGramAutomaton {
             this.initial = initial;
         }
 
+        @Override
         public String toString() {
             return "(" + prettyPrefix() + ", " + sourceState + ")";
         }
@@ -350,6 +351,7 @@ public class NGramAutomaton {
             return new And<>(ImmutableSet.of(from.expression(), new Leaf<>(ngram)));
         }
 
+        @Override
         public String toString() {
             StringBuilder b = new StringBuilder();
             b.append(from.dotName()).append(" -> ").append(to.dotName());

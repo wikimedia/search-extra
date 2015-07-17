@@ -2,7 +2,7 @@ package org.wikimedia.search.extra.regex;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.lucene.util.automaton.XTooComplexToDeterminizeException;
+import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.elasticsearch.common.io.ThrowableObjectOutputStream;
 import org.junit.Test;
 
@@ -18,6 +18,6 @@ public class ExceptionsAreSerializableTest {
 
     @Test
     public void regexTooComplexExceptionIsSerializable() {
-        assertTrue(ThrowableObjectOutputStream.canSerialize(new RegexTooComplexException(new XTooComplexToDeterminizeException(null, 10))));
+        assertTrue(ThrowableObjectOutputStream.canSerialize(new RegexTooComplexException(new TooComplexToDeterminizeException(null, 10))));
     }
 }
