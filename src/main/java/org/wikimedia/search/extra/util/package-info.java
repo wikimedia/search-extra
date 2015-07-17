@@ -1,4 +1,4 @@
 /**
- * Extracts ngrams from an {@link org.apache.lucene.util.automaton.XAutomaton}.
+ * Shared utilities.
  */
 package org.wikimedia.search.extra.util;

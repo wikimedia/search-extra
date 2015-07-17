@@ -55,7 +55,7 @@ public class PhraseTooLargeActionModule implements ActionModule {
     }
 
     /**
-     * @param maxTermsInAllPhraseQueries action taken when a phrase is too
+     * @param phraseTooLargeAction action taken when a phrase is too
      *            large. Defaults to ERROR.
      * @return this for chaining
      */
@@ -64,6 +64,7 @@ public class PhraseTooLargeActionModule implements ActionModule {
         return this;
     }
 
+    @Override
     public void register(Safeifier registry) {
         registry.register(PhraseQuery.class, new Action<PhraseQuery, Query>() {
             @Override
@@ -104,6 +105,6 @@ public class PhraseTooLargeActionModule implements ActionModule {
             phraseTermsSoFar += pq.terms();
             return pq.unwrap();
         }
-        
+
     };
 }

@@ -195,11 +195,10 @@ public class SourceRegexFilterBuilder extends BaseFilterBuilder {
         }
 
         /**
-         * @param maxDeterminizedStates the maximum number of automaton states
-         *            that Lucene will create at a time when compiling the regex
-         *            to a DFA. Higher numbers allow the regex compilation phase
-         *            to run for longer and use more memory needed to compile
-         *            more complex regexes.
+         * @param maxStatesTraced the maximum number of the regex's automata's
+         *            states that will be traced when extracting ngrams for
+         *            acceleration. If there are more than this many states then
+         *            that portion of the regex isn't used for acceleration.
          * @return this for chaining
          */
         public Settings maxStatesTraced(int maxStatesTraced) {
