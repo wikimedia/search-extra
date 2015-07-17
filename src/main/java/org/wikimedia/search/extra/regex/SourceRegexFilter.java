@@ -14,7 +14,10 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.automaton.XAutomaton;
 import org.apache.lucene.util.automaton.XCharacterRunAutomaton;
 import org.apache.lucene.util.automaton.XRegExp;
+import org.apache.lucene.util.automaton.XTooComplexToDeterminizeException;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.lucene.docset.AllDocIdSet;
 import org.elasticsearch.common.lucene.search.Queries;
 import org.wikimedia.search.extra.regex.expression.Expression;
@@ -23,6 +26,7 @@ import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
 
 public class SourceRegexFilter extends Filter {
+    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexFilter.class.getPackage().getName());
     private final String fieldPath;
     private final String ngramFieldPath;
     private final String regex;
@@ -33,7 +37,8 @@ public class SourceRegexFilter extends Filter {
     private Filter prefilter;
     private XCharacterRunAutomaton charRun;
 
-    public SourceRegexFilter(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings, int gramSize) {
+    public SourceRegexFilter(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
+            int gramSize) {
         this.fieldPath = fieldPath;
         this.ngramFieldPath = ngramFieldPath;
         this.regex = regex;
@@ -62,11 +67,12 @@ public class SourceRegexFilter extends Filter {
         }
         if (prefilter == null) {
             try {
-                // The accelerating filter is always assumed to be case insensitive/always lowercased
-                XAutomaton automaton = new XRegExp(regex.toLowerCase(settings.getLocale()),
-                        XRegExp.ALL ^ XRegExp.AUTOMATON).toAutomaton(settings.getMaxDeterminizedStates());
-                Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(),
-                        settings.getMaxStatesTraced(), settings.getMaxNgramsExtracted()).extract(automaton).simplify();
+                // The accelerating filter is always assumed to be case
+                // insensitive/always lowercased
+                XAutomaton automaton = regexToAutomaton(new XRegExp(regex.toLowerCase(settings.getLocale()), XRegExp.ALL
+                        ^ XRegExp.AUTOMATON));
+                Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(), settings.getMaxStatesTraced(),
+                        settings.getMaxNgramsExtracted()).extract(automaton).simplify();
                 if (expression.alwaysTrue()) {
                     if (settings.getRejectUnaccelerated()) {
                         throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
@@ -84,6 +90,21 @@ public class SourceRegexFilter extends Filter {
             }
         }
         return prefilter.getDocIdSet(context, acceptDocs);
+    }
+
+    private XAutomaton regexToAutomaton(XRegExp regex) {
+        try {
+            return regex.toAutomaton(settings.getMaxDeterminizedStates());
+        } catch (XTooComplexToDeterminizeException e) {
+            /*
+             * Since we're going to lose the stack trace we give our future
+             * selves an opportunity to log it in case we need it.
+             */
+            if (log.isDebugEnabled()) {
+                log.debug("Regex too complex to determinize", e);
+            }
+            throw new RegexTooComplexException(e);
+        }
     }
 
     /**
@@ -110,8 +131,7 @@ public class SourceRegexFilter extends Filter {
                 if (!settings.getCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
                 }
-                XAutomaton automaton = new XRegExp(".*" + regexString + ".*", XRegExp.ALL ^ XRegExp.AUTOMATON).toAutomaton(settings
-                        .getMaxDeterminizedStates());
+                XAutomaton automaton = regexToAutomaton(new XRegExp(".*" + regexString + ".*", XRegExp.ALL ^ XRegExp.AUTOMATON));
                 charRun = new XCharacterRunAutomaton(automaton);
             }
             List<String> values = load(docid);

@@ -92,14 +92,14 @@ public class SourceRegexFilterTest extends AbstractPluginIntegrationTest {
         indexRandom(true, doc("findme", "test"));
         // The default is good enough to prevent craziness
         assertFailures(search(filter("[^]]*alt=[^]\\|}]{80,}")),
-                RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing automaton would result in more than"));
+                RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing [^]]*alt=[^]\\|}]{80,} would result in more than"));
         // Some regexes with explosive state growth still run because they
         // don't explode into too many states.
         SearchResponse response = search(filter("te*s[tabclse]{1,16}")).get();
         assertHitCount(response, 1);
         // But you can stop them by lowering maxStatesTraced
         assertFailures(search(filter("te*s[tabcse]{1,16}").maxDeterminizedStates(100)),
-                RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing automaton would result in more than 100"));
+                RestStatus.INTERNAL_SERVER_ERROR, containsString("Determinizing .*te*s[tabcse]{1,16}.* would result in more than 100"));
         // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
         // I can't find any way from here to mark it otherwise.
     }
