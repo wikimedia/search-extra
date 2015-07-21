@@ -13,6 +13,7 @@ import org.apache.lucene.search.FilteredDocIdSet;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CharacterRunAutomaton;
+import org.apache.lucene.util.automaton.ContainsCharacterRunAutomaton;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.elasticsearch.ElasticsearchException;
@@ -33,9 +34,9 @@ public class SourceRegexFilter extends Filter {
     private final FieldValues.Loader loader;
     private final Settings settings;
     private final int gramSize;
+    private final Rechecker rechecker;
     private int inspected = 0;
     private Filter prefilter;
-    private CharacterRunAutomaton charRun;
 
     public SourceRegexFilter(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
             int gramSize) {
@@ -45,6 +46,13 @@ public class SourceRegexFilter extends Filter {
         this.loader = loader;
         this.settings = settings;
         this.gramSize = gramSize;
+        if (!settings.getCaseSensitive()
+                && !settings.getLocale().getLanguage().equals("ga")
+                && !settings.getLocale().getLanguage().equals("tr")) {
+            rechecker = new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings);
+        } else {
+            rechecker = new NonBacktrackingRechecker(regex, settings);
+        }
     }
 
     @Override
@@ -53,7 +61,7 @@ public class SourceRegexFilter extends Filter {
         if (filtered == null) {
             return null;
         }
-        return new RegexAcceptsDocIdSet(BitsFilteredDocIdSet.wrap(filtered, acceptDocs), context.reader());
+        return new RegexAcceptsDocIdSet(BitsFilteredDocIdSet.wrap(filtered, acceptDocs), context.reader(), rechecker);
     }
 
     private DocIdSet getFilteredDocIdSet(AtomicReaderContext context, Bits acceptDocs) throws IOException {
@@ -69,8 +77,8 @@ public class SourceRegexFilter extends Filter {
             try {
                 // The accelerating filter is always assumed to be case
                 // insensitive/always lowercased
-                Automaton automaton = regexToAutomaton(new RegExp(regex.toLowerCase(settings.getLocale()), RegExp.ALL
-                        ^ RegExp.AUTOMATON));
+                Automaton automaton = regexToAutomaton(new RegExp(regex.toLowerCase(settings.getLocale()), RegExp.ALL ^ RegExp.AUTOMATON),
+                        settings.getMaxDeterminizedStates());
                 Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(), settings.getMaxStatesTraced(),
                         settings.getMaxNgramsExtracted()).extract(automaton).simplify();
                 if (expression.alwaysTrue()) {
@@ -92,9 +100,9 @@ public class SourceRegexFilter extends Filter {
         return prefilter.getDocIdSet(context, acceptDocs);
     }
 
-    private Automaton regexToAutomaton(RegExp regex) {
+    private static Automaton regexToAutomaton(RegExp regex, int maxDeterminizedStates) {
         try {
-            return regex.toAutomaton(settings.getMaxDeterminizedStates());
+            return regex.toAutomaton(maxDeterminizedStates);
         } catch (TooComplexToDeterminizeException e) {
             /*
              * Since we're going to lose the stack trace we give our future
@@ -113,10 +121,12 @@ public class SourceRegexFilter extends Filter {
      */
     private final class RegexAcceptsDocIdSet extends FilteredDocIdSet {
         private final IndexReader reader;
+        private final Rechecker rechecker;
 
-        public RegexAcceptsDocIdSet(DocIdSet innerSet, IndexReader reader) {
+        public RegexAcceptsDocIdSet(DocIdSet innerSet, IndexReader reader, Rechecker rechecker) {
             super(innerSet);
             this.reader = reader;
+            this.rechecker = rechecker;
         }
 
         @Override
@@ -126,15 +136,135 @@ public class SourceRegexFilter extends Filter {
                 return false;
             }
             inspected++;
+            return rechecker.recheck(load(docid));
+        }
+
+        private List<String> load(int docId) {
+            try {
+                return loader.load(fieldPath, reader, docId);
+            } catch (IOException e) {
+                throw new ElasticsearchException("Error loading field values", e);
+            }
+        }
+    }
+
+    /**
+     * Wraps all recheck operations for a single execution. Package private for
+     * testing.
+     */
+    interface Rechecker {
+        /**
+         * Recheck the values in a candidate document to see if they actually
+         * contain a match to the regex.
+         */
+        boolean recheck(Iterable<String> values);
+    }
+
+    /**
+     * Faster for case insensitive queries than the NonBacktrackingRechecker but
+     * wrong for Irish and Turkish.
+     */
+    static class NonBacktrackingOnTheFlyCaseConvertingRechecker implements Rechecker {
+        private final String regex;
+        private final Settings settings;
+
+        private ContainsCharacterRunAutomaton charRun;
+
+        NonBacktrackingOnTheFlyCaseConvertingRechecker(String regex, Settings settings) {
+            this.regex = regex;
+            this.settings = settings;
+        }
+
+        @Override
+        public boolean recheck(Iterable<String> values) {
             if (charRun == null) {
                 String regexString = regex;
                 if (!settings.getCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
                 }
-                Automaton automaton = regexToAutomaton(new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON));
+                Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
+                        settings.getMaxDeterminizedStates());
+                if (settings.getLocale().getLanguage().equals("el")) {
+                    charRun = new ContainsCharacterRunAutomaton.GreekLowerCasing(automaton);
+                } else {
+                    charRun = new ContainsCharacterRunAutomaton.LowerCasing(automaton);
+                }
+            }
+            for (String value : values) {
+                if (charRun.contains(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Much much faster than SlowRechecker.
+     */
+    static class NonBacktrackingRechecker implements Rechecker {
+        private final String regex;
+        private final Settings settings;
+
+        private ContainsCharacterRunAutomaton charRun;
+
+        NonBacktrackingRechecker(String regex, Settings settings) {
+            this.regex = regex;
+            this.settings = settings;
+        }
+
+        @Override
+        public boolean recheck(Iterable<String> values) {
+            if (charRun == null) {
+                String regexString = regex;
+                if (!settings.getCaseSensitive()) {
+                    regexString = regexString.toLowerCase(settings.getLocale());
+                }
+                Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
+                        settings.getMaxDeterminizedStates());
+                charRun = new ContainsCharacterRunAutomaton(automaton);
+            }
+            for (String value : values) {
+                if (!settings.getCaseSensitive()) {
+                    value = value.toLowerCase(settings.getLocale());
+                }
+                if (charRun.contains(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Simplistic recheck implemetation which is more obviously correct.
+     */
+    static class SlowRechecker implements Rechecker {
+        private final String regex;
+        private final Settings settings;
+
+        private CharacterRunAutomaton charRun;
+
+        SlowRechecker(String regex, Settings settings) {
+            this.regex = regex;
+            this.settings = settings;
+        }
+
+        /**
+         * Recheck the values in a candidate document to see if they actually
+         * contain a match to the regex.
+         */
+        @Override
+        public boolean recheck(Iterable<String> values) {
+            if (charRun == null) {
+                String regexString = regex;
+                if (!settings.getCaseSensitive()) {
+                    regexString = regexString.toLowerCase(settings.getLocale());
+                }
+                Automaton automaton = regexToAutomaton(new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON),
+                        settings.getMaxDeterminizedStates());
                 charRun = new CharacterRunAutomaton(automaton);
             }
-            List<String> values = load(docid);
             for (String value : values) {
                 if (!settings.getCaseSensitive()) {
                     value = value.toLowerCase(settings.getLocale());
@@ -144,14 +274,6 @@ public class SourceRegexFilter extends Filter {
                 }
             }
             return false;
-        }
-
-        private List<String> load(int docId) {
-            try {
-                return loader.load(fieldPath, reader, docId);
-            } catch (IOException e) {
-                throw new ElasticsearchException("Error loading field values", e);
-            }
         }
     }
 

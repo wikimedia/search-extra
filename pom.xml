@@ -61,6 +61,9 @@
       <testResource>
         <directory>src/test/java</directory>
       </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+      </testResource>
     </testResources>
     <plugins>
       <plugin>
@@ -327,6 +330,12 @@
       <artifactId>elasticsearch</artifactId>
       <version>${elasticsearch.version}</version>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
