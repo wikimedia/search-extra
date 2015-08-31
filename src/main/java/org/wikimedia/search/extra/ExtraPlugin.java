@@ -14,6 +14,7 @@ import org.elasticsearch.plugins.AbstractPlugin;
 import org.elasticsearch.script.ScriptModule;
 import org.wikimedia.search.extra.fieldvaluefactor.FieldValueFactorFunctionWithDefaultParser;
 import org.wikimedia.search.extra.idhashmod.IdHashModFilterParser;
+import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreParser;
 import org.wikimedia.search.extra.regex.SourceRegexFilterParser;
 import org.wikimedia.search.extra.safer.ActionModuleParser;
 import org.wikimedia.search.extra.safer.SaferQueryParser;
@@ -44,8 +45,8 @@ public class ExtraPlugin extends AbstractPlugin {
      */
     @SuppressWarnings("unchecked")
     public void onModule(IndicesQueriesModule module) {
-        module.addFilter(new SourceRegexFilterParser());
-        module.addFilter(new IdHashModFilterParser());
+        module.addFilter(SourceRegexFilterParser.class);
+        module.addFilter(IdHashModFilterParser.class);
         module.addQuery((Class<QueryParser>) (Class<?>) SaferQueryParser.class);
     }
 
@@ -61,6 +62,7 @@ public class ExtraPlugin extends AbstractPlugin {
      */
     public void onModule(FunctionScoreModule module) {
         module.registerParser(FieldValueFactorFunctionWithDefaultParser.class);
+        module.registerParser(LevenshteinDistanceScoreParser.class);
     }
 
     @Override
