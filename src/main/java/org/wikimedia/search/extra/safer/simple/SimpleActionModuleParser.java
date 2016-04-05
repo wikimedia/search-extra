@@ -34,11 +34,11 @@ public class SimpleActionModuleParser implements ActionModuleParser<SimpleAction
                     module.numericRangeQuery(Option.parse(parser.text()));
                     break;
                 default:
-                    throw new QueryParsingException(parseContext.index(), "[safer][simple] query does not support the field ["
+                    throw new QueryParsingException(parseContext, "[safer][simple] query does not support the field ["
                             + currentFieldName + "]");
                 }
             } else {
-                throw new QueryParsingException(parseContext.index(), "[safer][simple] only supports values, not objects.");
+                throw new QueryParsingException(parseContext, "[safer][simple] only supports values, not objects.");
             }
         }
         return module;

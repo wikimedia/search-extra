@@ -6,8 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.elasticsearch.common.collect.ImmutableSet;
-import org.elasticsearch.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+
 
 /**
  * Abstract parent for composite expressions like And and Or.

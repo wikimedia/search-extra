@@ -19,7 +19,7 @@ import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
 public class IdHashModFilterTest extends AbstractPluginIntegrationTest {
     @Test
-    public void random() throws InterruptedException, ExecutionException, IOException {
+    public void randomTest() throws InterruptedException, ExecutionException, IOException {
         int count = randomIntBetween(0, 1000);
         String typeName = "r" + randomAsciiOfLengthBetween(0, 30);
         List<IndexRequestBuilder> docs = new ArrayList<>();

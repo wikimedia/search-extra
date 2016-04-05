@@ -4,13 +4,13 @@ import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.RegExp;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.True;
 
-public class NGramExtractorTest extends ElasticsearchTestCase {
+public class NGramExtractorTest extends ESTestCase {
     @Test
     public void simple() {
         NGramExtractor gram = new NGramExtractor(3, 4, 10000, 100);

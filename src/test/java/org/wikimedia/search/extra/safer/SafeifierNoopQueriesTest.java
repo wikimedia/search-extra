@@ -8,8 +8,8 @@ import java.util.Collections;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.CommonTermsQuery;
 import org.apache.lucene.queries.ExtendedCommonTermsQuery;
-import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.PrefixQuery;
@@ -33,11 +33,10 @@ import org.apache.lucene.search.spans.SpanPositionRangeQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.elasticsearch.common.lucene.all.AllTermQuery;
-import org.elasticsearch.common.lucene.search.XConstantScoreQuery;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
-public class SafeifierNoopQueriesTest extends ElasticsearchTestCase {
+public class SafeifierNoopQueriesTest extends ESTestCase {
     @Test
     public void noopQueries() {
         Term t = new Term("test", "foo");
@@ -49,7 +48,7 @@ public class SafeifierNoopQueriesTest extends ElasticsearchTestCase {
                 new PrefixQuery(t),
                 new CommonTermsQuery(Occur.SHOULD, Occur.MUST, .5f),
                 new ExtendedCommonTermsQuery(Occur.SHOULD, Occur.MUST, .5f, false, null),
-                new XConstantScoreQuery(new TermFilter(t)),
+                new ConstantScoreQuery(new TermQuery(t)),
                 TermRangeQuery.newStringRange("foo", "a", "z", true, true),
                 NumericRangeQuery.newLongRange("foo", null, 1L, false, true),
 

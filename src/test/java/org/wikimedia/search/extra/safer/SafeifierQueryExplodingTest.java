@@ -8,12 +8,12 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.DisjunctionMaxQuery;
 import org.apache.lucene.search.FilteredQuery;
-import org.elasticsearch.common.lucene.search.MatchAllDocsFilter;
-import org.elasticsearch.common.lucene.search.XFilteredQuery;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.QueryWrapperFilter;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 
-public class SafeifierQueryExplodingTest extends ElasticsearchTestCase {
+public class SafeifierQueryExplodingTest extends ESTestCase {
     /**
      * Validate that phrase queries are flattened inside of boolean queries.
      */
@@ -55,9 +55,9 @@ public class SafeifierQueryExplodingTest extends ElasticsearchTestCase {
      */
     @Test
     public void filteredQuery() {
-        FilteredQuery in = new FilteredQuery(pq("1", "2"), new MatchAllDocsFilter());
+        FilteredQuery in = new FilteredQuery(pq("1", "2"), new QueryWrapperFilter(new MatchAllDocsQuery()));
         in.setBoost(getRandom().nextFloat());
-        XFilteredQuery expected = new XFilteredQuery(tq("1", "2"), new MatchAllDocsFilter());
+        FilteredQuery expected = new FilteredQuery(tq("1", "2"), new QueryWrapperFilter(new MatchAllDocsQuery()));
         expected.setBoost(in.getBoost());
         assertEquals(expected, flatten(in));
     }

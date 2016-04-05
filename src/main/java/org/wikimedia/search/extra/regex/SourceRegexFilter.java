@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BitsFilteredDocIdSet;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.FilteredDocIdSet;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CharacterRunAutomaton;
@@ -19,7 +21,6 @@ import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.common.lucene.docset.AllDocIdSet;
 import org.elasticsearch.common.lucene.search.Queries;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
@@ -36,7 +37,7 @@ public class SourceRegexFilter extends Filter {
     private final int gramSize;
     private final Rechecker rechecker;
     private int inspected = 0;
-    private Filter prefilter;
+    private Query prefilter;
 
     public SourceRegexFilter(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
             int gramSize) {
@@ -56,7 +57,7 @@ public class SourceRegexFilter extends Filter {
     }
 
     @Override
-    public DocIdSet getDocIdSet(AtomicReaderContext context, Bits acceptDocs) throws IOException {
+    public DocIdSet getDocIdSet(LeafReaderContext context, Bits acceptDocs) throws IOException {
         DocIdSet filtered = getFilteredDocIdSet(context, acceptDocs);
         if (filtered == null) {
             return null;
@@ -64,14 +65,14 @@ public class SourceRegexFilter extends Filter {
         return new RegexAcceptsDocIdSet(BitsFilteredDocIdSet.wrap(filtered, acceptDocs), context.reader(), rechecker);
     }
 
-    private DocIdSet getFilteredDocIdSet(AtomicReaderContext context, Bits acceptDocs) throws IOException {
+    private DocIdSet getFilteredDocIdSet(LeafReaderContext context, Bits acceptDocs) throws IOException {
         if (ngramFieldPath == null) {
             // Don't bother expanding the regex if there isn't a field to check
             // it against. Its unlikely to resolve to all false anyway.
             if (settings.getRejectUnaccelerated()) {
                 throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
             }
-            return new AllDocIdSet(context.reader().maxDoc());
+            return new QueryWrapperFilter(Queries.newMatchAllQuery()).getDocIdSet(context, acceptDocs);
         }
         if (prefilter == null) {
             try {
@@ -85,9 +86,9 @@ public class SourceRegexFilter extends Filter {
                     if (settings.getRejectUnaccelerated()) {
                         throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                     }
-                    prefilter = Queries.MATCH_ALL_FILTER;
+                    prefilter = Queries.newMatchAllQuery();
                 } else if (expression.alwaysFalse()) {
-                    prefilter = Queries.MATCH_NO_FILTER;
+                    prefilter = Queries.newMatchNoDocsQuery();
                 } else {
                     prefilter = expression.transform(new ExpressionToFilterTransformer(ngramFieldPath));
                 }
@@ -97,7 +98,7 @@ public class SourceRegexFilter extends Filter {
                         settings.getMaxStatesTraced()), e);
             }
         }
-        return prefilter.getDocIdSet(context, acceptDocs);
+        return new QueryWrapperFilter(prefilter).getDocIdSet(context, acceptDocs);
     }
 
     private static Automaton regexToAutomaton(RegExp regex, int maxDeterminizedStates) {
@@ -278,7 +279,7 @@ public class SourceRegexFilter extends Filter {
     }
 
     @Override
-    public String toString() {
+    public String toString(String field) {
         StringBuilder b = new StringBuilder();
         b.append(fieldPath).append(":/").append(regex).append('/');
         if (ngramFieldPath != null) {

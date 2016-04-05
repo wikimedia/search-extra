@@ -6,7 +6,7 @@ import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
@@ -16,7 +16,7 @@ import org.wikimedia.search.extra.regex.expression.True;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
 
-public class NGramAutomatonTest extends ElasticsearchTestCase {
+public class NGramAutomatonTest extends ESTestCase {
     @Test
     public void simple() {
         assertTrigramExpression("cat", new Leaf<>("cat"));

@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import static org.elasticsearch.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -8,12 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.elasticsearch.common.collect.ImmutableList;
-import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.script.AbstractExecutableScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.NativeScriptFactory;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
 
 /**
  * Like the detect_noop option on updates but with pluggable "close enough"
@@ -57,6 +59,11 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
                 }
             }
             throw new IllegalArgumentException("Don't recognize this type of change handler:  " + config);
+        }
+
+        @Override
+        public boolean needsScores() {
+            return false;
         }
     }
 

@@ -3,14 +3,15 @@ package org.wikimedia.search.extra.idhashmod;
 import java.io.IOException;
 import java.util.Locale;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.BitsFilteredDocIdSet;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSet;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.FilteredDocIdSet;
 import org.apache.lucene.util.Bits;
-import org.elasticsearch.common.lucene.docset.MatchDocIdSet;
+import org.apache.lucene.util.RamUsageEstimator;
 import org.elasticsearch.index.fielddata.IndexFieldData;
-import org.elasticsearch.index.fielddata.ScriptDocValues;
+import org.elasticsearch.index.fielddata.SortedBinaryDocValues;
 
 /**
  * Filters to document's whose _uid's hash matches a number mod some other number.
@@ -53,28 +54,65 @@ public class IdHashModFilter extends Filter {
     }
 
     @Override
-    public DocIdSet getDocIdSet(AtomicReaderContext context, Bits acceptDocs) throws IOException {
-        @SuppressWarnings("unchecked")
-        ScriptDocValues<String> uids = uidFieldData.load(context).getScriptValues();
-        return BitsFilteredDocIdSet.wrap(new IdHashModDocIdSet(uids, context.reader().maxDoc(), acceptDocs), acceptDocs);
+    public DocIdSet getDocIdSet(final LeafReaderContext context, final Bits acceptDocs) throws IOException {
+        final SortedBinaryDocValues uids = uidFieldData.load(context).getBytesValues();
+        DocIdSet allDocs = new DocIdSet() {
+            @Override
+            public long ramBytesUsed() {
+                return RamUsageEstimator.NUM_BYTES_OBJECT_REF;
+            }
+
+            @Override
+            public DocIdSetIterator iterator() throws IOException {
+                return DocIdSetIterator.all(context.reader().maxDoc());
+            }
+        };
+        return new FilteredDocIdSet(allDocs) {
+            @Override
+            protected boolean match(int docid) {
+                if(acceptDocs != null && !acceptDocs.get(docid)) {
+                    return false;
+                }
+                uids.setDocument(docid);
+                int hash = uids.valueAt(0).hashCode();
+                return (hash & Integer.MAX_VALUE) % mod == match;
+            }
+        };
     }
 
-    /**
-     * Performs the actual filtering.
-     */
-    private class IdHashModDocIdSet extends MatchDocIdSet {
-        private final ScriptDocValues<String> uids;
+    @Override
+    public String toString(String field) {
+        return "IdHashModFilter";
+    }
 
-        protected IdHashModDocIdSet(ScriptDocValues<String> uids, int maxDoc, Bits acceptDocs) {
-            super(maxDoc, acceptDocs);
-            this.uids = uids;
-        }
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + match;
+        result = prime * result + mod;
+        result = prime * result + ((uidFieldData == null) ? 0 : uidFieldData.hashCode());
+        return result;
+    }
 
-        @Override
-        protected boolean matchDoc(int doc) {
-            uids.setNextDocId(doc);
-            int hash = uids.get(0).hashCode();
-            return (hash & Integer.MAX_VALUE) % mod == match;
-        }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        IdHashModFilter other = (IdHashModFilter) obj;
+        if (match != other.match)
+            return false;
+        if (mod != other.mod)
+            return false;
+        if (uidFieldData == null) {
+            if (other.uidFieldData != null)
+                return false;
+        } else if (!uidFieldData.equals(other.uidFieldData))
+            return false;
+        return true;
     }
 }

@@ -12,19 +12,21 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
-import org.elasticsearch.common.base.Splitter;
-import org.elasticsearch.common.collect.ImmutableList;
-import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     @Test
@@ -244,7 +246,7 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     public void garbageDetector() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", "cat", "not a valid detector");
-        assertThrows(toUpdateRequest(b), ElasticsearchIllegalArgumentException.class, RestStatus.BAD_REQUEST);
+        assertThrows(toUpdateRequest(b), IllegalArgumentException.class, RestStatus.BAD_REQUEST);
     }
 
     /**
@@ -326,9 +328,9 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
 
     private UpdateRequestBuilder toUpdateRequest(XContentBuilder b) {
         b.close();
-        Map<String, Object> m = XContentHelper.convertToMap(b.bytes(), true).v2();
-        return client().prepareUpdate("test", "test", "1").setScript("super_detect_noop", ScriptType.INLINE).setScriptLang("native")
-                .setScriptParams(m).setRefresh(true);
+        Map<String, ? extends Object> m = XContentHelper.convertToMap(b.bytes(), true).v2();
+        return client().prepareUpdate("test", "test", "1").setScript(new Script("super_detect_noop", ScriptType.INLINE, "native", m))
+                .setRefresh(true);
 
     }
 }

@@ -2,6 +2,7 @@ package org.wikimedia.search.extra.safer;
 
 import org.apache.lucene.queries.CommonTermsQuery;
 import org.apache.lucene.queries.ExtendedCommonTermsQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiPhraseQuery;
 import org.apache.lucene.search.NumericRangeQuery;
@@ -26,7 +27,6 @@ import org.apache.lucene.search.spans.SpanPositionRangeQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.elasticsearch.common.lucene.all.AllTermQuery;
 import org.elasticsearch.common.lucene.search.MultiPhrasePrefixQuery;
-import org.elasticsearch.common.lucene.search.XConstantScoreQuery;
 import org.wikimedia.search.extra.safer.Safeifier.Action;
 
 public class DefaultNoopSafeifierActions {
@@ -39,7 +39,7 @@ public class DefaultNoopSafeifierActions {
         safeifier.register(CommonTermsQuery.class, NOOP);
         safeifier.register(ExtendedCommonTermsQuery.class, NOOP);
         // XConstantScoreQuery only contains filters and we don't safeify them right now
-        safeifier.register(XConstantScoreQuery.class, NOOP);
+        safeifier.register(ConstantScoreQuery.class, NOOP);
         safeifier.register(TermRangeQuery.class, NOOP);
         safeifier.register(NumericRangeQuery.class, NOOP);
 

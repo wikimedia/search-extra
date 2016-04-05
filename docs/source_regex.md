@@ -123,6 +123,4 @@ many.  Without this even simple little regexes like /[abc]{20,80}/ would make
 thousands of term filters.
 
 Also supports the standard Elasticsearch filter options:
-* ```_cache```
 * ```_name```
-* ```_cache_key```

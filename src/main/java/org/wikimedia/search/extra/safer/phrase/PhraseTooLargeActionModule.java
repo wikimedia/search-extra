@@ -7,11 +7,12 @@ import java.util.Locale;
 import org.apache.lucene.search.MultiPhraseQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.common.base.Function;
 import org.elasticsearch.common.lucene.search.MultiPhrasePrefixQuery;
 import org.wikimedia.search.extra.safer.Safeifier;
 import org.wikimedia.search.extra.safer.Safeifier.Action;
 import org.wikimedia.search.extra.safer.Safeifier.ActionModule;
+
+import com.google.common.base.Function;
 
 /**
  * Safeifier action module for detecting and degrading queries with too many
@@ -81,9 +82,13 @@ public class PhraseTooLargeActionModule implements ActionModule {
         registry.register(MultiPhrasePrefixQuery.class, new Action<MultiPhrasePrefixQuery, Query>() {
             @Override
             public Query apply(Safeifier safeifier, MultiPhrasePrefixQuery pq) {
-                return common.apply(PhraseQueryAdapter.adapt(pq));
+                return new SafeMultiPhrasePrefixQuery(pq, PhraseTooLargeActionModule.this);
             }
         });
+    }
+
+    Query applyOnRewrite(PhraseQueryAdapter adapter) {
+        return common.apply(adapter);
     }
 
     Function<PhraseQueryAdapter, Query> common = new Function<PhraseQueryAdapter, Query>() {

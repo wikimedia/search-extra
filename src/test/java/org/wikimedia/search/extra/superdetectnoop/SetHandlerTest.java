@@ -7,8 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.common.collect.ImmutableList;
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableList;
 
 public class SetHandlerTest {
     @Test

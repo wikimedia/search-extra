@@ -1,18 +1,18 @@
 package org.wikimedia.search.extra;
 
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.plugins.PluginsService;
-import org.elasticsearch.test.ElasticsearchIntegrationTest;
+import org.elasticsearch.test.ESIntegTestCase;
+import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 
-@ElasticsearchIntegrationTest.ClusterScope(scope = ElasticsearchIntegrationTest.Scope.SUITE, transportClientRatio = 0.0)
-public class AbstractPluginIntegrationTest extends ElasticsearchIntegrationTest {
+@ClusterScope(scope = ESIntegTestCase.Scope.SUITE, transportClientRatio = 0.0)
+public class AbstractPluginIntegrationTest extends ESIntegTestCase {
     /**
      * Enable plugin loading.
      */
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return ImmutableSettings.builder().put(super.nodeSettings(nodeOrdinal))
-                .put("plugins." + PluginsService.LOAD_PLUGIN_FROM_CLASSPATH, true).build();
+        return Settings.settingsBuilder()
+                .put("plugin.types", ExtraPlugin.class.getName())
+                .put(super.nodeSettings(nodeOrdinal)).build();
     }
 }

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Locale;
 
-import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.junit.Test;
@@ -16,6 +15,7 @@ import org.wikimedia.search.extra.regex.SourceRegexFilter.Settings;
 import org.wikimedia.search.extra.regex.SourceRegexFilter.SlowRechecker;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
 public class SourceRegexFilterRecheckTest {

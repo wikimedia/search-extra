@@ -7,11 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import org.elasticsearch.common.base.Function;
-import org.elasticsearch.common.collect.ArrayListMultimap;
-import org.elasticsearch.common.collect.ImmutableList;
-import org.elasticsearch.common.collect.ListMultimap;
-import org.elasticsearch.common.collect.Ordering;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.junit.Test;
@@ -19,6 +14,11 @@ import org.junit.runner.RunWith;
 
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.google.common.base.Function;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Ordering;
 
 /**
  * Runs Monte Carlo method to help you pick the best parameters for

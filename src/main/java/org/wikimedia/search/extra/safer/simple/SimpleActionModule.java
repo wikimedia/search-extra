@@ -190,11 +190,11 @@ public class SimpleActionModule implements ActionModule {
             }
             // 6 is enough to house a left and right bracket and " TO "
             BytesRef result = new BytesRef(6 + getLowerTerm(q).length + getUpperTerm(q).length);
-            result.append(includesLower(q) ? LB : LCB);
-            result.append(getLowerTerm(q));
-            result.append(TO);
-            result.append(getUpperTerm(q));
-            result.append(includesUpper(q) ? RB : RCB);
+            append(result, includesLower(q) ? LB : LCB);
+            append(result, getLowerTerm(q));
+            append(result, TO);
+            append(result, getUpperTerm(q));
+            append(result, includesUpper(q) ? RB : RCB);
             return new TermQuery(new Term(getField(q), result));
         }
     }
@@ -204,8 +204,26 @@ public class SimpleActionModule implements ActionModule {
      */
     static BytesRef cat(BytesRef a, BytesRef b) {
         BytesRef result = new BytesRef(a.length + b.length);
-        result.append(a);
-        result.append(b);
+        append(result, a);
+        append(result, b);
         return result;
+    }
+
+    /**
+     * Appends data to dest.
+     * Code borrowed from the BytesRef append method that was removed in lucene5
+     * @param dest
+     * @param data
+     */
+    private static void append(BytesRef dest, BytesRef data) {
+        int newLen = dest.length + data.length;
+        if (dest.bytes.length < newLen) {
+          byte[] newBytes = new byte[newLen];
+          System.arraycopy(dest.bytes, dest.offset, newBytes, 0, dest.length);
+          dest.offset = 0;
+          dest.bytes = newBytes;
+        }
+        System.arraycopy(data.bytes, data.offset, dest.bytes, dest.length+dest.offset, data.length);
+        dest.length = newLen;
     }
 }

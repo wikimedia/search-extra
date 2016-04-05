@@ -1,18 +1,17 @@
 package org.wikimedia.search.extra;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.query.QueryParser;
-import org.elasticsearch.index.query.functionscore.FunctionScoreModule;
-import org.elasticsearch.indices.query.IndicesQueriesModule;
-import org.elasticsearch.plugins.AbstractPlugin;
+import org.elasticsearch.indices.IndicesModule;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.ScriptModule;
-import org.wikimedia.search.extra.fieldvaluefactor.FieldValueFactorFunctionWithDefaultParser;
+import org.elasticsearch.search.SearchModule;
 import org.wikimedia.search.extra.idhashmod.IdHashModFilterParser;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreParser;
 import org.wikimedia.search.extra.regex.SourceRegexFilterParser;
@@ -29,7 +28,7 @@ import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
 /**
  * Setup the Elasticsearch plugin.
  */
-public class ExtraPlugin extends AbstractPlugin {
+public class ExtraPlugin extends Plugin {
     @Override
     public String description() {
         return "Extra queries and filters.";
@@ -43,11 +42,10 @@ public class ExtraPlugin extends AbstractPlugin {
     /**
      * Register our parsers.
      */
-    @SuppressWarnings("unchecked")
-    public void onModule(IndicesQueriesModule module) {
-        module.addFilter(SourceRegexFilterParser.class);
-        module.addFilter(IdHashModFilterParser.class);
-        module.addQuery((Class<QueryParser>) (Class<?>) SaferQueryParser.class);
+    public void onModule(IndicesModule module) {
+        module.registerQueryParser(SourceRegexFilterParser.class);
+        module.registerQueryParser(IdHashModFilterParser.class);
+        module.registerQueryParser(SaferQueryParser.class);
     }
 
     /**
@@ -60,20 +58,19 @@ public class ExtraPlugin extends AbstractPlugin {
     /**
      * Register our function scores.
      */
-    public void onModule(FunctionScoreModule module) {
-        module.registerParser(FieldValueFactorFunctionWithDefaultParser.class);
-        module.registerParser(LevenshteinDistanceScoreParser.class);
+    public void onModule(SearchModule module) {
+        module.registerFunctionScoreParser(LevenshteinDistanceScoreParser.class);
     }
 
     @Override
-    public Collection<Class<? extends Module>> modules() {
-        return ImmutableList.<Class<? extends Module>> of(SafeifierActionsModule.class, CloseEnoughDetectorsModule.class);
+    public Collection<Module> nodeModules() {
+        List<Module> modules = new ArrayList<>(2);
+        modules.add(new SafeifierActionsModule());
+        modules.add(new CloseEnoughDetectorsModule());
+        return Collections.unmodifiableCollection(modules);
     }
 
     public static class SafeifierActionsModule extends AbstractModule {
-        public SafeifierActionsModule(Settings settings) {
-        }
-
         @Override
         @SuppressWarnings("rawtypes")
         protected void configure() {
@@ -84,9 +81,6 @@ public class ExtraPlugin extends AbstractPlugin {
     }
 
     public static class CloseEnoughDetectorsModule extends AbstractModule {
-        public CloseEnoughDetectorsModule(Settings settings) {
-        }
-
         @Override
         protected void configure() {
             Multibinder<ChangeHandler.Recognizer> handlers = Multibinder

@@ -5,9 +5,8 @@ import java.io.IOException;
 import org.apache.lucene.search.Filter;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.cache.filter.support.CacheKeyFilter;
-import org.elasticsearch.index.query.FilterParser;
 import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.wikimedia.search.extra.regex.SourceRegexFilter.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
@@ -15,7 +14,7 @@ import org.wikimedia.search.extra.util.FieldValues;
 /**
  * Parses source_regex filters.
  */
-public class SourceRegexFilterParser implements FilterParser {
+public class SourceRegexFilterParser implements QueryParser {
     public static final String[] NAMES = new String[] { "source_regex", "source-regex", "sourceRegex" };
 
     @Override
@@ -35,8 +34,6 @@ public class SourceRegexFilterParser implements FilterParser {
 
         // Stuff all filters have
         String filterName = null;
-        boolean cache = false; // Not cached by default
-        CacheKeyFilter.Key cacheKey = null;
 
         XContentParser parser = parseContext.parser();
         String currentFieldName = null;
@@ -68,38 +65,33 @@ public class SourceRegexFilterParser implements FilterParser {
                 case "gramSize":
                     ngramGramSize = parser.intValue();
                     break;
-                case "_cache":
-                    cache = parser.booleanValue();
-                    break;
                 case "_name":
                     filterName = parser.text();
                     break;
                 case "_cache_key":
                 case "_cacheKey":
-                    cacheKey = new CacheKeyFilter.Key(parser.text());
+                    // Ignored, caching is no more handled by the client
+                    // TODO: remove this case block
                     break;
                 default:
                     if (parseInto(settings, currentFieldName, parser)) {
                         continue;
                     }
-                    throw new QueryParsingException(parseContext.index(), "[source-regex] filter does not support [" + currentFieldName
+                    throw new QueryParsingException(parseContext, "[source-regex] filter does not support [" + currentFieldName
                             + "]");
                 }
             }
         }
 
         if (regex == null || "".equals(regex)) {
-            throw new QueryParsingException(parseContext.index(), "[source-regex] filter must specify [regex]");
+            throw new QueryParsingException(parseContext, "[source-regex] filter must specify [regex]");
         }
         if (fieldPath == null) {
-            throw new QueryParsingException(parseContext.index(), "[source-regex] filter must specify [field]");
+            throw new QueryParsingException(parseContext, "[source-regex] filter must specify [field]");
         }
         Filter filter = new SourceRegexFilter(fieldPath, ngramFieldPath, regex, loader, settings, ngramGramSize);
-        if (cache) {
-            filter = parseContext.cacheFilter(filter, cacheKey);
-        }
         if (filterName != null) {
-            parseContext.addNamedFilter(filterName, filter);
+            parseContext.addNamedQuery(filterName, filter);
         }
         return filter;
     }

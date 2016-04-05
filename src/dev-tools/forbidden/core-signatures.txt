@@ -23,13 +23,6 @@ org.apache.lucene.index.IndexReader#decRef()
 org.apache.lucene.index.IndexReader#incRef()
 org.apache.lucene.index.IndexReader#tryIncRef()
 
-@defaultMessage QueryWrapperFilter is cachable by default - use Queries#wrap instead
-org.apache.lucene.search.QueryWrapperFilter#<init>(org.apache.lucene.search.Query)
-
-@defaultMessage Because the filtercache doesn't take deletes into account FilteredQuery can't be used - use XFilteredQuery instead
-org.apache.lucene.search.FilteredQuery#<init>(org.apache.lucene.search.Query,org.apache.lucene.search.Filter)
-org.apache.lucene.search.FilteredQuery#<init>(org.apache.lucene.search.Query,org.apache.lucene.search.Filter,org.apache.lucene.search.FilteredQuery$FilterStrategy)
-
 @defaultMessage Pass the precision step from the mappings explicitly instead
 org.apache.lucene.search.NumericRangeQuery#newDoubleRange(java.lang.String,java.lang.Double,java.lang.Double,boolean,boolean)
 org.apache.lucene.search.NumericRangeQuery#newFloatRange(java.lang.String,java.lang.Float,java.lang.Float,boolean,boolean)
@@ -40,7 +33,7 @@ org.apache.lucene.search.NumericRangeFilter#newFloatRange(java.lang.String,java.
 org.apache.lucene.search.NumericRangeFilter#newIntRange(java.lang.String,java.lang.Integer,java.lang.Integer,boolean,boolean)
 org.apache.lucene.search.NumericRangeFilter#newLongRange(java.lang.String,java.lang.Long,java.lang.Long,boolean,boolean)
 
-@defaultMessage Only use wait / notify when really needed try to use concurrency primitives, latches or callbacks instead. 
+@defaultMessage Only use wait / notify when really needed try to use concurrency primitives, latches or callbacks instead.
 java.lang.Object#wait()
 java.lang.Object#wait(long)
 java.lang.Object#wait(long,int)

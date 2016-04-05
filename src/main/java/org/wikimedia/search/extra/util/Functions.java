@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.util;
 
-import org.elasticsearch.common.base.Function;
+import com.google.common.base.Function;
 
 /**
  * Some useful functions.

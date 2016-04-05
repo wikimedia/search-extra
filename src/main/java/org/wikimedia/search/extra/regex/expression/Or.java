@@ -2,7 +2,7 @@ package org.wikimedia.search.extra.regex.expression;
 
 import java.util.List;
 
-import org.elasticsearch.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Disjunction.

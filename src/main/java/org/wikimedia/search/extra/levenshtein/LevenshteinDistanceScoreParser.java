@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.lucene.search.function.ScoreFunction;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.mapper.FieldMapper;
+import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionParser;
@@ -37,26 +37,26 @@ public class LevenshteinDistanceScoreParser implements ScoreFunctionParser {
                 } else if ("missing".equals(currentFieldName)) {
                     missing = parser.text();
                 } else {
-                    throw new QueryParsingException(parseContext.index(), NAMES[0] + " query does not support [" + currentFieldName + "]");
+                    throw new QueryParsingException(parseContext, NAMES[0] + " query does not support [" + currentFieldName + "]");
                 }
             }
         }
 
         if (field == null) {
-            throw new QueryParsingException(parseContext.index(), "[" + NAMES[0] + "] required field 'field' missing");
+            throw new QueryParsingException(parseContext, "[" + NAMES[0] + "] required field 'field' missing");
         }
 
         if (text == null) {
-            throw new QueryParsingException(parseContext.index(), "[" + NAMES[0] + "] required field 'text' missing");
+            throw new QueryParsingException(parseContext, "[" + NAMES[0] + "] required field 'text' missing");
         }
 
         SearchContext searchContext = SearchContext.current();
-        @SuppressWarnings("rawtypes")
-        FieldMapper mapper = searchContext.mapperService().smartNameFieldMapper(field);
-        if (mapper == null) {
-            throw new ElasticsearchException("Unable to find a field mapper for field [" + field + "]");
+        MappedFieldType fieldType = searchContext.smartNameFieldType(field);
+
+        if (fieldType == null) {
+            throw new ElasticsearchException("Unable to load field type for field [" + field + "]");
         }
-        return new LevenshteinDistanceScore(parseContext.lookup(), mapper, text, missing);
+        return new LevenshteinDistanceScore(parseContext.lookup(), fieldType, text, missing);
     }
 
     @Override

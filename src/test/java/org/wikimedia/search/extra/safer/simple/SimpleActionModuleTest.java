@@ -14,12 +14,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import static org.apache.lucene.search.TermRangeQuery.*;
 
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 import org.wikimedia.search.extra.safer.Safeifier;
 import org.wikimedia.search.extra.safer.simple.SimpleActionModule.Option;
 
-public class SimpleActionModuleTest extends ElasticsearchTestCase {
+public class SimpleActionModuleTest extends ESTestCase {
     @Test
     public void defaultNeverRegisters() {
         final AtomicBoolean initialized = new AtomicBoolean(false);

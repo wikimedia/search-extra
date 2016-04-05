@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import org.elasticsearch.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Immutable representation of some logic. Expressions can be simplified and

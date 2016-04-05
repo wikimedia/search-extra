@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.Locale;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.BaseFilterBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 /**
  * Builds the {@link IdHashModFilter}.
  */
-public class IdHashModFilterBuilder extends BaseFilterBuilder {
+public class IdHashModFilterBuilder extends QueryBuilder {
     private final int mod;
     private final int match;
 

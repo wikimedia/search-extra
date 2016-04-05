@@ -5,12 +5,12 @@ import java.util.Locale;
 
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.BaseFilterBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 
 /**
  * Builds source_regex filters.
  */
-public class SourceRegexFilterBuilder extends BaseFilterBuilder {
+public class SourceRegexFilterBuilder extends QueryBuilder {
     private final String field;
     private final String regex;
     private Boolean loadFromSource;

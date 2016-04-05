@@ -23,18 +23,13 @@ Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but
 supports configurable sloppiness. New in 1.5.0, 1.4.1, and 1.3.1.
 
-Score Functions:
-* [field_value_factor_with_default](docs/field_value_factor_with_default.md) -
-Just like field_value_factor except it supports a ```missing``` parameter that
-is the value used if the field is missing from the document being scored. Added
-in 1.5.0, 1.4.1, and 1.3.0.
-
 Installation
 ------------
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 1.7.0, master branch             | 1.7.X           |
+| 2.0.0, master branch             | 2.0.x           |
+| 1.7.0 -> 1.7.1, 1.7 branch       | 1.7.X           |
 | 1.6.0, 1.6 branch                | 1.6.X           |
 | 1.5.0, 1.5 branch                | 1.5.X           |
 | 1.4.0 -> 1.4.1, 1.4 branch       | 1.4.X           |

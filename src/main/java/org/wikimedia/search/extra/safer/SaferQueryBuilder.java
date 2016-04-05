@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.util.Locale;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.BaseQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeAction;
 import org.wikimedia.search.extra.safer.simple.SimpleActionModule.Option;
 
-public class SaferQueryBuilder extends BaseQueryBuilder {
+public class SaferQueryBuilder extends QueryBuilder {
     private final QueryBuilder delegate;
     private Integer maxTermsPerPhraseQuery;
     private Integer maxTermsInAllPhraseQueries;

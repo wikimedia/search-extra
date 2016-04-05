@@ -37,11 +37,11 @@ public class PhraseTooLargeActionModuleParser implements ActionModuleParser<Phra
                     module.phraseTooLargeAction(PhraseTooLargeAction.parse(parser.text()));
                     break;
                 default:
-                    throw new QueryParsingException(parseContext.index(), "[safer][phrase] query does not support the field ["
+                    throw new QueryParsingException(parseContext, "[safer][phrase] query does not support the field ["
                             + currentFieldName + "]");
                 }
             } else {
-                throw new QueryParsingException(parseContext.index(), "[safer][phrase] only supports values, not objects.");
+                throw new QueryParsingException(parseContext, "[safer][phrase] only supports values, not objects.");
             }
         }
         return module;

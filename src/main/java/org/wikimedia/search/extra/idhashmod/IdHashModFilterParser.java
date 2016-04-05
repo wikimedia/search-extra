@@ -3,17 +3,17 @@ package org.wikimedia.search.extra.idhashmod;
 import java.io.IOException;
 import java.util.Locale;
 
-import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.fielddata.IndexFieldData;
-import org.elasticsearch.index.query.FilterParser;
 import org.elasticsearch.index.query.QueryParseContext;
+import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.index.query.QueryParsingException;
 
 /**
  * Parses the {@link IdHashModFilter}.
  */
-public class IdHashModFilterParser implements FilterParser {
+public class IdHashModFilterParser implements QueryParser {
     public static final String[] NAMES = new String[] { "id_hash_mod", "id-hash-mod", "idHashMod" };
 
     @Override
@@ -22,7 +22,7 @@ public class IdHashModFilterParser implements FilterParser {
     }
 
     @Override
-    public Filter parse(QueryParseContext parseContext) throws IOException, QueryParsingException {
+    public Query parse(QueryParseContext parseContext) throws IOException, QueryParsingException {
         Integer mod = null;
         Integer match = null;
         XContentParser parser = parseContext.parser();
@@ -40,26 +40,26 @@ public class IdHashModFilterParser implements FilterParser {
                     match = parser.intValue();
                     break;
                 default:
-                    throw new QueryParsingException(parseContext.index(), "[id-mod-hash] filter does not support [" + currentFieldName
+                    throw new QueryParsingException(parseContext, "[id-mod-hash] filter does not support [" + currentFieldName
                             + "]");
                 }
             }
         }
 
         if (mod == null) {
-            throw new QueryParsingException(parseContext.index(), "[id-mod-hash] filter requires the \"mod\" parameter");
+            throw new QueryParsingException(parseContext, "[id-mod-hash] filter requires the \"mod\" parameter");
         }
         if (mod < 0) {
-            throw new QueryParsingException(parseContext.index(), "[id-mod-hash] \"mod\" must be positive");
+            throw new QueryParsingException(parseContext, "[id-mod-hash] \"mod\" must be positive");
         }
         if (match == null) {
-            throw new QueryParsingException(parseContext.index(), "[id-mod-hash] filter requires the \"match\" parameter");
+            throw new QueryParsingException(parseContext, "[id-mod-hash] filter requires the \"match\" parameter");
         }
         if (match < 0) {
-            throw new QueryParsingException(parseContext.index(), "[id-mod-hash] \"match\" must be positive");
+            throw new QueryParsingException(parseContext, "[id-mod-hash] \"match\" must be positive");
         }
         if (match >= mod) {
-            throw new QueryParsingException(parseContext.index(), String.format(Locale.ROOT,
+            throw new QueryParsingException(parseContext, String.format(Locale.ROOT,
                     "If match is >= mod it won't find anything. match = %s and mod = %s", match, mod));
         }
         IndexFieldData<?> uidFieldData = parseContext.getForField(parseContext.fieldMapper("_uid"));

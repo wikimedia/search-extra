@@ -1,18 +1,19 @@
 package org.wikimedia.search.extra.util;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
-import org.elasticsearch.common.base.Function;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.collect.ImmutableSet;
-import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.fieldvisitor.CustomFieldsVisitor;
-import org.elasticsearch.index.fieldvisitor.JustSourceFieldsVisitor;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 /**
  * Hub for fetching field values.
@@ -61,7 +62,7 @@ public abstract class FieldValues {
         private static final FieldValues.Loader INSTANCE = new Source();
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
-            JustSourceFieldsVisitor visitor = new JustSourceFieldsVisitor();
+            CustomFieldsVisitor visitor = new CustomFieldsVisitor(Collections.<String>emptySet(), true);
             reader.document(docId, visitor);
             BytesReference source = visitor.source();
             Map<String, Object> map = XContentHelper.convertToMap(source, false).v2();

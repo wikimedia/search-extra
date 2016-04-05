@@ -2,8 +2,14 @@ package org.wikimedia.search.extra.regex;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
-import org.elasticsearch.common.io.ThrowableObjectOutputStream;
 import org.junit.Test;
 
 /**
@@ -13,11 +19,31 @@ import org.junit.Test;
 public class ExceptionsAreSerializableTest {
     @Test
     public void unableToAccelerateRegexExceptionIsSerializable() {
-        assertTrue(ThrowableObjectOutputStream.canSerialize(new UnableToAccelerateRegexException("cat", 3, "trigrams")));
+        assertTrue(canSerialize(new UnableToAccelerateRegexException("cat", 3, "trigrams")));
     }
 
     @Test
     public void regexTooComplexExceptionIsSerializable() {
-        assertTrue(ThrowableObjectOutputStream.canSerialize(new RegexTooComplexException(new TooComplexToDeterminizeException(null, 10))));
+        assertTrue(canSerialize(new RegexTooComplexException(new TooComplexToDeterminizeException(null, 10))));
+    }
+
+    public static boolean canSerialize(Throwable t) {
+        try {
+            serialize(t);
+            return true;
+        } catch (Throwable throwable) {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Serializable> T serialize(T t) throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        try (ObjectOutputStream outputStream = new ObjectOutputStream(stream)) {
+            outputStream.writeObject(t);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(stream.toByteArray()))) {
+            return (T) in.readObject();
+        }
     }
 }

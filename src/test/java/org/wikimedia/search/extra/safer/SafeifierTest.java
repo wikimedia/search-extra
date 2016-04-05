@@ -9,12 +9,12 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.TestUtil;
 import org.elasticsearch.common.lucene.search.MultiPhrasePrefixQuery;
-import org.elasticsearch.test.ElasticsearchTestCase;
+import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeAction;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeActionModule;
 
-public class SafeifierTest extends ElasticsearchTestCase {
+public class SafeifierTest extends ESTestCase {
     @Test(expected = UnknownQueryException.class)
     public void unknownQueryError() {
         new Safeifier().safeify(new Query() {

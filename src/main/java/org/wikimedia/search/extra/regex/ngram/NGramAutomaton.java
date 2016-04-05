@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.Transition;
-import org.elasticsearch.common.collect.ImmutableSet;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.ExpressionSource;
@@ -16,6 +15,8 @@ import org.wikimedia.search.extra.regex.expression.False;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A finite automaton who's transitions are ngrams that must be in the string or

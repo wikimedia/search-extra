@@ -1,7 +1,7 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import static org.elasticsearch.common.Preconditions.*;
-import org.elasticsearch.common.collect.ImmutableSet;
+import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A leaf expression.

@@ -49,8 +49,8 @@ public class LevenshteinDistanceScoreTest extends AbstractPluginIntegrationTest 
         assertFailures(client().prepareSearch("test").setExplain(randomBoolean())
                 .setQuery(functionScoreQuery(termQuery("content", "ignorance")).add(
                         new LevenshteinDistanceScoreBuilder().field("blah").text("Ignorance is strength"))
-                        .boostMode(CombineFunction.REPLACE)), RestStatus.BAD_REQUEST,
-                        Matchers.containsString("Unable to find a field mapper for field [blah]"));
+                        .boostMode(CombineFunction.REPLACE)), RestStatus.INTERNAL_SERVER_ERROR,
+                        Matchers.containsString("Unable to load field type for field [blah]"));
 
         assertFailures(client().prepareSearch("test").setExplain(randomBoolean())
                 .setQuery(functionScoreQuery(matchAllQuery()).add(

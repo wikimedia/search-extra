@@ -3,11 +3,11 @@ package org.wikimedia.search.extra.safer.phrase;
 import java.util.Locale;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.lucene.search.MatchNoDocsQuery;
 
 /**
  * Detects large phrase queries or queries containing many phrase queries and rejects or degrades them.
@@ -64,6 +64,6 @@ public enum PhraseTooLargeAction {
         if ("convert_to_match_all_query".equals(text) || "convertToMatchAllQuery".equals(text)) {
             return CONVERT_TO_MATCH_ALL_QUERY;
         }
-        throw new ElasticsearchIllegalArgumentException(String.format(Locale.ROOT, "Invalid PhraseBreakUpMode:  %s", text));
+        throw new ElasticsearchParseException("Invalid PhraseBreakUpMode:  %s", text);
     }
 }

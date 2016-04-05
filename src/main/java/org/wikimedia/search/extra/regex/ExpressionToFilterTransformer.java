@@ -4,19 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.BooleanFilter;
-import org.apache.lucene.queries.TermFilter;
-import org.apache.lucene.queries.TermsFilter;
+import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
-import org.elasticsearch.common.collect.ImmutableSet;
 import org.wikimedia.search.extra.regex.expression.Expression;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Transforms expressions to filters.
  */
-public class ExpressionToFilterTransformer implements Expression.Transformer<String, Filter> {
+public class ExpressionToFilterTransformer implements Expression.Transformer<String, Query> {
     private final String ngramField;
 
     public ExpressionToFilterTransformer(String ngramField) {
@@ -34,40 +36,40 @@ public class ExpressionToFilterTransformer implements Expression.Transformer<Str
     }
 
     @Override
-    public Filter leaf(String t) {
-        return new TermFilter(new Term(ngramField, t));
+    public Query leaf(String t) {
+        return new TermQuery(new Term(ngramField, t));
     }
 
     @Override
-    public Filter and(ImmutableSet<Filter> js) {
-        BooleanFilter filter = new BooleanFilter();
-        for (Filter j : js) {
-            filter.add(j, Occur.MUST);
+    public Query and(ImmutableSet<Query> js) {
+        BooleanQuery query = new BooleanQuery();
+        for (Query j : js) {
+            query.add(j, Occur.MUST);
         }
-        return filter;
+        return query;
     }
 
     @Override
-    public Filter or(ImmutableSet<Filter> js) {
-        // Array containing all terms if this is contains only term filters
-        boolean allTermFilters = true;
+    public Query or(ImmutableSet<Query> js) {
+        // Array containing all terms if this is contains only term queries
+        boolean allTermQueries = true;
         List<BytesRef> allTerms = null;
-        BooleanFilter filter = new BooleanFilter();
-        for (Filter j : js) {
-            filter.add(j, Occur.SHOULD);
-            if (allTermFilters) {
-                allTermFilters = j instanceof TermFilter;
-                if (allTermFilters) {
+        BooleanQuery query = new BooleanQuery();
+        for (Query j : js) {
+            query.add(j, Occur.SHOULD);
+            if (allTermQueries) {
+                allTermQueries = j instanceof TermQuery;
+                if (allTermQueries) {
                     if (allTerms == null) {
                         allTerms = new ArrayList<>(js.size());
                     }
-                    allTerms.add(((TermFilter) j).getTerm().bytes());
+                    allTerms.add(((TermQuery) j).getTerm().bytes());
                 }
             }
         }
-        if (!allTermFilters) {
-            return filter;
+        if (!allTermQueries) {
+            return query;
         }
-        return new TermsFilter(ngramField, allTerms);
+        return new TermsQuery(ngramField, allTerms);
     }
 }

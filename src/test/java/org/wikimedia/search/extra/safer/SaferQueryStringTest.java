@@ -1,7 +1,7 @@
 package org.wikimedia.search.extra.safer;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.index.query.QueryBuilders.queryString;
+import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertFailures;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
@@ -81,7 +81,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
     @Test
     public void error() throws ParseException, InterruptedException, ExecutionException {
         // Everything works when you expect it to
-        QueryStringQueryBuilder qs = queryString("\"0 0 0 0 0 0\"");
+        QueryStringQueryBuilder qs = queryStringQuery("\"0 0 0 0 0 0\"");
         SaferQueryBuilder b = new SaferQueryBuilder(qs);
         if (getRandom().nextBoolean()) {
             b.phraseTooLargeAction(PhraseTooLargeAction.ERROR);
@@ -92,7 +92,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         assertSearchHits(search.get(), "1");
 
         // Even with phrases made by lack of spaces
-        qs = queryString("findme:0.0.0.0.0.0");
+        qs = queryStringQuery("findme:0.0.0.0.0.0");
         b = new SaferQueryBuilder(qs);
         if (getRandom().nextBoolean()) {
             b.phraseTooLargeAction(PhraseTooLargeAction.ERROR);
@@ -104,7 +104,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         assertSearchHits(search.get(), "1");
 
         // And also with MultiPhraseQueries
-        qs = queryString("findme:\"CaptureAAAA Test\"");
+        qs = queryStringQuery("findme:\"CaptureAAAA Test\"");
         b = new SaferQueryBuilder(qs);
         if (getRandom().nextBoolean()) {
             b.phraseTooLargeAction(PhraseTooLargeAction.ERROR);
@@ -135,7 +135,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
     }
 
     private void assertSearchByFieldsFails(boolean total, String query, String... fields) {
-        QueryStringQueryBuilder qs = queryString(query);
+        QueryStringQueryBuilder qs = queryStringQuery(query);
         SaferQueryBuilder b = new SaferQueryBuilder(qs).maxTermsPerPhraseQuery(5).maxTermsInAllPhraseQueries(8);
         if (getRandom().nextBoolean()) {
             b.phraseTooLargeAction(PhraseTooLargeAction.ERROR);
@@ -149,25 +149,25 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         }
         SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
         if (total) {
-            assertFailures(search, RestStatus.BAD_REQUEST, both(containsString("Query has ")).and(containsString(" total terms but only 8 total terms are allowed")));
+            assertFailures(search, RestStatus.INTERNAL_SERVER_ERROR, both(containsString("Query has ")).and(containsString(" total terms but only 8 total terms are allowed")));
         } else {
-            assertFailures(search, RestStatus.BAD_REQUEST, containsString("Query has 6 terms but only 5 are allowed"));
+            assertFailures(search, RestStatus.INTERNAL_SERVER_ERROR, containsString("Query has 6 terms but only 5 are allowed"));
         }
     }
 
     private void assertSearchByString(String string) {
-        QueryStringQueryBuilder qs = queryString(string);
+        QueryStringQueryBuilder qs = queryStringQuery(string);
         SaferQueryBuilder b = new SaferQueryBuilder(qs).maxTermsPerPhraseQuery(5);
         if (getRandom().nextBoolean()) {
             b.phraseTooLargeAction(PhraseTooLargeAction.ERROR);
         }
         SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
-        assertFailures(search, RestStatus.BAD_REQUEST, containsString("Query has 6 terms but only 5 are allowed"));
+        assertFailures(search, RestStatus.INTERNAL_SERVER_ERROR, containsString("Query has 6 terms but only 5 are allowed"));
     }
 
     @Test
     public void convert() {
-        QueryStringQueryBuilder qs = queryString("\"0 0 0 0 0 0\"");
+        QueryStringQueryBuilder qs = queryStringQuery("\"0 0 0 0 0 0\"");
         SaferQueryBuilder b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_TERM_QUERIES);
         SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "1");
@@ -177,7 +177,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         b.maxTermsPerPhraseQuery(5);
         assertSearchHits(search.get(), "1", "2");  //Unorderd
 
-        qs = queryString("\"0 0 0\" \"0 0 0 0 0 0\"").defaultOperator(Operator.AND);
+        qs = queryStringQuery("\"0 0 0\" \"0 0 0 0 0 0\"").defaultOperator(Operator.AND);
         b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_TERM_QUERIES);
         search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "1");
@@ -188,7 +188,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         b.maxTermsInAllPhraseQueries(8);
         assertSearchHits(search.get(), "1", "2");  //Unorderd
 
-        qs = queryString("findme:\"CaptureAAAA Test\"");
+        qs = queryStringQuery("findme:\"CaptureAAAA Test\"");
         b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_TERM_QUERIES);
         search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "delimited1", "delimited2");
@@ -198,7 +198,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
         b.maxTermsPerPhraseQuery(5);
         assertSearchHits(search.get(), "delimited1", "delimited2");
 
-        qs = queryString("findme:0.0.0.0.0.0");
+        qs = queryStringQuery("findme:0.0.0.0.0.0");
         b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_TERM_QUERIES);
         search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "1", "2");
@@ -211,7 +211,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
 
     @Test
     public void matchNone() {
-        QueryStringQueryBuilder qs = queryString("\"0 0 0 0 0 0\"");
+        QueryStringQueryBuilder qs = queryStringQuery("\"0 0 0 0 0 0\"");
         SaferQueryBuilder b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_MATCH_NONE_QUERY);
         SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "1");
@@ -223,7 +223,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
 
     @Test
     public void matchAll() {
-        QueryStringQueryBuilder qs = queryString("\"0 0 0 0 0 0\"");
+        QueryStringQueryBuilder qs = queryStringQuery("\"0 0 0 0 0 0\"");
         SaferQueryBuilder b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_MATCH_ALL_QUERY);
         SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "1");
@@ -235,7 +235,7 @@ public class SaferQueryStringTest extends AbstractPluginIntegrationTest {
 
     @Test
     public void degradeTermRangeQuery() {
-        QueryStringQueryBuilder qs = queryString("<Z");
+        QueryStringQueryBuilder qs = queryStringQuery("<Z");
         SaferQueryBuilder b = new SaferQueryBuilder(qs).phraseTooLargeAction(PhraseTooLargeAction.CONVERT_TO_MATCH_ALL_QUERY);
         SearchRequestBuilder search = client().prepareSearch("test").setQuery(b);
         assertSearchHits(search.get(), "1", "2", "delimited1", "delimited2");

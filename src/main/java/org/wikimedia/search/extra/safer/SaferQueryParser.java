@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.search.Query;
-import org.elasticsearch.common.collect.ImmutableMap;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
@@ -15,6 +14,8 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.index.query.QueryParsingException;
 import org.wikimedia.search.extra.safer.Safeifier.ActionModule;
+
+import com.google.common.collect.ImmutableMap;
 
 public class SaferQueryParser implements QueryParser {
     private final Map<String, ActionModuleParser<?>> moduleParsers;
@@ -49,7 +50,7 @@ public class SaferQueryParser implements QueryParser {
                 switch (currentFieldName) {
                 case "query":
                     if (delegate != null) {
-                        throw new QueryParsingException(parseContext.index(), "[safer] Can only wrap a single query ([" + currentFieldName
+                        throw new QueryParsingException(parseContext, "[safer] Can only wrap a single query ([" + currentFieldName
                                 + "]) is the second query.");
                     }
                     delegate = parseContext.parseInnerQuery();
@@ -57,7 +58,7 @@ public class SaferQueryParser implements QueryParser {
                 default:
                     ActionModuleParser<?> moduleParser = moduleParsers.get(currentFieldName);
                     if (moduleParser == null) {
-                        throw new QueryParsingException(parseContext.index(), "[safer] query does not support the object [" + currentFieldName + "]");
+                        throw new QueryParsingException(parseContext, "[safer] query does not support the object [" + currentFieldName + "]");
                     }
                     actionModules.add(moduleParser.parse(parseContext));
                 }
@@ -68,13 +69,13 @@ public class SaferQueryParser implements QueryParser {
                     errorOnUnknownQueryType = parser.booleanValue();
                     break;
                 default:
-                    throw new QueryParsingException(parseContext.index(), "[safer] query does not support the field [" + currentFieldName + "]");
+                    throw new QueryParsingException(parseContext, "[safer] query does not support the field [" + currentFieldName + "]");
                 }
             }
         }
 
         if (delegate == null) {
-            throw new QueryParsingException(parseContext.index(), "[safer] requires a query");
+            throw new QueryParsingException(parseContext, "[safer] requires a query");
         }
         return new Safeifier(errorOnUnknownQueryType, actionModules).safeify(delegate);
     }
