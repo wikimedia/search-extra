@@ -42,11 +42,12 @@ public class ExpressionToFilterTransformer implements Expression.Transformer<Str
 
     @Override
     public Query and(ImmutableSet<Query> js) {
-        BooleanQuery query = new BooleanQuery();
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+
         for (Query j : js) {
-            query.add(j, Occur.MUST);
+            builder.add(j, Occur.MUST);
         }
-        return query;
+        return builder.build();
     }
 
     @Override
@@ -54,9 +55,9 @@ public class ExpressionToFilterTransformer implements Expression.Transformer<Str
         // Array containing all terms if this is contains only term queries
         boolean allTermQueries = true;
         List<BytesRef> allTerms = null;
-        BooleanQuery query = new BooleanQuery();
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
         for (Query j : js) {
-            query.add(j, Occur.SHOULD);
+            builder.add(j, Occur.SHOULD);
             if (allTermQueries) {
                 allTermQueries = j instanceof TermQuery;
                 if (allTermQueries) {
@@ -68,7 +69,7 @@ public class ExpressionToFilterTransformer implements Expression.Transformer<Str
             }
         }
         if (!allTermQueries) {
-            return query;
+            return builder.build();
         }
         return new TermsQuery(ngramField, allTerms);
     }

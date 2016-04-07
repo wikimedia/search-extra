@@ -59,11 +59,12 @@ public abstract class PhraseQueryAdapter {
 
         @Override
         public Query convertToTermQueries() {
-            BooleanQuery bq = new BooleanQuery();
-            bq.setBoost(pq.getBoost());
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (Term term : pq.getTerms()) {
-                bq.add(new TermQuery(term), BooleanClause.Occur.MUST);
+                builder.add(new TermQuery(term), BooleanClause.Occur.MUST);
             }
+            BooleanQuery bq = builder.build();
+            bq.setBoost(pq.getBoost());
             return bq;
         }
     }
@@ -93,15 +94,16 @@ public abstract class PhraseQueryAdapter {
 
         @Override
         public Query convertToTermQueries() {
-            BooleanQuery bq = new BooleanQuery();
-            bq.setBoost(pq.getBoost());
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (Term[] terms : pq.getTermArrays()) {
-                BooleanQuery inner = new BooleanQuery();
+                BooleanQuery.Builder inner = new BooleanQuery.Builder();
                 for (Term term: terms) {
                     inner.add(new TermQuery(term), BooleanClause.Occur.SHOULD);
                 }
-                bq.add(inner, BooleanClause.Occur.MUST);
+                builder.add(inner.build(), BooleanClause.Occur.MUST);
             }
+            BooleanQuery bq = builder.build();
+            bq.setBoost(pq.getBoost());
             return bq;
         }
     }

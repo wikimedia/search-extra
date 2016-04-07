@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;

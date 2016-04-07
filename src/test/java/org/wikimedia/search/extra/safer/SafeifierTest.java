@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.safer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.MultiPhraseQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
@@ -51,10 +52,11 @@ public class SafeifierTest extends ESTestCase {
      */
     // @Test
     public void quickAndDirtyPerfTest() {
-        BooleanQuery q = new BooleanQuery();
+        Builder builder = new Builder();
         for (int i = 0; i < 10; i++) {
-            q.add(pq(10), Occur.MUST);
+            builder.add(pq(10), Occur.MUST);
         }
+        BooleanQuery q = builder.build();
         long start = System.currentTimeMillis();
         for (int i = 0; i < 1000000; i++) {
             PhraseTooLargeActionModule pa = new PhraseTooLargeActionModule();
@@ -69,11 +71,11 @@ public class SafeifierTest extends ESTestCase {
      * Generate a phrase query.
      */
     public static PhraseQuery pq(String... terms) {
-        PhraseQuery p = new PhraseQuery();
+        PhraseQuery.Builder builder = new PhraseQuery.Builder();
         for (String term : terms) {
-            p.add(new Term("test", term));
+            builder.add(new Term("test", term));
         }
-        return p;
+        return builder.build();
     }
 
     /**
@@ -81,11 +83,12 @@ public class SafeifierTest extends ESTestCase {
      * containing those terms.
      */
     public static BooleanQuery tq(String... terms) {
-        BooleanQuery bq = new BooleanQuery();
+        Builder builder = new Builder();
+
         for (String term : terms) {
-            bq.add(new TermQuery(new Term("test", term)), Occur.MUST);
+            builder.add(new TermQuery(new Term("test", term)), Occur.MUST);
         }
-        return bq;
+        return builder.build();
     }
 
     /**

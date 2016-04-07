@@ -18,17 +18,16 @@ import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.payloads.AveragePayloadFunction;
 import org.apache.lucene.search.payloads.MaxPayloadFunction;
-import org.apache.lucene.search.payloads.PayloadNearQuery;
-import org.apache.lucene.search.payloads.PayloadTermQuery;
+import org.apache.lucene.search.payloads.PayloadScoreQuery;
+import org.apache.lucene.search.payloads.SpanPayloadCheckQuery;
 import org.apache.lucene.search.spans.FieldMaskingSpanQuery;
 import org.apache.lucene.search.spans.SpanFirstQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
-import org.apache.lucene.search.spans.SpanNearPayloadCheckQuery;
 import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanNotQuery;
 import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanPayloadCheckQuery;
 import org.apache.lucene.search.spans.SpanPositionRangeQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
@@ -59,16 +58,16 @@ public class SafeifierNoopQueriesTest extends ESTestCase {
                 new FieldMaskingSpanQuery(new SpanTermQuery(t), "test"),
                 new SpanMultiTermQueryWrapper<>(new PrefixQuery(t)),
                 new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true),
-                new PayloadNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true),
+                new PayloadScoreQuery(new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true), new AveragePayloadFunction()),
                 new SpanNotQuery(new SpanTermQuery(t), new SpanTermQuery(t)),
                 new SpanOrQuery(new SpanTermQuery(t), new SpanTermQuery(t)),
-                new SpanNearPayloadCheckQuery(new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true), Collections.<byte[]>emptyList()),
+                new SpanPayloadCheckQuery(new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true), Collections.<byte[]>emptyList()),
                 new SpanPayloadCheckQuery(new SpanTermQuery(t), Collections.<byte[]>emptyList()),
                 new SpanPositionRangeQuery(new SpanTermQuery(t), 1, 20),
                 new SpanFirstQuery(new SpanTermQuery(t), 10),
                 new SpanTermQuery(t),
                 new AllTermQuery(t),
-                new PayloadTermQuery(t, new MaxPayloadFunction()),
+                new PayloadScoreQuery(new SpanTermQuery(t), new MaxPayloadFunction()),
         };
         for (Query query: queries) {
             query.setBoost(getRandom().nextFloat());
