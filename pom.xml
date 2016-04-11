@@ -10,7 +10,7 @@
 
   <groupId>org.wikimedia.search</groupId>
   <artifactId>extra</artifactId>
-  <version>2.1.0-SNAPSHOT</version>
+  <version>2.2.0-SNAPSHOT</version>
   <description>Extra queries and filters for Elasticsearch.</description>
 
   <licenses>
@@ -43,8 +43,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <elasticsearch.version>2.1.0</elasticsearch.version>
-    <lucene.version>5.3.1</lucene.version>
+    <elasticsearch.version>2.2.1</elasticsearch.version>
+    <lucene.version>5.4.1</lucene.version>
   </properties>
 
   <build>
@@ -141,7 +141,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>3.3</version>
           <configuration>
             <source>1.7</source>
             <target>1.7</target>
@@ -150,27 +150,27 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>2.4.1</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>2.5</version>
+          <version>2.7</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-install-plugin</artifactId>
-          <version>2.3.1</version>
+          <version>2.5.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>2.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.1</version>
+          <version>2.5.3</version>
           <configuration>
             <pushChanges>false</pushChanges>
           </configuration>
@@ -178,6 +178,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.19</version>
           <configuration>
             <skipTests>true</skipTests>
           </configuration>
@@ -185,7 +186,7 @@
         <plugin>
           <groupId>com.carrotsearch.randomizedtesting</groupId>
           <artifactId>junit4-maven-plugin</artifactId>
-          <version>2.1.2</version>
+          <version>2.3.4</version>
           <executions>
             <execution>
               <id>tests</id>
@@ -194,9 +195,20 @@
                 <goal>junit4</goal>
               </goals>
               <configuration>
+                <skipTests>${skip.unit.tests}</skipTests>
+                <listeners>
+                  <report-text showThrowable="true" showStackTraces="true"
+                      showOutput="onerror" showStatusOk="false" showStatusError="true"
+                      showStatusFailure="true" showStatusIgnored="true" showSuiteSummary="true"
+                      showNumFailures="30" timestamps="false">
+                  </report-text>
+                  <report-ant-xml mavenExtensions="true"
+                       dir="${project.build.directory}/surefire-reports" />
+                </listeners>
                 <heartbeat>20</heartbeat>
-                <jvmOutputAction>pipe,warn</jvmOutputAction>
+                <jvmOutputAction>warn</jvmOutputAction>
                 <leaveTemporary>true</leaveTemporary>
+                <sysouts>false</sysouts>
                 <assertions>
                   <enable />
                 </assertions>
@@ -212,7 +224,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.2.1</version>
+          <version>2.4</version>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -324,7 +336,7 @@
     <dependency>
       <groupId>com.carrotsearch.randomizedtesting</groupId>
       <artifactId>randomizedtesting-runner</artifactId>
-      <version>2.1.10</version>
+      <version>2.3.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -8,7 +8,12 @@ import java.util.Collections;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.CommonTermsQuery;
 import org.apache.lucene.queries.ExtendedCommonTermsQuery;
+import org.apache.lucene.queries.payloads.AveragePayloadFunction;
+import org.apache.lucene.queries.payloads.MaxPayloadFunction;
+import org.apache.lucene.queries.payloads.PayloadScoreQuery;
+import org.apache.lucene.queries.payloads.SpanPayloadCheckQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.NumericRangeQuery;
@@ -18,10 +23,6 @@ import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.payloads.AveragePayloadFunction;
-import org.apache.lucene.search.payloads.MaxPayloadFunction;
-import org.apache.lucene.search.payloads.PayloadScoreQuery;
-import org.apache.lucene.search.payloads.SpanPayloadCheckQuery;
 import org.apache.lucene.search.spans.FieldMaskingSpanQuery;
 import org.apache.lucene.search.spans.SpanFirstQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
@@ -31,6 +32,7 @@ import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanPositionRangeQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.lucene.all.AllTermQuery;
 import org.elasticsearch.test.ESTestCase;
 import org.junit.Test;
@@ -61,17 +63,22 @@ public class SafeifierNoopQueriesTest extends ESTestCase {
                 new PayloadScoreQuery(new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true), new AveragePayloadFunction()),
                 new SpanNotQuery(new SpanTermQuery(t), new SpanTermQuery(t)),
                 new SpanOrQuery(new SpanTermQuery(t), new SpanTermQuery(t)),
-                new SpanPayloadCheckQuery(new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true), Collections.<byte[]>emptyList()),
-                new SpanPayloadCheckQuery(new SpanTermQuery(t), Collections.<byte[]>emptyList()),
+                new SpanPayloadCheckQuery(new SpanNearQuery(new SpanQuery[] {new SpanTermQuery(t)}, 1, true), Collections.<BytesRef>emptyList()),
+                new SpanPayloadCheckQuery(new SpanTermQuery(t), Collections.<BytesRef>emptyList()),
                 new SpanPositionRangeQuery(new SpanTermQuery(t), 1, 20),
                 new SpanFirstQuery(new SpanTermQuery(t), 10),
                 new SpanTermQuery(t),
                 new AllTermQuery(t),
                 new PayloadScoreQuery(new SpanTermQuery(t), new MaxPayloadFunction()),
+                new BoostQuery(new TermQuery(t), 15f),
         };
         for (Query query: queries) {
             query.setBoost(getRandom().nextFloat());
             assertEquals(query, new Safeifier(true).safeify(query));
+        }
+        for (Query query: queries) {
+            BoostQuery bq = new BoostQuery(query, getRandom().nextFloat());
+            assertEquals(bq, new Safeifier(true).safeify(bq));
         }
     }
 

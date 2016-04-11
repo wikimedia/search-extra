@@ -11,9 +11,9 @@ import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.index.query.QueryParsingException;
 
 /**
- * Parses the {@link IdHashModFilter}.
+ * Parses the {@link IdHashModQuery}.
  */
-public class IdHashModFilterParser implements QueryParser {
+public class IdHashModQueryParser implements QueryParser {
     public static final String[] NAMES = new String[] { "id_hash_mod", "id-hash-mod", "idHashMod" };
 
     @Override
@@ -40,20 +40,20 @@ public class IdHashModFilterParser implements QueryParser {
                     match = parser.intValue();
                     break;
                 default:
-                    throw new QueryParsingException(parseContext, "[id-mod-hash] filter does not support [" + currentFieldName
+                    throw new QueryParsingException(parseContext, "[id-mod-hash] query does not support [" + currentFieldName
                             + "]");
                 }
             }
         }
 
         if (mod == null) {
-            throw new QueryParsingException(parseContext, "[id-mod-hash] filter requires the \"mod\" parameter");
+            throw new QueryParsingException(parseContext, "[id-mod-hash] query requires the \"mod\" parameter");
         }
         if (mod < 0) {
             throw new QueryParsingException(parseContext, "[id-mod-hash] \"mod\" must be positive");
         }
         if (match == null) {
-            throw new QueryParsingException(parseContext, "[id-mod-hash] filter requires the \"match\" parameter");
+            throw new QueryParsingException(parseContext, "[id-mod-hash] query requires the \"match\" parameter");
         }
         if (match < 0) {
             throw new QueryParsingException(parseContext, "[id-mod-hash] \"match\" must be positive");
@@ -63,6 +63,6 @@ public class IdHashModFilterParser implements QueryParser {
                     "If match is >= mod it won't find anything. match = %s and mod = %s", match, mod));
         }
         IndexFieldData<?> uidFieldData = parseContext.getForField(parseContext.fieldMapper("_uid"));
-        return new IdHashModFilter(uidFieldData, mod, match);
+        return new IdHashModQuery(uidFieldData, mod, match);
     }
 }

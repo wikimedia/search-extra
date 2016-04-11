@@ -12,9 +12,9 @@ import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.search.SearchModule;
-import org.wikimedia.search.extra.idhashmod.IdHashModFilterParser;
+import org.wikimedia.search.extra.idhashmod.IdHashModQueryParser;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreParser;
-import org.wikimedia.search.extra.regex.SourceRegexFilterParser;
+import org.wikimedia.search.extra.regex.SourceRegexQueryParser;
 import org.wikimedia.search.extra.safer.ActionModuleParser;
 import org.wikimedia.search.extra.safer.SaferQueryParser;
 import org.wikimedia.search.extra.safer.phrase.PhraseTooLargeActionModuleParser;
@@ -43,8 +43,8 @@ public class ExtraPlugin extends Plugin {
      * Register our parsers.
      */
     public void onModule(IndicesModule module) {
-        module.registerQueryParser(SourceRegexFilterParser.class);
-        module.registerQueryParser(IdHashModFilterParser.class);
+        module.registerQueryParser(SourceRegexQueryParser.class);
+        module.registerQueryParser(IdHashModQueryParser.class);
         module.registerQueryParser(SaferQueryParser.class);
     }
 

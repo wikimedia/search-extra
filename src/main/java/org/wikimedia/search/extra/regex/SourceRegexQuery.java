@@ -1,24 +1,16 @@
 package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.BitsFilteredDocIdSet;
-import org.apache.lucene.search.DocIdSet;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.FilteredDocIdSet;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryWrapperFilter;
-import org.apache.lucene.util.Bits;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CharacterRunAutomaton;
 import org.apache.lucene.util.automaton.ContainsCharacterRunAutomaton;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.lucene.search.Queries;
@@ -27,8 +19,8 @@ import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
 
-public class SourceRegexFilter extends Filter {
-    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexFilter.class.getPackage().getName());
+public class SourceRegexQuery extends Query {
+    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexQuery.class.getPackage().getName());
     private final String fieldPath;
     private final String ngramFieldPath;
     private final String regex;
@@ -36,10 +28,8 @@ public class SourceRegexFilter extends Filter {
     private final Settings settings;
     private final int gramSize;
     private final Rechecker rechecker;
-    private int inspected = 0;
-    private Query prefilter;
 
-    public SourceRegexFilter(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
+    public SourceRegexQuery(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
             int gramSize) {
         this.fieldPath = fieldPath;
         this.ngramFieldPath = ngramFieldPath;
@@ -57,48 +47,40 @@ public class SourceRegexFilter extends Filter {
     }
 
     @Override
-    public DocIdSet getDocIdSet(LeafReaderContext context, Bits acceptDocs) throws IOException {
-        DocIdSet filtered = getFilteredDocIdSet(context, acceptDocs);
-        if (filtered == null) {
-            return null;
-        }
-        return new RegexAcceptsDocIdSet(BitsFilteredDocIdSet.wrap(filtered, acceptDocs), context.reader(), rechecker);
-    }
-
-    private DocIdSet getFilteredDocIdSet(LeafReaderContext context, Bits acceptDocs) throws IOException {
+    public Query rewrite(IndexReader reader) throws IOException {
+        // Rewrite the query as an AcceleratedSourceRegexQuery or UnacceleratedSourceRegexQuery
         if (ngramFieldPath == null) {
             // Don't bother expanding the regex if there isn't a field to check
             // it against. Its unlikely to resolve to all false anyway.
             if (settings.getRejectUnaccelerated()) {
                 throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
             }
-            return new QueryWrapperFilter(Queries.newMatchAllQuery()).getDocIdSet(context, acceptDocs);
+            return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings);
         }
-        if (prefilter == null) {
-            try {
-                // The accelerating filter is always assumed to be case
-                // insensitive/always lowercased
-                Automaton automaton = regexToAutomaton(new RegExp(regex.toLowerCase(settings.getLocale()), RegExp.ALL ^ RegExp.AUTOMATON),
-                        settings.getMaxDeterminizedStates());
-                Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(), settings.getMaxStatesTraced(),
-                        settings.getMaxNgramsExtracted()).extract(automaton).simplify();
-                if (expression.alwaysTrue()) {
-                    if (settings.getRejectUnaccelerated()) {
-                        throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
-                    }
-                    prefilter = Queries.newMatchAllQuery();
-                } else if (expression.alwaysFalse()) {
-                    prefilter = Queries.newMatchNoDocsQuery();
-                } else {
-                    prefilter = expression.transform(new ExpressionToFilterTransformer(ngramFieldPath));
+        try {
+            // The accelerating filter is always assumed to be case
+            // insensitive/always lowercased
+            Automaton automaton = regexToAutomaton(
+                    new RegExp(regex.toLowerCase(settings.getLocale()), RegExp.ALL ^ RegExp.AUTOMATON),
+                    settings.getMaxDeterminizedStates());
+            Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(), settings.getMaxStatesTraced(),
+                    settings.getMaxNgramsExtracted()).extract(automaton).simplify();
+            if (expression.alwaysTrue()) {
+                if (settings.getRejectUnaccelerated()) {
+                    throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                 }
-            } catch (AutomatonTooComplexException e) {
-                throw new IllegalArgumentException(String.format(Locale.ROOT,
-                        "Regex /%s/ too complex for maxStatesTraced setting [%s].  Use a simpler regex or raise maxStatesTraced.", regex,
-                        settings.getMaxStatesTraced()), e);
+                return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
+            } else if (expression.alwaysFalse()) {
+                return Queries.newMatchNoDocsQuery().rewrite(reader);
+            } else {
+                return new AcceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings,
+                        expression.transform(new ExpressionToQueryTransformer(ngramFieldPath))).rewrite(reader);
             }
+        } catch (AutomatonTooComplexException e) {
+            throw new IllegalArgumentException(String.format(Locale.ROOT,
+                    "Regex /%s/ too complex for maxStatesTraced setting [%s].  Use a simpler regex or raise maxStatesTraced.", regex,
+                    settings.getMaxStatesTraced()), e);
         }
-        return new QueryWrapperFilter(prefilter).getDocIdSet(context, acceptDocs);
     }
 
     private static Automaton regexToAutomaton(RegExp regex, int maxDeterminizedStates) {
@@ -117,39 +99,6 @@ public class SourceRegexFilter extends Filter {
     }
 
     /**
-     * Filters a DocIdSet to those that contain a field value (loaded from
-     * source) that matches an automaton.
-     */
-    private final class RegexAcceptsDocIdSet extends FilteredDocIdSet {
-        private final IndexReader reader;
-        private final Rechecker rechecker;
-
-        public RegexAcceptsDocIdSet(DocIdSet innerSet, IndexReader reader, Rechecker rechecker) {
-            super(innerSet);
-            this.reader = reader;
-            this.rechecker = rechecker;
-        }
-
-        @Override
-        protected boolean match(int docid) {
-            if (inspected >= settings.getMaxInspect()) {
-                // TODO hook into the generic timeout mechanism when it is ready
-                return false;
-            }
-            inspected++;
-            return rechecker.recheck(load(docid));
-        }
-
-        private List<String> load(int docId) {
-            try {
-                return loader.load(fieldPath, reader, docId);
-            } catch (IOException e) {
-                throw new ElasticsearchException("Error loading field values", e);
-            }
-        }
-    }
-
-    /**
      * Wraps all recheck operations for a single execution. Package private for
      * testing.
      */
@@ -159,6 +108,13 @@ public class SourceRegexFilter extends Filter {
          * contain a match to the regex.
          */
         boolean recheck(Iterable<String> values);
+
+        /**
+         * Determine the cost of the recheck phase.
+         * (Used by {@link TwoPhaseIterator})
+         * @return the cost
+         */
+        float getCost();
     }
 
     /**
@@ -178,7 +134,16 @@ public class SourceRegexFilter extends Filter {
 
         @Override
         public boolean recheck(Iterable<String> values) {
-            if (charRun == null) {
+            for (String value : values) {
+                if (getCharRun().contains(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private ContainsCharacterRunAutomaton getCharRun() {
+            if(charRun == null) {
                 String regexString = regex;
                 if (!settings.getCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
@@ -191,12 +156,43 @@ public class SourceRegexFilter extends Filter {
                     charRun = new ContainsCharacterRunAutomaton.LowerCasing(automaton);
                 }
             }
-            for (String value : values) {
-                if (charRun.contains(value)) {
-                    return true;
-                }
-            }
-            return false;
+            return charRun;
+        }
+
+        @Override
+        public float getCost() {
+            return getCharRun().getSize();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((regex == null) ? 0 : regex.hashCode());
+            result = prime * result + ((settings == null) ? 0 : settings.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            NonBacktrackingOnTheFlyCaseConvertingRechecker other = (NonBacktrackingOnTheFlyCaseConvertingRechecker) obj;
+            if (regex == null) {
+                if (other.regex != null)
+                    return false;
+            } else if (!regex.equals(other.regex))
+                return false;
+            if (settings == null) {
+                if (other.settings != null)
+                    return false;
+            } else if (!settings.equals(other.settings))
+                return false;
+            return true;
         }
     }
 
@@ -216,6 +212,18 @@ public class SourceRegexFilter extends Filter {
 
         @Override
         public boolean recheck(Iterable<String> values) {
+            for (String value : values) {
+                if (!settings.getCaseSensitive()) {
+                    value = value.toLowerCase(settings.getLocale());
+                }
+                if (getCharRun().contains(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private ContainsCharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
                 if (!settings.getCaseSensitive()) {
@@ -225,15 +233,43 @@ public class SourceRegexFilter extends Filter {
                         settings.getMaxDeterminizedStates());
                 charRun = new ContainsCharacterRunAutomaton(automaton);
             }
-            for (String value : values) {
-                if (!settings.getCaseSensitive()) {
-                    value = value.toLowerCase(settings.getLocale());
-                }
-                if (charRun.contains(value)) {
-                    return true;
-                }
-            }
-            return false;
+            return charRun;
+        }
+
+        @Override
+        public float getCost() {
+            return getCharRun().getSize();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((regex == null) ? 0 : regex.hashCode());
+            result = prime * result + ((settings == null) ? 0 : settings.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            NonBacktrackingRechecker other = (NonBacktrackingRechecker) obj;
+            if (regex == null) {
+                if (other.regex != null)
+                    return false;
+            } else if (!regex.equals(other.regex))
+                return false;
+            if (settings == null) {
+                if (other.settings != null)
+                    return false;
+            } else if (!settings.equals(other.settings))
+                return false;
+            return true;
         }
     }
 
@@ -257,6 +293,18 @@ public class SourceRegexFilter extends Filter {
          */
         @Override
         public boolean recheck(Iterable<String> values) {
+            for (String value : values) {
+                if (!settings.getCaseSensitive()) {
+                    value = value.toLowerCase(settings.getLocale());
+                }
+                if (getCharRun().run(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private CharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
                 if (!settings.getCaseSensitive()) {
@@ -266,15 +314,43 @@ public class SourceRegexFilter extends Filter {
                         settings.getMaxDeterminizedStates());
                 charRun = new CharacterRunAutomaton(automaton);
             }
-            for (String value : values) {
-                if (!settings.getCaseSensitive()) {
-                    value = value.toLowerCase(settings.getLocale());
-                }
-                if (charRun.run(value)) {
-                    return true;
-                }
-            }
-            return false;
+            return charRun;
+        }
+
+        @Override
+        public float getCost() {
+            return getCharRun().getSize();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((regex == null) ? 0 : regex.hashCode());
+            result = prime * result + ((settings == null) ? 0 : settings.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SlowRechecker other = (SlowRechecker) obj;
+            if (regex == null) {
+                if (other.regex != null)
+                    return false;
+            } else if (!regex.equals(other.regex))
+                return false;
+            if (settings == null) {
+                if (other.settings != null)
+                    return false;
+            } else if (!settings.equals(other.settings))
+                return false;
+            return true;
         }
     }
 
@@ -309,7 +385,7 @@ public class SourceRegexFilter extends Filter {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SourceRegexFilter other = (SourceRegexFilter) obj;
+        SourceRegexQuery other = (SourceRegexQuery) obj;
         if (fieldPath == null) {
             if (other.fieldPath != null)
                 return false;
@@ -345,6 +421,9 @@ public class SourceRegexFilter extends Filter {
         private int maxStatesTraced = 10000;
         private int maxDeterminizedStates = 20000;
         private int maxNgramsExtracted = 100;
+        /**
+         * @deprecated use a generic time limiting collector
+         */
         private int maxInspect = Integer.MAX_VALUE;
         private boolean caseSensitive = false;
         private Locale locale = Locale.ROOT;
@@ -382,10 +461,16 @@ public class SourceRegexFilter extends Filter {
             this.maxNgramsExtracted = maxNgramsExtracted;
         }
 
+        /**
+         * @deprecated use a generic time limiting collector
+         */
         public int getMaxInspect() {
             return maxInspect;
         }
 
+        /**
+         * @deprecated use a generic time limiting collector
+         */
         public void setMaxInspect(int maxInspect) {
             this.maxInspect = maxInspect;
         }

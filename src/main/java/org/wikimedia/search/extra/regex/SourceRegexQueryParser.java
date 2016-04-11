@@ -2,19 +2,19 @@ package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.Query;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.index.query.QueryParsingException;
-import org.wikimedia.search.extra.regex.SourceRegexFilter.Settings;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
 
 /**
- * Parses source_regex filters.
+ * Parses source_regex queries.
  */
-public class SourceRegexFilterParser implements QueryParser {
+public class SourceRegexQueryParser implements QueryParser {
     public static final String[] NAMES = new String[] { "source_regex", "source-regex", "sourceRegex" };
 
     @Override
@@ -23,7 +23,7 @@ public class SourceRegexFilterParser implements QueryParser {
     }
 
     @Override
-    public Filter parse(QueryParseContext parseContext) throws IOException, QueryParsingException {
+    public Query parse(QueryParseContext parseContext) throws IOException, QueryParsingException {
         // Stuff for our filter
         String regex = null;
         String fieldPath = null;
@@ -89,11 +89,11 @@ public class SourceRegexFilterParser implements QueryParser {
         if (fieldPath == null) {
             throw new QueryParsingException(parseContext, "[source-regex] filter must specify [field]");
         }
-        Filter filter = new SourceRegexFilter(fieldPath, ngramFieldPath, regex, loader, settings, ngramGramSize);
+        Query query = new SourceRegexQuery(fieldPath, ngramFieldPath, regex, loader, settings, ngramGramSize);
         if (filterName != null) {
-            parseContext.addNamedQuery(filterName, filter);
+            parseContext.addNamedQuery(filterName, query);
         }
-        return filter;
+        return query;
     }
 
     /**
@@ -101,7 +101,7 @@ public class SourceRegexFilterParser implements QueryParser {
      *
      * @return true if the field belonged to settings, false if it didn't
      */
-    public static boolean parseInto(SourceRegexFilter.Settings settings, String fieldName, XContentParser parser) throws IOException {
+    public static boolean parseInto(SourceRegexQuery.Settings settings, String fieldName, XContentParser parser) throws IOException {
         switch (fieldName) {
         case "max_expand":
         case "maxExpand":

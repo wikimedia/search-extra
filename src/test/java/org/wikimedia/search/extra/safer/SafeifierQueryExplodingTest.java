@@ -6,6 +6,7 @@ import static org.wikimedia.search.extra.safer.SafeifierTest.tq;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.DisjunctionMaxQuery;
 import org.apache.lucene.search.FilteredQuery;
@@ -87,6 +88,17 @@ public class SafeifierQueryExplodingTest extends ESTestCase {
         in.setBoost(getRandom().nextFloat());
         QueryWrapperFilter expected = new QueryWrapperFilter(tq("1", "2"));
         expected.setBoost(in.getBoost());
+        assertEquals(expected, flatten(in));
+    }
+
+    /**
+     * Validate that phrase queries are flattened inside of boost queries.
+     */
+    @Test
+    public void testBoostQuery() {
+        float boost = getRandom().nextFloat();
+        BoostQuery in = new BoostQuery(pq("1", "2"), boost);
+        BoostQuery expected = new BoostQuery(tq("1", "2"), boost);
         assertEquals(expected, flatten(in));
     }
 }

@@ -64,6 +64,8 @@ public abstract class PhraseQueryAdapter {
                 builder.add(new TermQuery(term), BooleanClause.Occur.MUST);
             }
             BooleanQuery bq = builder.build();
+            // We won't wrap inside a BoostQuery since we are maybe already inside
+            // a BoostQuery, we'll just have remove this line when setBoost is removed
             bq.setBoost(pq.getBoost());
             return bq;
         }
@@ -103,6 +105,8 @@ public abstract class PhraseQueryAdapter {
                 builder.add(inner.build(), BooleanClause.Occur.MUST);
             }
             BooleanQuery bq = builder.build();
+            // We won't wrap inside a BoostQuery since we are maybe already inside
+            // a BoostQuery, we'll just have remove this line when setBoost is removed
             bq.setBoost(pq.getBoost());
             return bq;
         }

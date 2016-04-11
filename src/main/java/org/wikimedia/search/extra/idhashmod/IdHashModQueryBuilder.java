@@ -7,13 +7,13 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 /**
- * Builds the {@link IdHashModFilter}.
+ * Builds the {@link IdHashModQuery}.
  */
-public class IdHashModFilterBuilder extends QueryBuilder {
+public class IdHashModQueryBuilder extends QueryBuilder {
     private final int mod;
     private final int match;
 
-    public IdHashModFilterBuilder(int mod, int match) {
+    public IdHashModQueryBuilder(int mod, int match) {
         if (match >= mod) {
             throw new IllegalArgumentException(String.format(Locale.ROOT,
                     "If match is >= mod it won't find anything. match = %s and mod = %s", match, mod));
@@ -24,7 +24,7 @@ public class IdHashModFilterBuilder extends QueryBuilder {
 
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject(IdHashModFilterParser.NAMES[0]);
+        builder.startObject(IdHashModQueryParser.NAMES[0]);
         builder.field("mod", mod);
         builder.field("match", match);
         builder.endObject();

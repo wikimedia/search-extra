@@ -33,6 +33,8 @@ public enum PhraseTooLargeAction {
         public Query perform(PhraseQueryAdapter pq, int maximumAllowedPositions) {
             logger.debug("Converted phrase query with {} terms to MatchNoDocsQuery", pq.terms());
             Query q = new MatchNoDocsQuery();
+            // We won't wrap inside a BoostQuery since we are maybe already inside
+            // a BoostQuery, we'll just have remove this line when setBoost is removed
             q.setBoost(pq.unwrap().getBoost());
             return q;
         }
@@ -42,6 +44,8 @@ public enum PhraseTooLargeAction {
         public Query perform(PhraseQueryAdapter pq, int maximumAllowedPositions) {
             logger.debug("Converted phrase query with {} terms to MatchNoDocsQuery", pq.terms());
             Query q = new MatchAllDocsQuery();
+            // We won't wrap inside a BoostQuery since we are maybe already inside
+            // a BoostQuery, we'll just have remove this line when setBoost is removed
             q.setBoost(pq.unwrap().getBoost());
             return q;
         }

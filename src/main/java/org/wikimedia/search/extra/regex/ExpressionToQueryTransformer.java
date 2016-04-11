@@ -7,7 +7,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
@@ -16,23 +15,23 @@ import org.wikimedia.search.extra.regex.expression.Expression;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * Transforms expressions to filters.
+ * Transforms expressions to queries.
  */
-public class ExpressionToFilterTransformer implements Expression.Transformer<String, Query> {
+public class ExpressionToQueryTransformer implements Expression.Transformer<String, Query> {
     private final String ngramField;
 
-    public ExpressionToFilterTransformer(String ngramField) {
+    public ExpressionToQueryTransformer(String ngramField) {
         this.ngramField = ngramField;
     }
 
     @Override
-    public Filter alwaysTrue() {
-        throw new IllegalArgumentException("Can't transform always true into a filter.");
+    public Query alwaysTrue() {
+        throw new IllegalArgumentException("Can't transform always true into a query.");
     }
 
     @Override
-    public Filter alwaysFalse() {
-        throw new IllegalArgumentException("Can't transform always false into a filter.");
+    public Query alwaysFalse() {
+        throw new IllegalArgumentException("Can't transform always false into a query.");
     }
 
     @Override

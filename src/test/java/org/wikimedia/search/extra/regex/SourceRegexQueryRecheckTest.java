@@ -8,23 +8,23 @@ import java.util.Locale;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.junit.Test;
-import org.wikimedia.search.extra.regex.SourceRegexFilter.NonBacktrackingOnTheFlyCaseConvertingRechecker;
-import org.wikimedia.search.extra.regex.SourceRegexFilter.NonBacktrackingRechecker;
-import org.wikimedia.search.extra.regex.SourceRegexFilter.Rechecker;
-import org.wikimedia.search.extra.regex.SourceRegexFilter.Settings;
-import org.wikimedia.search.extra.regex.SourceRegexFilter.SlowRechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingOnTheFlyCaseConvertingRechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingRechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.Settings;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.SlowRechecker;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
-public class SourceRegexFilterRecheckTest {
-    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexFilterRecheckTest.class.getPackage().getName());
+public class SourceRegexQueryRecheckTest {
+    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());
 
     private final String rashidun;
     private final String obama;
 
-    public SourceRegexFilterRecheckTest() throws IOException {
+    public SourceRegexQueryRecheckTest() throws IOException {
         rashidun = Resources.toString(Resources.getResource("Rashidun Caliphate.txt"), Charsets.UTF_8);
         obama = Resources.toString(Resources.getResource("Barack Obama.txt"), Charsets.UTF_8);
     }

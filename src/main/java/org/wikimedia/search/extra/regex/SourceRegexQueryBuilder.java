@@ -10,7 +10,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 /**
  * Builds source_regex filters.
  */
-public class SourceRegexFilterBuilder extends QueryBuilder {
+public class SourceRegexQueryBuilder extends QueryBuilder {
     private final String field;
     private final String regex;
     private Boolean loadFromSource;
@@ -24,7 +24,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      * @param field the field to load and run the regex against
      * @param regex the regex to run
      */
-    public SourceRegexFilterBuilder(String field, String regex) {
+    public SourceRegexQueryBuilder(String field, String regex) {
         this.field = field;
         this.regex = regex;
     }
@@ -34,7 +34,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            stored field (false)?
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder loadFromSource(boolean loadFromSource) {
+    public SourceRegexQueryBuilder loadFromSource(boolean loadFromSource) {
         this.loadFromSource = loadFromSource;
         return this;
     }
@@ -44,7 +44,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            documents. If not set then no ngram acceleration is performed.
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder ngramField(String ngramField) {
+    public SourceRegexQueryBuilder ngramField(String ngramField) {
         this.ngramField = ngramField;
         return this;
     }
@@ -54,7 +54,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            trigrams.
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder gramSize(int gramSize) {
+    public SourceRegexQueryBuilder gramSize(int gramSize) {
         this.gramSize = gramSize;
         return this;
     }
@@ -68,7 +68,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            purposes.
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder maxExpand(int maxExpand) {
+    public SourceRegexQueryBuilder maxExpand(int maxExpand) {
         settings.maxExpand(maxExpand);
         return this;
     }
@@ -83,7 +83,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            of characters
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder maxStatesTraced(int maxStatesTraced) {
+    public SourceRegexQueryBuilder maxStatesTraced(int maxStatesTraced) {
         settings.maxStatesTraced(maxStatesTraced);
         return this;
     }
@@ -96,7 +96,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            regexes.
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder maxDeterminizedStates(int maxDeterminizedStates) {
+    public SourceRegexQueryBuilder maxDeterminizedStates(int maxDeterminizedStates) {
         settings.maxDeterminizedStates(maxDeterminizedStates);
         return this;
     }
@@ -111,7 +111,7 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            reasonably well.
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder maxNgramsExtracted(int maxNgramsExtracted) {
+    public SourceRegexQueryBuilder maxNgramsExtracted(int maxNgramsExtracted) {
         settings.maxNgramsExtracted(maxNgramsExtracted);
         return this;
     }
@@ -122,17 +122,17 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            match. Defaults to Integer.MAX_VALUE.
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder maxInspect(int maxInspect) {
+    public SourceRegexQueryBuilder maxInspect(int maxInspect) {
         settings.maxInspect(maxInspect);
         return this;
     }
 
-    public SourceRegexFilterBuilder caseSensitive(boolean caseSensitive) {
+    public SourceRegexQueryBuilder caseSensitive(boolean caseSensitive) {
         settings.caseSensitive(caseSensitive);
         return this;
     }
 
-    public SourceRegexFilterBuilder locale(Locale locale) {
+    public SourceRegexQueryBuilder locale(Locale locale) {
         settings.locale(locale);
         return this;
     }
@@ -142,14 +142,14 @@ public class SourceRegexFilterBuilder extends QueryBuilder {
      *            accelerate?
      * @return this for chaining
      */
-    public SourceRegexFilterBuilder rejectUnaccelerated(boolean rejectUnaccelerated) {
+    public SourceRegexQueryBuilder rejectUnaccelerated(boolean rejectUnaccelerated) {
         settings.rejectUnaccelerated(rejectUnaccelerated);
         return this;
     }
 
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject(SourceRegexFilterParser.NAMES[0]);
+        builder.startObject(SourceRegexQueryParser.NAMES[0]);
         builder.field("field", field);
         builder.field("regex", regex);
 

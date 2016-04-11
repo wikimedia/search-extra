@@ -23,7 +23,7 @@ import org.elasticsearch.rest.RestStatus;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
-public class SourceRegexFilterTest extends AbstractPluginIntegrationTest {
+public class SourceRegexQueryTest extends AbstractPluginIntegrationTest {
     @Test
     public void basicUnacceleratedRegex() throws InterruptedException, ExecutionException, IOException {
         setup();
@@ -299,14 +299,14 @@ public class SourceRegexFilterTest extends AbstractPluginIntegrationTest {
         int rounds = 50;
         long start = System.currentTimeMillis();
         for (int i = 0; i < rounds; i++) {
-            SearchResponse response = search(new SourceRegexFilterBuilder("test", regex)).get();
+            SearchResponse response = search(new SourceRegexQueryBuilder("test", regex)).get();
             assertSearchHits(response, "findme");
         }
         logger.info("Warmup:  {}", (System.currentTimeMillis() - start) / rounds);
 
         start = System.currentTimeMillis();
         for (int i = 0; i < rounds; i++) {
-            SearchResponse response = search(new SourceRegexFilterBuilder("test", regex)).get();
+            SearchResponse response = search(new SourceRegexQueryBuilder("test", regex)).get();
             assertSearchHits(response, "findme");
         }
         logger.info("No accel:  {}", (System.currentTimeMillis() - start) / rounds);
@@ -337,13 +337,13 @@ public class SourceRegexFilterTest extends AbstractPluginIntegrationTest {
         }
     }
 
-    private SourceRegexFilterBuilder filter(String regex) {
-        SourceRegexFilterBuilder builder = new SourceRegexFilterBuilder("test", regex);
+    private SourceRegexQueryBuilder filter(String regex) {
+        SourceRegexQueryBuilder builder = new SourceRegexQueryBuilder("test", regex);
         builder.ngramField("test.trigram");
         return builder;
     }
 
-    private SearchRequestBuilder search(SourceRegexFilterBuilder builder) {
+    private SearchRequestBuilder search(SourceRegexQueryBuilder builder) {
         return client().prepareSearch("test").setTypes("test").setQuery(filteredQuery(matchAllQuery(), builder));
     }
 

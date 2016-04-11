@@ -2,6 +2,7 @@ package org.wikimedia.search.extra.safer;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.CachingWrapperFilter;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.DisjunctionMaxQuery;
@@ -16,6 +17,7 @@ public class DefaultQueryExplodingSafeifierActions {
         safeifier.register(DisjunctionMaxQuery.class, DISJUNCTION_MAX_QUERY_ACTION);
         safeifier.register(FilteredQuery.class, FILTERED_QUERY_ACTION);
         safeifier.register(QueryWrapperFilter.class, QUERY_WRAPPER_ACTION);
+        safeifier.register(BoostQuery.class, BOOST_QUERY_ACTION);
         safeifier.register(ConstantScoreQuery.class, CONSTANT_SCORE_QUERY_ACTION);
     }
 
@@ -57,6 +59,14 @@ public class DefaultQueryExplodingSafeifierActions {
         public QueryWrapperFilter apply(Safeifier safeifier, QueryWrapperFilter fq) {
             QueryWrapperFilter newQuery = new QueryWrapperFilter(safeifier.safeify(fq.getQuery()));
             newQuery.setBoost(fq.getBoost());
+            return newQuery;
+        }
+    };
+
+    private static final Action<BoostQuery, BoostQuery> BOOST_QUERY_ACTION = new Action<BoostQuery, BoostQuery>() {
+        @Override
+        public BoostQuery apply(Safeifier safeifier, BoostQuery query) {
+            BoostQuery newQuery = new BoostQuery(safeifier.safeify(query.getQuery()), query.getBoost());
             return newQuery;
         }
     };
