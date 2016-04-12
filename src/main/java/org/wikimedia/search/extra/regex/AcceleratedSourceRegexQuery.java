@@ -48,7 +48,7 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
                 if(approxScorer == null) {
                     return null;
                 }
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer, context, inspected));
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, inspected));
             }
         };
     }
