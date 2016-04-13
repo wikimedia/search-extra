@@ -8,11 +8,13 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import lombok.EqualsAndHashCode;
 
 
 /**
  * Abstract parent for composite expressions like And and Or.
  */
+@EqualsAndHashCode(exclude = { "simplified", "toString" })
 public abstract class AbstractCompositeExpression<T> implements Expression<T> {
     private static final int MAX_COMPONENT_STRING_LENGTH = 1000;
     private static final int MAX_COMPONENTS_SIZE_FOR_TO_STRING = 10;
@@ -261,21 +263,4 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
         return toString;
     }
 
-    @Override
-    public int hashCode() {
-        return components.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        @SuppressWarnings("rawtypes")
-        AbstractCompositeExpression other = (AbstractCompositeExpression) obj;
-        return components.equals(other.components);
-    }
 }

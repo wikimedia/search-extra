@@ -2,10 +2,12 @@ package org.wikimedia.search.extra.regex.expression;
 
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableSet;
+import lombok.EqualsAndHashCode;
 
 /**
  * A leaf expression.
  */
+@EqualsAndHashCode
 public final class Leaf<T> implements Expression<T> {
     @SafeVarargs
     public static final <T> ImmutableSet<Expression<T>> leaves(T... ts) {
@@ -17,7 +19,6 @@ public final class Leaf<T> implements Expression<T> {
     }
 
     private final T t;
-    private int hashCode;
 
     public Leaf(T t) {
         this.t = checkNotNull(t);
@@ -52,24 +53,4 @@ public final class Leaf<T> implements Expression<T> {
         return transformer.leaf(t);
     }
 
-    @Override
-    public int hashCode() {
-        if (hashCode == 0) {
-            hashCode = t.hashCode();
-        }
-        return hashCode;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        @SuppressWarnings("rawtypes")
-        Leaf other = (Leaf) obj;
-        return t.equals(other.t);
-    }
 }

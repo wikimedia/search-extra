@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.idhashmod;
 import java.io.IOException;
 import java.util.Locale;
 
+import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
@@ -39,6 +40,7 @@ import org.elasticsearch.index.fielddata.SortedBinaryDocValues;
  * which is how you'd use this query anyway. On the other hand this is fast
  * enough.
  */
+@EqualsAndHashCode
 public class IdHashModQuery extends Query {
     private final IndexFieldData<?> uidFieldData;
     private final int mod;
@@ -108,34 +110,4 @@ public class IdHashModQuery extends Query {
         return "IdHashModQuery";
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + match;
-        result = prime * result + mod;
-        result = prime * result + ((uidFieldData == null) ? 0 : uidFieldData.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        IdHashModQuery other = (IdHashModQuery) obj;
-        if (match != other.match)
-            return false;
-        if (mod != other.mod)
-            return false;
-        if (uidFieldData == null) {
-            if (other.uidFieldData != null)
-                return false;
-        } else if (!uidFieldData.equals(other.uidFieldData))
-            return false;
-        return true;
-    }
 }

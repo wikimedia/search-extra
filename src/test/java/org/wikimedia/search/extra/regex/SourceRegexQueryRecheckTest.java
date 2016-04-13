@@ -72,7 +72,7 @@ public class SourceRegexQueryRecheckTest {
         long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex);
         long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex);
         assertTrue("Nonbacktracking is faster than slow", slow > nonBacktracking);
-        if (!settings.getCaseSensitive()) {
+        if (!settings.isCaseSensitive()) {
             long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),
                     "case converting", name, settings, times, regex);
             if (!matchIsNearTheEnd) {

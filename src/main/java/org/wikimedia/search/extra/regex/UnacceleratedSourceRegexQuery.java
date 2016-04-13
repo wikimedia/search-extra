@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.regex;
 import java.io.IOException;
 import java.util.List;
 
+import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
@@ -22,6 +23,7 @@ import org.wikimedia.search.extra.util.FieldValues.Loader;
  * Unaccelerated source_regex query.
  * It will scan all the docs in the index.
  */
+@EqualsAndHashCode
 class UnacceleratedSourceRegexQuery extends Query {
     protected final Rechecker rechecker;
     protected final String fieldPath;
@@ -102,46 +104,4 @@ class UnacceleratedSourceRegexQuery extends Query {
         }
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((fieldPath == null) ? 0 : fieldPath.hashCode());
-        result = prime * result + ((loader == null) ? 0 : loader.hashCode());
-        result = prime * result + ((rechecker == null) ? 0 : rechecker.hashCode());
-        result = prime * result + ((settings == null) ? 0 : settings.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UnacceleratedSourceRegexQuery other = (UnacceleratedSourceRegexQuery) obj;
-        if (fieldPath == null) {
-            if (other.fieldPath != null)
-                return false;
-        } else if (!fieldPath.equals(other.fieldPath))
-            return false;
-        if (loader == null) {
-            if (other.loader != null)
-                return false;
-        } else if (!loader.equals(other.loader))
-            return false;
-        if (rechecker == null) {
-            if (other.rechecker != null)
-                return false;
-        } else if (!rechecker.equals(other.rechecker))
-            return false;
-        if (settings == null) {
-            if (other.settings != null)
-                return false;
-        } else if (!settings.equals(other.settings))
-            return false;
-        return true;
-    }
 }

@@ -2,6 +2,7 @@ package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
 
+import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -18,6 +19,7 @@ import org.wikimedia.search.extra.util.FieldValues.Loader;
 /**
  * Accelerated version of the source_regex query.
  */
+@EqualsAndHashCode
 class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     private final Query approximation;
 
@@ -67,28 +69,4 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
         return "source_regex(accelerated):" + field;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((approximation == null) ? 0 : approximation.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        AcceleratedSourceRegexQuery other = (AcceleratedSourceRegexQuery) obj;
-        if (approximation == null) {
-            if (other.approximation != null)
-                return false;
-        } else if (!approximation.equals(other.approximation))
-            return false;
-        return true;
-    }
 }

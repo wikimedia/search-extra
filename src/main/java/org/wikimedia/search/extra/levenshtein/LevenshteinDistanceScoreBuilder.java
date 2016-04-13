@@ -2,16 +2,19 @@ package org.wikimedia.search.extra.levenshtein;
 
 import java.io.IOException;
 
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 
 /**
  * Builds the levenshtein_distance_score score function.
  */
+@Accessors(chain = true, fluent = true)
 public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder {
-    private String field;
-    private String text;
-    private String missing;
+    @Setter private String field;
+    @Setter private String text;
+    @Setter private String missing;
 
     @Override
     public String getName() {
@@ -36,18 +39,4 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder {
         builder.endObject();
     }
 
-    public LevenshteinDistanceScoreBuilder field(String field) {
-        this.field = field;
-        return this;
-    }
-
-    public LevenshteinDistanceScoreBuilder text(String text) {
-        this.text = text;
-        return this;
-    }
-
-    public LevenshteinDistanceScoreBuilder missing(String missing) {
-        this.missing = missing;
-        return this;
-    }
 }

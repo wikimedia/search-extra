@@ -3,6 +3,8 @@ package org.wikimedia.search.extra.regex;
 import java.io.IOException;
 import java.util.Locale;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
@@ -19,6 +21,7 @@ import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
 
+@EqualsAndHashCode
 public class SourceRegexQuery extends Query {
     private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexQuery.class.getPackage().getName());
     private final String fieldPath;
@@ -37,7 +40,7 @@ public class SourceRegexQuery extends Query {
         this.loader = loader;
         this.settings = settings;
         this.gramSize = gramSize;
-        if (!settings.getCaseSensitive()
+        if (!settings.isCaseSensitive()
                 && !settings.getLocale().getLanguage().equals("ga")
                 && !settings.getLocale().getLanguage().equals("tr")) {
             rechecker = new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings);
@@ -52,7 +55,7 @@ public class SourceRegexQuery extends Query {
         if (ngramFieldPath == null) {
             // Don't bother expanding the regex if there isn't a field to check
             // it against. Its unlikely to resolve to all false anyway.
-            if (settings.getRejectUnaccelerated()) {
+            if (settings.isRejectUnaccelerated()) {
                 throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
             }
             return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings);
@@ -66,7 +69,7 @@ public class SourceRegexQuery extends Query {
             Expression<String> expression = new NGramExtractor(gramSize, settings.getMaxExpand(), settings.getMaxStatesTraced(),
                     settings.getMaxNgramsExtracted()).extract(automaton).simplify();
             if (expression.alwaysTrue()) {
-                if (settings.getRejectUnaccelerated()) {
+                if (settings.isRejectUnaccelerated()) {
                     throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                 }
                 return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
@@ -121,6 +124,7 @@ public class SourceRegexQuery extends Query {
      * Faster for case insensitive queries than the NonBacktrackingRechecker but
      * wrong for Irish and Turkish.
      */
+    @EqualsAndHashCode(exclude = "charRun")
     static class NonBacktrackingOnTheFlyCaseConvertingRechecker implements Rechecker {
         private final String regex;
         private final Settings settings;
@@ -145,7 +149,7 @@ public class SourceRegexQuery extends Query {
         private ContainsCharacterRunAutomaton getCharRun() {
             if(charRun == null) {
                 String regexString = regex;
-                if (!settings.getCaseSensitive()) {
+                if (!settings.isCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
                 }
                 Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
@@ -164,41 +168,12 @@ public class SourceRegexQuery extends Query {
             return getCharRun().getSize();
         }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((regex == null) ? 0 : regex.hashCode());
-            result = prime * result + ((settings == null) ? 0 : settings.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            NonBacktrackingOnTheFlyCaseConvertingRechecker other = (NonBacktrackingOnTheFlyCaseConvertingRechecker) obj;
-            if (regex == null) {
-                if (other.regex != null)
-                    return false;
-            } else if (!regex.equals(other.regex))
-                return false;
-            if (settings == null) {
-                if (other.settings != null)
-                    return false;
-            } else if (!settings.equals(other.settings))
-                return false;
-            return true;
-        }
     }
 
     /**
      * Much much faster than SlowRechecker.
      */
+    @EqualsAndHashCode(exclude = "charRun")
     static class NonBacktrackingRechecker implements Rechecker {
         private final String regex;
         private final Settings settings;
@@ -213,7 +188,7 @@ public class SourceRegexQuery extends Query {
         @Override
         public boolean recheck(Iterable<String> values) {
             for (String value : values) {
-                if (!settings.getCaseSensitive()) {
+                if (!settings.isCaseSensitive()) {
                     value = value.toLowerCase(settings.getLocale());
                 }
                 if (getCharRun().contains(value)) {
@@ -226,7 +201,7 @@ public class SourceRegexQuery extends Query {
         private ContainsCharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
-                if (!settings.getCaseSensitive()) {
+                if (!settings.isCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
                 }
                 Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
@@ -241,41 +216,12 @@ public class SourceRegexQuery extends Query {
             return getCharRun().getSize();
         }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((regex == null) ? 0 : regex.hashCode());
-            result = prime * result + ((settings == null) ? 0 : settings.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            NonBacktrackingRechecker other = (NonBacktrackingRechecker) obj;
-            if (regex == null) {
-                if (other.regex != null)
-                    return false;
-            } else if (!regex.equals(other.regex))
-                return false;
-            if (settings == null) {
-                if (other.settings != null)
-                    return false;
-            } else if (!settings.equals(other.settings))
-                return false;
-            return true;
-        }
     }
 
     /**
      * Simplistic recheck implemetation which is more obviously correct.
      */
+    @EqualsAndHashCode(exclude = "charRun")
     static class SlowRechecker implements Rechecker {
         private final String regex;
         private final Settings settings;
@@ -294,7 +240,7 @@ public class SourceRegexQuery extends Query {
         @Override
         public boolean recheck(Iterable<String> values) {
             for (String value : values) {
-                if (!settings.getCaseSensitive()) {
+                if (!settings.isCaseSensitive()) {
                     value = value.toLowerCase(settings.getLocale());
                 }
                 if (getCharRun().run(value)) {
@@ -307,7 +253,7 @@ public class SourceRegexQuery extends Query {
         private CharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
-                if (!settings.getCaseSensitive()) {
+                if (!settings.isCaseSensitive()) {
                     regexString = regexString.toLowerCase(settings.getLocale());
                 }
                 Automaton automaton = regexToAutomaton(new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON),
@@ -322,36 +268,6 @@ public class SourceRegexQuery extends Query {
             return getCharRun().getSize();
         }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((regex == null) ? 0 : regex.hashCode());
-            result = prime * result + ((settings == null) ? 0 : settings.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            SlowRechecker other = (SlowRechecker) obj;
-            if (regex == null) {
-                if (other.regex != null)
-                    return false;
-            } else if (!regex.equals(other.regex))
-                return false;
-            if (settings == null) {
-                if (other.settings != null)
-                    return false;
-            } else if (!settings.equals(other.settings))
-                return false;
-            return true;
-        }
     }
 
     @Override
@@ -364,58 +280,7 @@ public class SourceRegexQuery extends Query {
         return b.toString();
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((fieldPath == null) ? 0 : fieldPath.hashCode());
-        result = prime * result + gramSize;
-        result = prime * result + ((loader == null) ? 0 : loader.hashCode());
-        result = prime * result + ((ngramFieldPath == null) ? 0 : ngramFieldPath.hashCode());
-        result = prime * result + ((regex == null) ? 0 : regex.hashCode());
-        result = prime * result + ((settings == null) ? 0 : settings.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SourceRegexQuery other = (SourceRegexQuery) obj;
-        if (fieldPath == null) {
-            if (other.fieldPath != null)
-                return false;
-        } else if (!fieldPath.equals(other.fieldPath))
-            return false;
-        if (gramSize != other.gramSize)
-            return false;
-        if (loader == null) {
-            if (other.loader != null)
-                return false;
-        } else if (!loader.equals(other.loader))
-            return false;
-        if (ngramFieldPath == null) {
-            if (other.ngramFieldPath != null)
-                return false;
-        } else if (!ngramFieldPath.equals(other.ngramFieldPath))
-            return false;
-        if (regex == null) {
-            if (other.regex != null)
-                return false;
-        } else if (!regex.equals(other.regex))
-            return false;
-        if (settings == null) {
-            if (other.settings != null)
-                return false;
-        } else if (!settings.equals(other.settings))
-            return false;
-        return true;
-    }
-
+    @Data
     public static class Settings {
         private int maxExpand = 4;
         private int maxStatesTraced = 10000;
@@ -424,125 +289,11 @@ public class SourceRegexQuery extends Query {
         /**
          * @deprecated use a generic time limiting collector
          */
+        @Deprecated
         private int maxInspect = Integer.MAX_VALUE;
         private boolean caseSensitive = false;
         private Locale locale = Locale.ROOT;
         private boolean rejectUnaccelerated = false;
 
-        public int getMaxExpand() {
-            return maxExpand;
-        }
-
-        public void setMaxExpand(int maxExpand) {
-            this.maxExpand = maxExpand;
-        }
-
-        public int getMaxStatesTraced() {
-            return maxStatesTraced;
-        }
-
-        public void setMaxStatesTraced(int maxStatesTraced) {
-            this.maxStatesTraced = maxStatesTraced;
-        }
-
-        public int getMaxDeterminizedStates() {
-            return maxDeterminizedStates;
-        }
-
-        public void setMaxDeterminizedStates(int maxDeterminizedStates) {
-            this.maxDeterminizedStates = maxDeterminizedStates;
-        }
-
-        public int getMaxNgramsExtracted() {
-            return maxNgramsExtracted;
-        }
-
-        public void setMaxNgramsExtracted(int maxNgramsExtracted) {
-            this.maxNgramsExtracted = maxNgramsExtracted;
-        }
-
-        /**
-         * @deprecated use a generic time limiting collector
-         */
-        public int getMaxInspect() {
-            return maxInspect;
-        }
-
-        /**
-         * @deprecated use a generic time limiting collector
-         */
-        public void setMaxInspect(int maxInspect) {
-            this.maxInspect = maxInspect;
-        }
-
-        public boolean getCaseSensitive() {
-            return caseSensitive;
-        }
-
-        public void setCaseSensitive(boolean caseSensitive) {
-            this.caseSensitive = caseSensitive;
-        }
-
-        public Locale getLocale() {
-            return locale;
-        }
-
-        public void setLocale(Locale locale) {
-            this.locale = locale;
-        }
-
-        public boolean getRejectUnaccelerated() {
-            return rejectUnaccelerated;
-        }
-
-        public void setRejectUnaccelerated(boolean rejectUnaccelerated) {
-            this.rejectUnaccelerated = rejectUnaccelerated;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + (caseSensitive ? 1231 : 1237);
-            result = prime * result + ((locale == null) ? 0 : locale.hashCode());
-            result = prime * result + maxDeterminizedStates;
-            result = prime * result + maxExpand;
-            result = prime * result + maxInspect;
-            result = prime * result + maxNgramsExtracted;
-            result = prime * result + maxStatesTraced;
-            result = prime * result + (rejectUnaccelerated ? 1231 : 1237);
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Settings other = (Settings) obj;
-            if (caseSensitive != other.caseSensitive)
-                return false;
-            if (locale == null) {
-                if (other.locale != null)
-                    return false;
-            } else if (!locale.equals(other.locale))
-                return false;
-            if (maxDeterminizedStates != other.maxDeterminizedStates)
-                return false;
-            if (maxExpand != other.maxExpand)
-                return false;
-            if (maxInspect != other.maxInspect)
-                return false;
-            if (maxNgramsExtracted != other.maxNgramsExtracted)
-                return false;
-            if (maxStatesTraced != other.maxStatesTraced)
-                return false;
-            if (rejectUnaccelerated != other.rejectUnaccelerated)
-                return false;
-            return true;
-        }
     }
 }

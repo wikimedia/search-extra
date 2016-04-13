@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.Transition;
 import org.wikimedia.search.extra.regex.expression.And;
@@ -222,6 +223,7 @@ public class NGramAutomaton {
      * State in the ngram graph. Equals and hashcode only use the sourceState
      * and prefix.
      */
+    @EqualsAndHashCode(of = { "prefix", "sourceState" })
     private static class NGramState implements ExpressionSource<String> {
         /**
          * We use the 0 char to stand in for code points we can't match.
@@ -298,35 +300,6 @@ public class NGramAutomaton {
                 }
             }
             return expression;
-        }
-
-        // Equals and hashcode from Eclipse.
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((prefix == null) ? 0 : prefix.hashCode());
-            result = prime * result + sourceState;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            NGramState other = (NGramState) obj;
-            if (prefix == null) {
-                if (other.prefix != null)
-                    return false;
-            } else if (!prefix.equals(other.prefix))
-                return false;
-            if (sourceState != other.sourceState)
-                return false;
-            return true;
         }
     }
 
