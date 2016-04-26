@@ -10,11 +10,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CharacterRunAutomaton;
-import org.apache.lucene.util.automaton.ContainsCharacterRunAutomaton;
 import org.apache.lucene.util.automaton.RegExp;
-import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.lucene.search.Queries;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
@@ -23,7 +19,6 @@ import org.wikimedia.search.extra.util.FieldValues;
 
 @EqualsAndHashCode
 public class SourceRegexQuery extends Query {
-    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexQuery.class.getPackage().getName());
     private final String fieldPath;
     private final String ngramFieldPath;
     private final String regex;
@@ -87,18 +82,7 @@ public class SourceRegexQuery extends Query {
     }
 
     private static Automaton regexToAutomaton(RegExp regex, int maxDeterminizedStates) {
-        try {
-            return regex.toAutomaton(maxDeterminizedStates);
-        } catch (TooComplexToDeterminizeException e) {
-            /*
-             * Since we're going to lose the stack trace we give our future
-             * selves an opportunity to log it in case we need it.
-             */
-            if (log.isDebugEnabled()) {
-                log.debug("Regex too complex to determinize", e);
-            }
-            throw new RegexTooComplexException(e);
-        }
+        return regex.toAutomaton(maxDeterminizedStates);
     }
 
     /**

@@ -1,6 +1,9 @@
-package org.apache.lucene.util.automaton;
+package org.wikimedia.search.extra.regex;
 
-public class ContainsCharacterRunAutomaton extends RunAutomaton {
+import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.RunAutomaton;
+
+class ContainsCharacterRunAutomaton extends RunAutomaton {
     public ContainsCharacterRunAutomaton(Automaton a) {
         super(a, Character.MAX_CODE_POINT, true);
     }
@@ -13,6 +16,8 @@ public class ContainsCharacterRunAutomaton extends RunAutomaton {
     public boolean contains(String s) {
         int end = s.length();
         int offset = 0;
+        // super.initial is final
+        final int initial = getInitialState();
         while (offset < end) {
             int cp = s.codePointAt(offset);
             offset += Character.charCount(cp);
@@ -20,7 +25,7 @@ public class ContainsCharacterRunAutomaton extends RunAutomaton {
             if (p == -1) {
                 continue;
             }
-            if (accept[p]) {
+            if (isAccept(p)) {
                 return true;
             }
             /*
@@ -36,7 +41,7 @@ public class ContainsCharacterRunAutomaton extends RunAutomaton {
                 if (p == -1) {
                     break;
                 }
-                if (accept[p]) {
+                if (isAccept(p)) {
                     return true;
                 }
             }
