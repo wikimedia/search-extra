@@ -14,11 +14,6 @@ independantly. For example, it can be used by multiple processes to reindex
 all documents without any interprocess communication. Added in 1.5.0, 1.4.1,
 and 1.3.0.
 
-Queries:
-* [safer](docs/safer.md) - Wraps other queries and analyzes them for
-potentially expensive constructs.  Expensive constructs either cause errors to
-be sent back to the user or are degraded into cheaper, less precise constructs.
-
 Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but
 supports configurable sloppiness. New in 1.5.0, 1.4.1, and 1.3.1.
@@ -26,9 +21,13 @@ supports configurable sloppiness. New in 1.5.0, 1.4.1, and 1.3.1.
 Installation
 ------------
 
+TODO: fix this list when releasing, starting from es 2.0 we'll need one plugin version per elastic version
+
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 2.1.0, master branch             | 2.1.x           |
+| 2.3.0, master branch             | 2.3.x           |
+| 2.2.0, 2.2 branch                | 2.2.x           |
+| 2.1.0, 2.1 branch                | 2.1.x           |
 | 2.0.0, 2.0 branch                | 2.0.x           |
 | 1.7.0 -> 1.7.1, 1.7 branch       | 1.7.X           |
 | 1.6.0, 1.6 branch                | 1.6.X           |
@@ -37,27 +36,7 @@ Installation
 | 1.3.0 -> 1.3.1, 1.3 branch       | 1.3.4 -> 1.3.X  |
 | 0.0.1 -> 0.0.2                   | 1.3.2 -> 1.3.3  |
 
-Install it like so for Elasticsearch 1.7.x:
+Install it like so for Elasticsearch x.y.z:
 ```bash
-./bin/plugin --install org.wikimedia.search/extra/1.7.0
-```
-
-Install it like so for Elasticsearch 1.6.x:
-```bash
-./bin/plugin --install org.wikimedia.search/extra/1.6.0
-```
-
-Install it like so for Elasticsearch 1.5.x:
-```bash
-./bin/plugin --install org.wikimedia.search/extra/1.5.0
-```
-
-Install it like so for Elasticsearch 1.4.x:
-```bash
-./bin/plugin --install org.wikimedia.search/extra/1.4.1
-```
-
-and for Elasticsearch 1.3.x:
-```bash
-./bin/plugin --install org.wikimedia.search/extra/1.3.1
+./bin/plugin --install org.wikimedia.search/extra/x.y.z
 ```
