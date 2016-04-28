@@ -14,13 +14,14 @@ import lombok.EqualsAndHashCode;
 /**
  * Abstract parent for composite expressions like And and Or.
  */
-@EqualsAndHashCode(exclude = { "simplified", "toString" })
-public abstract class AbstractCompositeExpression<T> implements Expression<T> {
+@EqualsAndHashCode(exclude = { "simplified", "toString", "numClauses" })
+public abstract class AbstractCompositeExpression<T> implements Expression<T>, Iterable<Expression<T>> {
     private static final int MAX_COMPONENT_STRING_LENGTH = 1000;
     private static final int MAX_COMPONENTS_SIZE_FOR_TO_STRING = 10;
     private final ImmutableSet<Expression<T>> components;
     private boolean simplified;
     private String toString = null;
+    private int numClauses = -1;
 
     public AbstractCompositeExpression(ImmutableSet<Expression<T>> components) {
         this.components = components;
@@ -235,6 +236,11 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
     }
 
     @Override
+    public Iterator<Expression<T>> iterator() {
+        return components.iterator();
+    }
+
+    @Override
     public String toString() {
         if (toString != null) {
             return toString;
@@ -263,4 +269,16 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T> {
         return toString;
     }
 
+    @Override
+    public int countClauses() {
+        if(numClauses >= 0) {
+            return numClauses;
+        }
+        int cnt = components.size();
+        for(Expression<T> exp : components) {
+            cnt += exp.countClauses();
+        }
+        numClauses = cnt;
+        return numClauses;
+    }
 }

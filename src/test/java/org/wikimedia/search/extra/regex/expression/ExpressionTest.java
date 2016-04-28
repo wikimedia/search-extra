@@ -1,7 +1,14 @@
 package org.wikimedia.search.extra.regex.expression;
 
 import org.junit.Test;
+import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
+
 import static org.junit.Assert.*;
+
+import java.util.Locale;
+
+import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.RegExp;
 
 public class ExpressionTest {
     private final Leaf<String> foo = new Leaf<>("foo");
@@ -55,4 +62,23 @@ public class ExpressionTest {
         assertEquals(foo, new Or<>(foo, new And<>(foo)).simplify());
     }
 
+    @Test
+    public void testDegradedDisjunction() {
+        String regex = "[ab]*a[cd]{50,80}";
+        int maxExpand = 4;
+        int maxStatesTraced = 10000;
+        int maxDeterminizedStates = 20000;
+        int maxNgramsExtracted = 100;
+
+        Automaton automaton = new RegExp(regex.toLowerCase(Locale.ENGLISH), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
+        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted);
+
+        Expression<String> expression = extractor.extract(automaton);
+        assertTrue(expression.countClauses() > 1024);
+        expression = new ExpressionRewriter<>(expression).degradeAsDisjunction();
+        assertTrue(expression.getClass() == Or.class);
+        assertFalse(expression.alwaysFalse());
+        assertFalse(expression.alwaysTrue());
+        assertTrue(expression.countClauses() <= maxNgramsExtracted);
+    }
 }

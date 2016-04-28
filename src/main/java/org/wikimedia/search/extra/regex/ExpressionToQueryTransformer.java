@@ -44,7 +44,7 @@ public class ExpressionToQueryTransformer implements Expression.Transformer<Stri
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
 
         for (Query j : js) {
-            builder.add(j, Occur.MUST);
+            builder.add(j, Occur.FILTER);
         }
         return builder.build();
     }

@@ -53,4 +53,8 @@ public final class Leaf<T> implements Expression<T> {
         return transformer.leaf(t);
     }
 
+    @Override
+    public int countClauses() {
+        return 0;
+    }
 }

@@ -135,6 +135,11 @@ public class SourceRegexQueryParser implements QueryParser {
         case "rejectUnaccelerated":
             settings.setRejectUnaccelerated(parser.booleanValue());
             break;
+        case "max_ngram_clauses":
+        case "maxNgramClauses":
+        case "maxNGramClauses":
+            settings.setMaxNgramClauses(parser.intValue());
+            break;
         default:
             return false;
         }

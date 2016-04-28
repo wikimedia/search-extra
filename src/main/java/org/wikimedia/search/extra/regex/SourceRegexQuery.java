@@ -6,6 +6,7 @@ import java.util.Locale;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.automaton.Automaton;
@@ -13,6 +14,7 @@ import org.apache.lucene.util.automaton.CharacterRunAutomaton;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.common.lucene.search.Queries;
 import org.wikimedia.search.extra.regex.expression.Expression;
+import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
@@ -71,6 +73,28 @@ public class SourceRegexQuery extends Query {
             } else if (expression.alwaysFalse()) {
                 return Queries.newMatchNoDocsQuery().rewrite(reader);
             } else {
+                if(expression.countClauses() > settings.getMaxNgramClauses()) {
+                    // The expression is too large we will try to use a degraded disjunction
+                    // Even if we limit the number of trigram generated (number of transition)
+                    // Some loops may generate huge boolean expression. If it's the case
+                    // The time required to build and scan all the clauses may be counter productive
+                    // since we are trying to optimize not to slowdown.
+                    //
+                    // It's not clear if the the degraded disjunction will be actually optimize the
+                    // regex, if one of the ngram is very common we will certainly scan nearly all
+                    // the docs in the index resulting in a UnacceleratedSourceRegexQuery.
+
+                    expression = new ExpressionRewriter<>(expression).degradeAsDisjunction();
+                    if(expression.countClauses() > settings.getMaxNgramClauses() || expression.alwaysTrue()) {
+                        // Still too large, it's likely a bug or improper settings:
+                        // maxTrigramClauses very low and a large max_ngrams_extracted
+                        if (settings.isRejectUnaccelerated()) {
+                            throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
+                        }
+                        return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
+                    }
+                    assert !expression.alwaysFalse();
+                }
                 return new AcceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings,
                         expression.transform(new ExpressionToQueryTransformer(ngramFieldPath))).rewrite(reader);
             }
@@ -278,6 +302,7 @@ public class SourceRegexQuery extends Query {
         private boolean caseSensitive = false;
         private Locale locale = Locale.ROOT;
         private boolean rejectUnaccelerated = false;
+        private int maxNgramClauses = BooleanQuery.getMaxClauseCount();
 
     }
 }

@@ -38,12 +38,13 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
 
     @Override
     public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        // TODO: Get rid of this shared mutable state, we should be able to use
-        // the generic timeout system.
-        final MutableValueInt inspected = new MutableValueInt();
         // Build the approximation based on trigrams
         final Weight approxWeight = approximation.createWeight(searcher, false);
         return new ConstantScoreWeight(this) {
+            // TODO: Get rid of this shared mutable state, we should be able to use
+            // the generic timeout system.
+            private final MutableValueInt inspected = new MutableValueInt();
+
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
                 final Scorer approxScorer = approxWeight.scorer(context);

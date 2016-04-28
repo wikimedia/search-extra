@@ -47,7 +47,7 @@ class UnacceleratedSourceRegexQuery extends Query {
 
     @Override
     public String toString(String field) {
-        return "source_regex(optimized):" + field;
+        return "source_regex(unaccelerated):" + field;
     }
 
     @Override
@@ -55,7 +55,8 @@ class UnacceleratedSourceRegexQuery extends Query {
         return new ConstantScoreWeight(this) {
             // TODO: Get rid of this shared mutable state, we should be able to use
             // the generic timeout system.
-            MutableValueInt inspected = new MutableValueInt();
+            private final MutableValueInt inspected = new MutableValueInt();
+
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
                 // We can stop matching early if we are allowed to inspect less

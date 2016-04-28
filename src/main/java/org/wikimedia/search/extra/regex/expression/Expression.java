@@ -39,6 +39,12 @@ public interface Expression<T> {
     boolean isComposite();
 
     /**
+     * Compute recursively the number of boolean clauses in this branch.
+     * @return the number of boolean clauses
+     */
+    int countClauses();
+
+    /**
      * Transform this expression into another form.
      *
      * @param <J> result of the transformation.

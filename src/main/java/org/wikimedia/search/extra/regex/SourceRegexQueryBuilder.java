@@ -179,6 +179,7 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
         private Boolean caseSensitive;
         private Locale locale;
         private Boolean rejectUnaccelerated;
+        private Integer maxNgramClauses;
 
         /**
          * @param maxExpand Maximum size of range transitions to expand into
@@ -260,6 +261,11 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
             return this;
         }
 
+        public Settings maxNgramClauses(int maxNgramClauses) {
+            this.maxNgramClauses = maxNgramClauses;
+            return this;
+        }
+
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
@@ -291,6 +297,9 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
             }
             if (rejectUnaccelerated != null) {
                 builder.field("reject_unaccelerated", rejectUnaccelerated);
+            }
+            if (maxNgramClauses != null) {
+                builder.field("max_ngram_clauses", maxNgramClauses);
             }
             return builder;
         }

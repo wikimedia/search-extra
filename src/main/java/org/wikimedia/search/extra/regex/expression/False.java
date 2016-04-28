@@ -46,4 +46,9 @@ public class False<T> implements Expression<T> {
     public <J> J transform(Expression.Transformer<T, J> transformer) {
         return transformer.alwaysFalse();
     }
+
+    @Override
+    public int countClauses() {
+        return 0;
+    }
 }
