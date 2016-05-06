@@ -99,7 +99,7 @@ public class SourceRegexQuery extends Query {
                         expression.transform(new ExpressionToQueryTransformer(ngramFieldPath))).rewrite(reader);
             }
         } catch (AutomatonTooComplexException e) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT,
+            throw new InvalidRegexException(String.format(Locale.ROOT,
                     "Regex /%s/ too complex for maxStatesTraced setting [%s].  Use a simpler regex or raise maxStatesTraced.", regex,
                     settings.getMaxStatesTraced()), e);
         }

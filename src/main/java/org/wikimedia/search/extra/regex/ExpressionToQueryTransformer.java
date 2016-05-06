@@ -26,12 +26,12 @@ public class ExpressionToQueryTransformer implements Expression.Transformer<Stri
 
     @Override
     public Query alwaysTrue() {
-        throw new IllegalArgumentException("Can't transform always true into a query.");
+        throw new InvalidRegexException("Can't transform always true into a query.");
     }
 
     @Override
     public Query alwaysFalse() {
-        throw new IllegalArgumentException("Can't transform always false into a query.");
+        throw new InvalidRegexException("Can't transform always false into a query.");
     }
 
     @Override
