@@ -102,6 +102,8 @@ public class SourceRegexQuery extends Query {
             throw new InvalidRegexException(String.format(Locale.ROOT,
                     "Regex /%s/ too complex for maxStatesTraced setting [%s].  Use a simpler regex or raise maxStatesTraced.", regex,
                     settings.getMaxStatesTraced()), e);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRegexException(e.getMessage(), e);
         }
     }
 
