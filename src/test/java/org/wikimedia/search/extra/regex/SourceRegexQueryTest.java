@@ -78,9 +78,9 @@ public class SourceRegexQueryTest extends AbstractPluginIntegrationTest {
         assertHitCount(response, 1);
         // maxStatesTraced is used when the regex is just a sequence of
         // characters
-        assertFailures(search(filter("test").maxStatesTraced(0)), RestStatus.BAD_REQUEST, containsString("complex"));
+        assertFailures(search(filter("test").maxStatesTraced(0)), RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
         // And when there are more complex things in the regex
-        assertFailures(search(filter("te[st]t").maxStatesTraced(0)), RestStatus.BAD_REQUEST, containsString("complex"));
+        assertFailures(search(filter("te[st]t").maxStatesTraced(0)), RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
         // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
         // I can't find any way from here to mark it otherwise.
     }
