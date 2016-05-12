@@ -10,6 +10,8 @@ import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.search.SearchModule;
+import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
+import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryParser;
 import org.wikimedia.search.extra.idhashmod.IdHashModQueryParser;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreParser;
 import org.wikimedia.search.extra.regex.SourceRegexQueryParser;
@@ -39,6 +41,7 @@ public class ExtraPlugin extends Plugin {
     public void onModule(IndicesModule module) {
         module.registerQueryParser(SourceRegexQueryParser.class);
         module.registerQueryParser(IdHashModQueryParser.class);
+        module.registerQueryParser(FuzzyLikeThisQueryParser.class);
     }
 
     /**
