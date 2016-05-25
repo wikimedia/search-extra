@@ -21,8 +21,6 @@ supports configurable sloppiness. New in 1.5.0, 1.4.1, and 1.3.1.
 Installation
 ------------
 
-TODO: fix this list when releasing, starting from es 2.0 we'll need one plugin version per elastic version
-
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
 | 2.3.3, master                    | 2.3.3           |
