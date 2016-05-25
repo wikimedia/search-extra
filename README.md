@@ -25,10 +25,7 @@ TODO: fix this list when releasing, starting from es 2.0 we'll need one plugin v
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 2.3.0, master branch             | 2.3.x           |
-| 2.2.0, 2.2 branch                | 2.2.x           |
-| 2.1.0, 2.1 branch                | 2.1.x           |
-| 2.0.0, 2.0 branch                | 2.0.x           |
+| 2.3.3, master                    | 2.3.3           |
 | 1.7.0 -> 1.7.1, 1.7 branch       | 1.7.X           |
 | 1.6.0, 1.6 branch                | 1.6.X           |
 | 1.5.0, 1.5 branch                | 1.5.X           |
