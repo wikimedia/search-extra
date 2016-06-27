@@ -18,6 +18,11 @@ Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but
 supports configurable sloppiness. New in 1.5.0, 1.4.1, and 1.3.1.
 
+Analysis:
+* [preserve_original](docs/preserve_original.md) - A token filter that wraps a
+filter chain and keeps and emit the original term at the same position. New in
+2.3.3.1.
+
 Installation
 ------------
 

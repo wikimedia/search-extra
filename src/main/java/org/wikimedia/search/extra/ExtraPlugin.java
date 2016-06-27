@@ -6,11 +6,12 @@ import java.util.Collections;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
+import org.elasticsearch.index.analysis.AnalysisModule;
 import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.script.ScriptModule;
 import org.elasticsearch.search.SearchModule;
-import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
+import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory;
 import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryParser;
 import org.wikimedia.search.extra.idhashmod.IdHashModQueryParser;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreParser;
@@ -42,6 +43,15 @@ public class ExtraPlugin extends Plugin {
         module.registerQueryParser(SourceRegexQueryParser.class);
         module.registerQueryParser(IdHashModQueryParser.class);
         module.registerQueryParser(FuzzyLikeThisQueryParser.class);
+    }
+
+    /**
+     * Register our analysis components.
+     */
+    public void onModule(AnalysisModule module) {
+        module.addTokenFilter("preserve_original", PreserveOriginalFilterFactory.class);
+        module.addTokenFilter("preserve_original_recorder",
+                PreserveOriginalFilterFactory.RecorderFactory.class);
     }
 
     /**
