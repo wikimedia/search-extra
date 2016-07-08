@@ -1,8 +1,8 @@
 preserve_original
 =================
 
-The `preserve_original` and `preserve_original_recorder` are token filters that
-allows to keep and index original terms. This is very similar to the
+`preserve_original` and `preserve_original_recorder` are token filters that
+allow to keep and index original terms. This is very similar to the
 `keyword_repeat` and `unique` filters but will work also on filters that do not
 support the keyword attribute.
 
