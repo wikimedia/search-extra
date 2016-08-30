@@ -6,8 +6,11 @@ import static org.hamcrest.Matchers.equalTo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -31,19 +34,35 @@ public class IdHashModQueryTest extends AbstractPluginIntegrationTest {
             docs.add(client().prepareIndex("test", typeName, id).setSource(Collections.<String, Object> emptyMap()));
         }
         indexRandom(true, docs);
+        flush("test");
+        docs.clear();
+        // Generate some deletes
+        for (int i = 0; i < count; i++) {
+            String id = "id" + i;
+            if(randomBoolean()) docs.add(client().prepareIndex("test", typeName, id).setSource(Collections.<String, Object> emptyMap()));
+        }
 
-        List<String> found = new ArrayList<>();
-        List<String> foundDirect = new ArrayList<>();
-        List<String> foundBoolFilter = new ArrayList<>();
+        indexRandom(true, docs);
+
+        Set<String> found = new HashSet<>();
+        Set<String> foundDirect = new HashSet<>();
+        Set<String> foundBoolFilter = new HashSet<>();
         int mod = randomIntBetween(1, 10);
         for (int match = 0; match < mod; match++) {
-            found.addAll(idsFound(mod, match));
-            foundDirect.addAll(idsFoundDirectQuery(mod, match));
-            foundBoolFilter.addAll(idsFoundBooleanFilter(mod, match));
+            addUniques(found, idsFound(mod, match));
+            addUniques(foundDirect, idsFoundDirectQuery(mod, match));
+            addUniques(foundBoolFilter, idsFoundBooleanFilter(mod, match));
+
         }
         assertThat(found, containsInAnyOrder(created));
-        assertThat(foundDirect, containsInAnyOrder(created));
         assertThat(foundBoolFilter, containsInAnyOrder(created));
+        assertThat(foundDirect, containsInAnyOrder(created));
+    }
+
+    void addUniques(Set<String> oldIds, Collection<String> newIds) {
+        int size = oldIds.size();
+        oldIds.addAll(newIds);
+        assertEquals("Duplicate ids returned", size+newIds.size(), oldIds.size());
     }
 
     List<String> idsFound(int mod, int match) {

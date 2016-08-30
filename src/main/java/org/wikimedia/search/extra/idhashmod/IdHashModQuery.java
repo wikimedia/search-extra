@@ -12,6 +12,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.util.StringHelper;
 import org.elasticsearch.index.fielddata.IndexFieldData;
 import org.elasticsearch.index.fielddata.SortedBinaryDocValues;
 
@@ -42,6 +43,11 @@ import org.elasticsearch.index.fielddata.SortedBinaryDocValues;
  */
 @EqualsAndHashCode
 public class IdHashModQuery extends Query {
+    /**
+     * hash seed param for murmur hash, needs to be set with the same value for
+     * all the servers running this query
+     */
+    private static int HASH_SEED = 1472571934;
     private final IndexFieldData<?> uidFieldData;
     private final int mod;
     private final int match;
@@ -65,39 +71,40 @@ public class IdHashModQuery extends Query {
                 final int maxDoc = context.reader().maxDoc();
 
                 DocIdSetIterator disi = new DocIdSetIterator() {
-                  int doc = -1;
+                    int doc = -1;
 
-                  @Override
-                  public int docID() {
-                    return doc;
-                  }
+                    @Override
+                    public int docID() {
+                        return doc;
+                    }
 
-                  @Override
-                  public int nextDoc() throws IOException {
-                    return advance(doc + 1);
-                  }
+                    @Override
+                    public int nextDoc() throws IOException {
+                        return advance(doc + 1);
+                    }
 
-                  @Override
-                  public int advance(int target) throws IOException {
-                      doc = target;
-                      while(true) {
-                          if (doc >= maxDoc) {
-                              doc = NO_MORE_DOCS;
-                              return doc;
-                          }
-                          uids.setDocument(doc);
-                          int hash = uids.valueAt(0).hashCode();
-                          if((hash & Integer.MAX_VALUE) % mod == match) {
-                              return doc;
-                          }
-                          doc++;
-                      }
-                  }
+                    @Override
+                    public int advance(int target) throws IOException {
+                        doc = target;
+                        while(true) {
+                            if(doc >= maxDoc) {
+                                doc = NO_MORE_DOCS;
+                                return doc;
+                            }
+                            uids.setDocument(doc);
+                            int hash = StringHelper.murmurhash3_x86_32(uids.valueAt(0), HASH_SEED);
 
-                  @Override
-                  public long cost() {
-                    return maxDoc;
-                  }
+                            if((hash & Integer.MAX_VALUE) % mod == match) {
+                                return doc;
+                            }
+                            doc++;
+                        }
+                    }
+
+                    @Override
+                    public long cost() {
+                        return maxDoc;
+                    }
                 };
 
                 return new ConstantScoreScorer(this, 0f, disi);
