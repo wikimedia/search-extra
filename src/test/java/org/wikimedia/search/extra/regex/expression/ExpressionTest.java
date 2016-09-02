@@ -81,4 +81,27 @@ public class ExpressionTest {
         assertFalse(expression.alwaysTrue());
         assertTrue(expression.countClauses() <= maxNgramsExtracted);
     }
+
+    @Test(timeout=500)
+    public void testBooleanExplosion() {
+        String regex = "[0-9]*a[0-9]{50,80}";
+        int maxExpand = 10;
+        int maxStatesTraced = 10000;
+        int maxDeterminizedStates = 20000;
+        int maxNgramsExtracted = 10000;
+
+        Automaton automaton = new RegExp(regex.toLowerCase(Locale.ENGLISH), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
+        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted);
+
+        Expression<String> expression = extractor.extract(automaton);
+        // This one is huge... but most of its branches are reused
+        assertTrue(expression.countClauses() == Integer.MAX_VALUE);
+        // Test that the rewritter is sufficiently optimized
+        // to run onthis boolean tree
+        expression = new ExpressionRewriter<>(expression).degradeAsDisjunction(maxNgramsExtracted);
+        assertTrue(expression.getClass() == Or.class);
+        assertFalse(expression.alwaysFalse());
+        assertFalse(expression.alwaysTrue());
+        assertTrue(expression.countClauses() <= maxNgramsExtracted);
+    }
 }

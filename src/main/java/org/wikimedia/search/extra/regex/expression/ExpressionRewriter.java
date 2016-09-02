@@ -1,17 +1,25 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
 
 /**
  * Boolean expression rewriter
  * @param <T> type holding leaves
  */
 public class ExpressionRewriter<T> {
+    public final static int MAX_BOOLEAN_CLAUSES = 1024;
+
     private final Expression<T> expression;
 
     public ExpressionRewriter(Expression<T> expression) {
         this.expression = expression;
+    }
+
+    public Expression<T> degradeAsDisjunction() {
+        return degradeAsDisjunction(MAX_BOOLEAN_CLAUSES);
     }
 
     /**
@@ -21,25 +29,41 @@ public class ExpressionRewriter<T> {
      *
      * @return a flat disjunction expression
      */
-    public Expression<T> degradeAsDisjunction() {
-        Builder<Expression<T>> builder = ImmutableSet.builder();
-        extractLeaves(expression, builder);
-        ImmutableSet<Expression<T>> expressions = builder.build();
-        for(Expression<T> expression : expressions) {
+    public Expression<T> degradeAsDisjunction(int maxResultingClauses) {
+        Set<Expression<T>> leaves = new HashSet<>();
+        Set<Expression<T>> visited = new HashSet<>();
+        if( !extractLeaves(expression, leaves, visited, maxResultingClauses) ) {
+            return True.instance();
+        }
+        for(Expression<T> expression : leaves) {
             if(expression.alwaysTrue()) {
                 return True.instance();
             }
         }
-        return new Or<>(expressions);
+        return new Or<>(ImmutableSet.copyOf(leaves));
     }
 
-    private void extractLeaves(Expression<T> subExpr, Builder<Expression<T>> builder) {
+    private boolean extractLeaves(Expression<T> subExpr, Set<Expression<T>> leaves, Set<Expression<T>> visited, int maxResultingClauses) {
         if(subExpr.isComposite()) {
             for(Expression<T> exp : (AbstractCompositeExpression<T>) subExpr) {
-                extractLeaves(exp, builder);
+                // NGramExtractor may generate a graph that reuses its branches
+                // We just need to extract the leaves so there's no need
+                // to visit the same branch twice.
+                if(!visited.add(exp)) {
+                    continue;
+                }
+                if(!extractLeaves(exp, leaves, visited, maxResultingClauses)) {
+                    return false;
+                }
             }
+            return true;
         } else {
-            builder.add(subExpr);
+            if(leaves.add(subExpr)) {
+                if(leaves.size() > maxResultingClauses) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

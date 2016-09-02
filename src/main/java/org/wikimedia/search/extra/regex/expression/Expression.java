@@ -40,7 +40,7 @@ public interface Expression<T> {
 
     /**
      * Compute recursively the number of boolean clauses in this branch.
-     * @return the number of boolean clauses
+     * @return the number of boolean clauses, Integer.MAX_INT may be returned if the number of clauses is greater
      */
     int countClauses();
 
