@@ -6,7 +6,6 @@ import java.util.Locale;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.automaton.Automaton;
@@ -84,7 +83,7 @@ public class SourceRegexQuery extends Query {
                     // regex, if one of the ngram is very common we will certainly scan nearly all
                     // the docs in the index resulting in a UnacceleratedSourceRegexQuery.
 
-                    expression = new ExpressionRewriter<>(expression).degradeAsDisjunction();
+                    expression = new ExpressionRewriter<>(expression).degradeAsDisjunction(settings.getMaxNgramClauses());
                     if(expression.countClauses() > settings.getMaxNgramClauses() || expression.alwaysTrue()) {
                         // Still too large, it's likely a bug or improper settings:
                         // maxTrigramClauses very low and a large max_ngrams_extracted
@@ -304,7 +303,7 @@ public class SourceRegexQuery extends Query {
         private boolean caseSensitive = false;
         private Locale locale = Locale.ROOT;
         private boolean rejectUnaccelerated = false;
-        private int maxNgramClauses = BooleanQuery.getMaxClauseCount();
+        private int maxNgramClauses = ExpressionRewriter.MAX_BOOLEAN_CLAUSES;
 
     }
 }

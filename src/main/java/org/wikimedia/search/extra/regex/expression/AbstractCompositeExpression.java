@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 /**
  * Abstract parent for composite expressions like And and Or.
  */
-@EqualsAndHashCode(exclude = { "simplified", "toString", "numClauses" })
+@EqualsAndHashCode(exclude={"simplified", "toString", "numClauses"})
 public abstract class AbstractCompositeExpression<T> implements Expression<T>, Iterable<Expression<T>> {
     private static final int MAX_COMPONENT_STRING_LENGTH = 1000;
     private static final int MAX_COMPONENTS_SIZE_FOR_TO_STRING = 10;
@@ -276,7 +276,23 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
         }
         int cnt = components.size();
         for(Expression<T> exp : components) {
-            cnt += exp.countClauses();
+            int size = exp.countClauses();
+            assert size >= 0;
+            assert cnt >= 0;
+            cnt += size;
+            // an integer overflow may occur for very complex
+            // boolean expressions
+            // According to Hacker's Delight section 2-13 an
+            // integer overflow only occurs if the 2 values
+            // added are of the same sign and the result is of
+            // the opposite sign. Here we only add positive
+            // numbers so a simple negative check on the result
+            // is sufficient.
+            if(cnt < 0) {
+                // int overflow, max out to MAX_INT and break
+                cnt = Integer.MAX_VALUE;
+                break;
+            }
         }
         numClauses = cnt;
         return numClauses;
