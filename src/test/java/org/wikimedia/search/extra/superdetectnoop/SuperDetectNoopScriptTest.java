@@ -256,11 +256,43 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
     }
 
     @Test
-    public void dontNoopDocumentWithEqualVersion() throws IOException {
+    public void dontNoopDocumentWithEqualVersionAndDifferentData() throws IOException {
         indexSeedData();
-        XContentBuilder b = x("int", 3, "documentVersion");
+        XContentBuilder b = jsonBuilder().startObject();
+        b.startObject("source");
+        {
+            b.field("string", "cheesecake");
+            b.field("int", 3);
+        }
+        b.endObject();
+        b.startObject("handlers");
+        {
+            b.field("int", "documentVersion");
+        }
+        b.endObject();
+        b.endObject();
         update(b, true);
     }
+
+    @Test
+    public void noopDocumentWithEqualVersionAndSameData() throws IOException {
+        indexSeedData();
+        XContentBuilder b = jsonBuilder().startObject();
+        b.startObject("source");
+        {
+            b.field("string", "cake");
+            b.field("int", 3);
+        }
+        b.endObject();
+        b.startObject("handlers");
+        {
+            b.field("int", "documentVersion");
+        }
+        b.endObject();
+        b.endObject();
+        update(b, false);
+    }
+
 
     @Test
     public void dontNoopDocumentWithMissingPrevVersion() throws IOException {
@@ -313,7 +345,7 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
         }
         b.endObject();
         b.endObject();
-        Map<String, Object> r = update(b, false);
+        update(b, false);
     }
 
     /**
