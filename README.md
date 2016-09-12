@@ -28,7 +28,8 @@ Installation
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 2.3.4, master                    | 2.3.4           |
+| 2.4.0, master                    | 2.4.0           |
+| 2.3.4                            | 2.3.4           |
 | 2.3.3                            | 2.3.3           |
 | 1.7.0 -> 1.7.1, 1.7 branch       | 1.7.X           |
 | 1.6.0, 1.6 branch                | 1.6.X           |
