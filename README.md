@@ -3,7 +3,7 @@ Extra Queries and Filters [![Build Status](https://integration.wikimedia.org/ci/
 
 The plan is for this to include any extra queries, filters, native scripts,
 score functions, and anything else we think we end up creating to make search
-nice for Wikimedia.  At this point it only contains:
+nice for Wikimedia. At this point it only contains:
 
 Filters:
 * [source_regex](docs/source_regex.md) - An nGram accelerated regular
