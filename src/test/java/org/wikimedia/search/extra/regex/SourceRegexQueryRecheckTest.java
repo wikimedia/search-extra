@@ -5,13 +5,13 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Locale;
 
-import org.elasticsearch.common.logging.ESLogger;
-import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingOnTheFlyCaseConvertingRechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingRechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.Settings;
+import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.SlowRechecker;
 
 import com.google.common.base.Charsets;
@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
 public class SourceRegexQueryRecheckTest {
-    private static final ESLogger log = ESLoggerFactory.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());
+    private static final Logger log = LogManager.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());
 
     private final String rashidun;
     private final String obama;
@@ -38,7 +38,7 @@ public class SourceRegexQueryRecheckTest {
     @Test
     public void sensitiveShortRegex() {
         Settings settings = new Settings();
-        settings.setCaseSensitive(true);
+        settings.caseSensitive = true;
         many("case sensitive", "cat", settings, 1000, false);
     }
 
@@ -51,14 +51,14 @@ public class SourceRegexQueryRecheckTest {
     @Test
     public void sensitiveLongerRegex() {
         Settings settings = new Settings();
-        settings.setCaseSensitive(true);
+        settings.caseSensitive = true;
         many("case sensitive", "\\[\\[Category:", settings, 1000, true);
     }
 
     @Test
     public void insensitiveBacktrackyRegex() {
         Settings settings = new Settings();
-        settings.setCaseSensitive(true);
+        settings.caseSensitive = true;
         many("case sensitive", "days.+and", settings, 1000, true);
     }
 
@@ -72,7 +72,7 @@ public class SourceRegexQueryRecheckTest {
         long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex);
         long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex);
         assertTrue("Nonbacktracking is faster than slow", slow > nonBacktracking);
-        if (!settings.isCaseSensitive()) {
+        if (!settings.caseSensitive) {
             long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),
                     "case converting", name, settings, times, regex);
             if (!matchIsNearTheEnd) {

@@ -10,7 +10,7 @@
 
   <groupId>org.wikimedia.search</groupId>
   <artifactId>extra</artifactId>
-  <version>2.4.2-SNAPSHOT</version>
+  <version>5.1.2-SNAPSHOT</version>
   <description>Extra queries and filters for Elasticsearch.</description>
 
   <licenses>
@@ -44,10 +44,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <elasticsearch.version>2.4.1</elasticsearch.version>
-    <lucene.version>5.5.2</lucene.version>
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <maven.compiler.source>1.7</maven.compiler.source>
+    <elasticsearch.version>5.1.2</elasticsearch.version>
+    <lucene.version>6.3.0</lucene.version>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
 
   <build>
@@ -138,13 +138,37 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.17</version>
+        <configuration>
+          <configLocation>src/dev-tools/checkstyle.xml</configLocation>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>7.3</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>checkstyle-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.3</version>
+          <version>3.5.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -185,8 +209,41 @@
         <plugin>
           <groupId>com.carrotsearch.randomizedtesting</groupId>
           <artifactId>junit4-maven-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>2.4.0</version>
           <executions>
+            <!-- Separate unit tests from integration tests
+                 The elastic security manager may cause issues
+                 with normal unit tests -->
+            <execution>
+              <id>tests-junit</id>
+              <phase>test</phase>
+              <goals>
+                <goal>junit4</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>**/*IntegrationTest*</exclude>
+                </excludes>
+                <skipTests>${skip.unit.tests}</skipTests>
+                <listeners>
+                  <report-text showThrowable="true" showStackTraces="true" showOutput="onerror" showStatusOk="false" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showSuiteSummary="true" showNumFailures="30" timestamps="false">
+                  </report-text>
+                  <report-ant-xml mavenExtensions="true" dir="${project.build.directory}/surefire-reports" />
+                </listeners>
+                <heartbeat>20</heartbeat>
+                <jvmOutputAction>warn</jvmOutputAction>
+                <leaveTemporary>true</leaveTemporary>
+                <sysouts>false</sysouts>
+                <assertions>
+                  <enable />
+                </assertions>
+                <jvmArgs>
+                  <param>-Xmx512m</param>
+                  <param>-XX:MaxDirectMemorySize=512m</param>
+                  <param>-Des.logger.prefix=</param>
+                </jvmArgs>
+              </configuration>
+            </execution>
             <execution>
               <id>tests</id>
               <phase>test</phase>
@@ -194,6 +251,9 @@
                 <goal>junit4</goal>
               </goals>
               <configuration>
+                <includes>
+                  <include>**/*IntegrationTest*</include>
+                </includes>
                 <skipTests>${skip.unit.tests}</skipTests>
                 <listeners>
                   <report-text showThrowable="true" showStackTraces="true" showOutput="onerror" showStatusOk="false" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showSuiteSummary="true" showNumFailures="30" timestamps="false">
@@ -291,7 +351,7 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.16.8</version>
+      <version>1.16.10</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -300,16 +360,6 @@
       <artifactId>lucene-test-framework</artifactId>
       <version>${lucene.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>randomizedtesting-runner</artifactId>
-          <groupId>com.carrotsearch.randomizedtesting</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>junit4-ant</artifactId>
-          <groupId>com.carrotsearch.randomizedtesting</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.elasticsearch</groupId>
@@ -337,27 +387,31 @@
     <dependency>
       <groupId>com.carrotsearch.randomizedtesting</groupId>
       <artifactId>randomizedtesting-runner</artifactId>
-      <version>2.3.2</version>
+      <version>2.4.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>1.10.16</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>hamcrest-core</artifactId>
-          <groupId>org.hamcrest</groupId>
-        </exclusion>
-      </exclusions>
+        <groupId>org.elasticsearch.test</groupId>
+        <artifactId>framework</artifactId>
+        <version>${elasticsearch.version}</version>
+        <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>${elasticsearch.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>2.7</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>2.7</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>20.0</version>
     </dependency>
   </dependencies>
 </project>

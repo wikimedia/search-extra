@@ -1,23 +1,16 @@
 package org.wikimedia.search.extra.tokencount;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.index.query.QueryBuilders.functionScoreQuery;
-import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.*;
 
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.junit.Before;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
 import java.io.IOException;
 
-public class TokenCountRouterQueryTest extends AbstractPluginIntegrationTest {
+public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrationTest {
     private void init() throws IOException {
         assertAcked(prepareCreate("test")
                 .addMapping(
@@ -27,7 +20,7 @@ public class TokenCountRouterQueryTest extends AbstractPluginIntegrationTest {
                             .field("type", "string")
                             .field("store", false)
                             .field("analyzer", "standard")
-                        .endObject().endObject().endObject())
+                        .endObject().endObject().endObject().endObject())
                 .setSettings(jsonBuilder().startObject().startObject("index")
                         .field("number_of_shards", 1)
                         .startObject("analysis").startObject("analyzer")
@@ -53,8 +46,8 @@ public class TokenCountRouterQueryTest extends AbstractPluginIntegrationTest {
         init();
         TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
         builder.field("content")
-            .condition(TokenCountRouterQueryParser.ConditionDefinition.gt, 4, QueryBuilders.termQuery("content", "absent"))
-            .condition(TokenCountRouterQueryParser.ConditionDefinition.gte, 2, QueryBuilders.termQuery("content", "haste"))
+            .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gt, 4, QueryBuilders.termQuery("content", "absent"))
+            .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gte, 2, QueryBuilders.termQuery("content", "haste"))
             .fallback(QueryBuilders.termQuery("content", "strength"));
         SearchResponse sr;
         builder.text("one and two and three");

@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex;
 
+
 import java.io.IOException;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.util.Counter;
 import org.apache.lucene.util.mutable.MutableValueInt;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.Settings;
+import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
 
@@ -17,7 +18,7 @@ import org.wikimedia.search.extra.util.FieldValues.Loader;
  * Unaccelerated source_regex query.
  * It will scan all the docs in the index.
  */
-@EqualsAndHashCode( callSuper = true )
+@EqualsAndHashCode( callSuper = false )
 class UnacceleratedSourceRegexQuery extends Query {
     protected final Rechecker rechecker;
     protected final String fieldPath;
@@ -56,7 +57,7 @@ class UnacceleratedSourceRegexQuery extends Query {
             // TODO: Get rid of this shared mutable state, we should be able to use
             // the generic timeout system.
             private final MutableValueInt inspected = new MutableValueInt();
-            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.getTimeout());
+            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout);
 
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
@@ -64,8 +65,8 @@ class UnacceleratedSourceRegexQuery extends Query {
                 // We can stop matching early if we are allowed to inspect less
                 // doc than the number of docs available in this segment.
                 // This is because we use a DocIdSetIterator.all.
-                int remaining = settings.getMaxInspect() - inspected.value;
-                if(remaining < 0) {
+                int remaining = settings.maxInspect - inspected.value;
+                if (remaining < 0) {
                     remaining = 0;
                 }
                 int maxDoc = remaining > context.reader().maxDoc() ? context.reader().maxDoc() : remaining;
@@ -90,7 +91,7 @@ class UnacceleratedSourceRegexQuery extends Query {
         @Override
         public boolean matches() throws IOException {
             timeoutChecker.check(approximation.docID());
-            if (inspected.value >= settings.getMaxInspect()) {
+            if (inspected.value >= settings.maxInspect) {
                 return false;
             }
             List<String> values = loader.load(fieldPath, context.reader(), approximation.docID());
@@ -118,15 +119,15 @@ class UnacceleratedSourceRegexQuery extends Query {
         private LeafCollector collector;
         private final Collector topCollector;
 
-        public TimeoutChecker(long timeout, Counter counter) throws IOException {
-            if(timeout > 0) {
+        public TimeoutChecker(long timeout, Counter counter) {
+            if (timeout > 0) {
                 topCollector = new TimeLimitingCollector(NULL_COLLECTOR, counter, timeout);
             } else {
                 topCollector = NULL_COLLECTOR;
             }
         }
 
-        public TimeoutChecker(long timeout) throws IOException {
+        public TimeoutChecker(long timeout) {
             this(timeout, COUNTER);
         }
 
@@ -138,7 +139,7 @@ class UnacceleratedSourceRegexQuery extends Query {
             collector = topCollector.getLeafCollector(context);
         }
 
-        private static Collector NULL_COLLECTOR = new SimpleCollector() {
+        private static final Collector NULL_COLLECTOR = new SimpleCollector() {
             @Override
             public void collect(int doc) throws IOException {}
             @Override
@@ -157,7 +158,7 @@ class UnacceleratedSourceRegexQuery extends Query {
          * is marginal compared to loading the field content
          * and applying the regex.
          */
-        private static Counter COUNTER = new Counter() {
+        private static final Counter COUNTER = new Counter() {
             @Override
             public long addAndGet(long delta) {
                 // Should never be called in our context

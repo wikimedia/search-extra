@@ -32,14 +32,14 @@ public class VersionedDocumentHandler implements ChangeHandler<Number> {
 
     @Override
     public ChangeHandler.Result handle(Number oldVersion, Number newVersion) {
-        if(oldVersion.longValue() == newVersion.longValue()) {
+        if (oldVersion.longValue() == newVersion.longValue()) {
             // If version is identical we should let other
             // fields decide if the update is necessary
             // otherwize it's like disabling the benefit
             // of the super_noop_script, we won't update the fields
             // but still update the lucene doc.
             return ChangeHandler.CloseEnough.INSTANCE;
-        } else if(oldVersion.longValue() > newVersion.longValue()) {
+        } else if (oldVersion.longValue() > newVersion.longValue()) {
             return ChangeHandler.NoopDocument.INSTANCE;
         }
         return new Changed(newVersion);

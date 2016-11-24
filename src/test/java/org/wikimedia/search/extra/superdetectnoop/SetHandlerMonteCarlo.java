@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import org.elasticsearch.common.logging.ESLogger;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +26,7 @@ import com.google.common.collect.Ordering;
  */
 @RunWith(RandomizedRunner.class)
 public class SetHandlerMonteCarlo extends RandomizedTest {
-    private static final ESLogger log = ESLoggerFactory.getLogger("monte carlo");
+    private static final Logger log = ESLoggerFactory.getLogger("monte carlo");
     private static final int MAX_LIST = 10000;
     private static final Function<List<Integer>, Integer> ORDER = new Function<List<Integer>, Integer>() {
         @Override

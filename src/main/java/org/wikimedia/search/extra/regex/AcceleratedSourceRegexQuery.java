@@ -13,7 +13,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.mutable.MutableValueInt;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.Settings;
+import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
 
 /**
@@ -45,12 +45,12 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
             // TODO: Get rid of this shared mutable state, we should be able to use
             // the generic timeout system.
             private final MutableValueInt inspected = new MutableValueInt();
-            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.getTimeout());
+            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout);
 
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
                 final Scorer approxScorer = approxWeight.scorer(context);
-                if(approxScorer == null) {
+                if (approxScorer == null) {
                     return null;
                 }
                 timeoutChecker.nextSegment(context);
@@ -62,7 +62,7 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
         Query approxRewritten = approximation.rewrite(reader);
-        if(approxRewritten != approximation) {
+        if (approxRewritten != approximation) {
             return new AcceleratedSourceRegexQuery(this.rechecker, this.fieldPath, this.loader, this.settings, approxRewritten);
         }
         return super.rewrite(reader);

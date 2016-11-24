@@ -32,11 +32,11 @@ public class ExpressionRewriter<T> {
     public Expression<T> degradeAsDisjunction(int maxResultingClauses) {
         Set<Expression<T>> leaves = new HashSet<>();
         Set<Expression<T>> visited = new HashSet<>();
-        if( !extractLeaves(expression, leaves, visited, maxResultingClauses) ) {
+        if (!extractLeaves(expression, leaves, visited, maxResultingClauses)) {
             return True.instance();
         }
-        for(Expression<T> expression : leaves) {
-            if(expression.alwaysTrue()) {
+        for (Expression<T> expression : leaves) {
+            if (expression.alwaysTrue()) {
                 return True.instance();
             }
         }
@@ -44,22 +44,22 @@ public class ExpressionRewriter<T> {
     }
 
     private boolean extractLeaves(Expression<T> subExpr, Set<Expression<T>> leaves, Set<Expression<T>> visited, int maxResultingClauses) {
-        if(subExpr.isComposite()) {
-            for(Expression<T> exp : (AbstractCompositeExpression<T>) subExpr) {
+        if (subExpr.isComposite()) {
+            for (Expression<T> exp : (AbstractCompositeExpression<T>) subExpr) {
                 // NGramExtractor may generate a graph that reuses its branches
                 // We just need to extract the leaves so there's no need
                 // to visit the same branch twice.
-                if(!visited.add(exp)) {
+                if (!visited.add(exp)) {
                     continue;
                 }
-                if(!extractLeaves(exp, leaves, visited, maxResultingClauses)) {
+                if (!extractLeaves(exp, leaves, visited, maxResultingClauses)) {
                     return false;
                 }
             }
             return true;
         } else {
-            if(leaves.add(subExpr)) {
-                if(leaves.size() > maxResultingClauses) {
+            if (leaves.add(subExpr)) {
+                if (leaves.size() > maxResultingClauses) {
                     return false;
                 }
             }

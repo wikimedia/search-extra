@@ -9,7 +9,7 @@ public interface ChangeHandler<T> {
     /**
      * Two objects are never close enough.
      */
-    static final ChangeHandler<Object> EQUALS = new NullSafe<>(Equal.INSTANCE);
+    ChangeHandler<Object> EQUALS = new NullSafe<>(Equal.INSTANCE);
 
     /**
      * Handle a proposed change.
@@ -33,19 +33,19 @@ public interface ChangeHandler<T> {
          * Were the two values close enough? Returning true will cause the
          * values to be unchanged.
          */
-        abstract boolean isCloseEnough();
+        boolean isCloseEnough();
 
         /**
          * If the two values weren't close enough what should we use as the new
          * value? If the two values were close enough this is undefined. If this
          * returns null then the value should be removed from the source.
          */
-        abstract Object newValue();
+        Object newValue();
 
         /**
          * Should the entire document update be noop'd?
          */
-        abstract boolean isDocumentNooped();
+        boolean isDocumentNooped();
     }
 
     /**
@@ -80,7 +80,7 @@ public interface ChangeHandler<T> {
      * use CloseEnoughDetector.EQUALS if you need it.
      */
     class Equal implements ChangeHandler<Object> {
-        public static ChangeHandler<Object> INSTANCE = new Equal();
+        public static final ChangeHandler<Object> INSTANCE = new Equal();
 
         public static class Recognizer implements ChangeHandler.Recognizer {
             @Override

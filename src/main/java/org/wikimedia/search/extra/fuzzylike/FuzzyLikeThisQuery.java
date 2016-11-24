@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -47,6 +46,8 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.PriorityQueue;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * Fuzzifies ALL terms provided as strings and then picks the best n differentiating terms.
  * In effect this mixes the behaviour of FuzzyQuery and MoreLikeThis but with special consideration
@@ -62,62 +63,21 @@ import org.apache.lucene.util.PriorityQueue;
  * term) and this is factored into the variant's boost. If the source query term does not exist in the
  * index the average IDF of the variants is used.
  */
+@EqualsAndHashCode(callSuper = false, of = {"analyzer", "fieldVals", "ignoreTF", "maxNumTerms"})
 public class FuzzyLikeThisQuery extends Query
 {
     // TODO: generalize this query (at least it should not reuse this static sim!
     // a better way might be to convert this into multitermquery rewrite methods.
     // the rewrite method can 'average' the TermContext's term statistics (docfreq,totalTermFreq)
     // provided to TermQuery, so that the general idea is agnostic to any scoring system...
-    static TFIDFSimilarity sim=new ClassicSimilarity();
-    ArrayList<FieldVals> fieldVals=new ArrayList<>();
+    static final TFIDFSimilarity sim = new ClassicSimilarity();
+    ArrayList<FieldVals> fieldVals = new ArrayList<>();
     Analyzer analyzer;
 
-    ScoreTermQueue q;
-    int MAX_VARIANTS_PER_TERM=50;
-    boolean ignoreTF=false;
-    private int maxNumTerms;
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = super.hashCode();
-      result = prime * result + ((analyzer == null) ? 0 : analyzer.hashCode());
-      result = prime * result
-          + ((fieldVals == null) ? 0 : fieldVals.hashCode());
-      result = prime * result + (ignoreTF ? 1231 : 1237);
-      result = prime * result + maxNumTerms;
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
-      if (!super.equals(obj)) {
-        return false;
-      }
-      FuzzyLikeThisQuery other = (FuzzyLikeThisQuery) obj;
-      if (analyzer == null) {
-        if (other.analyzer != null)
-          return false;
-      } else if (!analyzer.equals(other.analyzer))
-        return false;
-      if (fieldVals == null) {
-        if (other.fieldVals != null)
-          return false;
-      } else if (!fieldVals.equals(other.fieldVals))
-        return false;
-      if (ignoreTF != other.ignoreTF)
-        return false;
-      if (maxNumTerms != other.maxNumTerms)
-        return false;
-      return true;
-    }
-
+    final ScoreTermQueue q;
+    static final int MAX_VARIANTS_PER_TERM = 50;
+    boolean ignoreTF = false;
+    private final int maxNumTerms;
 
     /**
      *
@@ -125,17 +85,18 @@ public class FuzzyLikeThisQuery extends Query
      */
     public FuzzyLikeThisQuery(int maxNumTerms, Analyzer analyzer)
     {
-        q=new ScoreTermQueue(maxNumTerms);
-        this.analyzer=analyzer;
+        q = new ScoreTermQueue(maxNumTerms);
+        this.analyzer = analyzer;
         this.maxNumTerms = maxNumTerms;
     }
 
-    class FieldVals
+    @EqualsAndHashCode
+    private static class FieldVals
     {
-      String queryString;
-      String fieldName;
-      float minSimilarity;
-      int prefixLength;
+      final String queryString;
+      final String fieldName;
+      final float minSimilarity;
+      final int prefixLength;
     public FieldVals(String name, float similarity, int length, String queryString)
     {
       fieldName = name;
@@ -143,49 +104,6 @@ public class FuzzyLikeThisQuery extends Query
       prefixLength = length;
       this.queryString = queryString;
     }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result
-          + ((fieldName == null) ? 0 : fieldName.hashCode());
-      result = prime * result + Float.floatToIntBits(minSimilarity);
-      result = prime * result + prefixLength;
-      result = prime * result
-          + ((queryString == null) ? 0 : queryString.hashCode());
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
-      FieldVals other = (FieldVals) obj;
-      if (fieldName == null) {
-        if (other.fieldName != null)
-          return false;
-      } else if (!fieldName.equals(other.fieldName))
-        return false;
-      if (Float.floatToIntBits(minSimilarity) != Float
-          .floatToIntBits(other.minSimilarity))
-        return false;
-      if (prefixLength != other.prefixLength)
-        return false;
-      if (queryString == null) {
-        if (other.queryString != null)
-          return false;
-      } else if (!queryString.equals(other.queryString))
-        return false;
-      return true;
-    }
-
-
-
     }
 
     /**
@@ -272,50 +190,35 @@ public class FuzzyLikeThisQuery extends Query
     public Query rewrite(IndexReader reader) throws IOException
     {
         //load up the list of possible terms
-        for (Iterator<FieldVals> iter = fieldVals.iterator(); iter.hasNext(); ) {
-          FieldVals f = iter.next();
-          addTerms(reader, f);
+        for (FieldVals f : fieldVals) {
+            addTerms(reader, f);
         }
 
-        BooleanQuery.Builder bq=new BooleanQuery.Builder();
-
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
 
         //create BooleanQueries to hold the variants for each token/field pair and ensure it
         // has no coord factor
         //Step 1: sort the termqueries by term/field
-        HashMap<Term,ArrayList<ScoreTerm>> variantQueries=new HashMap<>();
+        HashMap<Term,ArrayList<ScoreTerm>> variantQueries = new HashMap<>();
         int size = q.size();
-        for(int i = 0; i < size; i++)
+        for (int i = 0; i < size; i++)
         {
           ScoreTerm st = q.pop();
-          ArrayList<ScoreTerm> l= variantQueries.get(st.fuzziedSourceTerm);
-          if(l==null)
-          {
-              l=new ArrayList<>();
-              variantQueries.put(st.fuzziedSourceTerm,l);
-          }
-          l.add(st);
+            ArrayList<ScoreTerm> l = variantQueries.computeIfAbsent(st.fuzziedSourceTerm, k -> new ArrayList<>());
+            l.add(st);
         }
         //Step 2: Organize the sorted termqueries into zero-coord scoring boolean queries
-        for (Iterator<ArrayList<ScoreTerm>> iter = variantQueries.values().iterator(); iter.hasNext();)
-        {
-            ArrayList<ScoreTerm> variants = iter.next();
-            if(variants.size()==1)
-            {
+        for (ArrayList<ScoreTerm> variants : variantQueries.values()) {
+            if (variants.size() == 1) {
                 //optimize where only one selected variant
-                ScoreTerm st= variants.get(0);
+                ScoreTerm st = variants.get(0);
                 Query tq = ignoreTF ? new ConstantScoreQuery(new TermQuery(st.term)) : new TermQuery(st.term);
                 tq = new BoostQuery(tq, st.score); // set the boost to a mix of IDF and score
                 bq.add(tq, BooleanClause.Occur.SHOULD);
-            }
-            else
-            {
-                BooleanQuery.Builder termVariants=new BooleanQuery.Builder(); //disable coord and IDF for these term variants
+            } else {
+                BooleanQuery.Builder termVariants = new BooleanQuery.Builder(); //disable coord and IDF for these term variants
                 termVariants.setDisableCoord(true);
-                for (Iterator<ScoreTerm> iterator2 = variants.iterator(); iterator2
-                        .hasNext();)
-                {
-                    ScoreTerm st = iterator2.next();
+                for (ScoreTerm st : variants) {
                     // found a match
                     Query tq = ignoreTF ? new ConstantScoreQuery(new TermQuery(st.term)) : new TermQuery(st.term);
                     tq = new BoostQuery(tq, st.score); // set the boost using the ScoreTerm's score
@@ -327,33 +230,29 @@ public class FuzzyLikeThisQuery extends Query
         //TODO possible alternative step 3 - organize above booleans into a new layer of field-based
         // booleans with a minimum-should-match of NumFields-1?
         BooleanQuery bool = bq.build();
-        Query q = bool;
-        if(bool.clauses().isEmpty()) {
+        if (bool.clauses().isEmpty()) {
             return new MatchNoDocsQuery();
         }
-        if(getBoost() != 1f) {
-            q = new BoostQuery(q, getBoost());
-        }
-        return q;
+        return bool;
     }
 
     //Holds info for a fuzzy term variant - initially score is set to edit distance (for ranking best
     // term variants) then is reset with IDF for use in ranking against all other
     // terms/fields
-    private static class ScoreTerm{
-        public Term term;
+    private static class ScoreTerm {
+        public final Term term;
         public float score;
-        Term fuzziedSourceTerm;
+        final Term fuzziedSourceTerm;
 
-        public ScoreTerm(Term term, float score, Term fuzziedSourceTerm){
+        public ScoreTerm(Term term, float score, Term fuzziedSourceTerm) {
           this.term = term;
           this.score = score;
-          this.fuzziedSourceTerm=fuzziedSourceTerm;
+          this.fuzziedSourceTerm = fuzziedSourceTerm;
         }
       }
 
       private static class ScoreTermQueue extends PriorityQueue<ScoreTerm> {
-        public ScoreTermQueue(int size){
+        public ScoreTermQueue(int size) {
           super(size);
         }
 
@@ -362,7 +261,7 @@ public class FuzzyLikeThisQuery extends Query
          */
         @Override
         protected boolean lessThan(ScoreTerm termA, ScoreTerm termB) {
-          if (termA.score== termB.score)
+          if (termA.score == termB.score)
             return termA.term.compareTo(termB.term) > 0;
           else
             return termA.score < termB.score;

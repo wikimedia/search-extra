@@ -2,12 +2,26 @@ package org.wikimedia.search.extra.tokencount;
 
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+import org.apache.lucene.search.Query;
+import org.elasticsearch.common.ParseField;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.index.mapper.MappedFieldType;
+import org.elasticsearch.index.query.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.IntPredicate;
 
 /**
  * Builds a token_count_router query
@@ -15,47 +29,86 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(fluent = true, chain = true)
-public class TokenCountRouterQueryBuilder extends QueryBuilder {
+public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCountRouterQueryBuilder> {
+    public static final ParseField NAME = new ParseField("token_count_router");
+    static final ParseField TEXT = new ParseField("text");
+    static final ParseField FIELD = new ParseField("field");
+    static final ParseField ANALYZER = new ParseField("analyzer");
+    static final ParseField DISCOUNT_OVERLAPS = new ParseField("discount_overlaps");
+    static final ParseField CONDITIONS = new ParseField("contitions");
+    static final ParseField FALLBACK = new ParseField(("fallback"));
+    static final ParseField QUERY = new ParseField("query");
+
+    static final boolean DEFAULT_DISCOUNT_OVERLAPS = true;
+
     private String analyzer;
     private String field;
-    private Boolean discountOverlaps;
+    private boolean discountOverlaps = DEFAULT_DISCOUNT_OVERLAPS;
     private String text;
     private QueryBuilder fallback;
 
     @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    private List<Condition> conditions = new ArrayList<>();
+    private final List<Condition> conditions;
 
-    public TokenCountRouterQueryBuilder condition(TokenCountRouterQueryParser.ConditionDefinition predicate, int value, QueryBuilder query) {
+    public TokenCountRouterQueryBuilder() {
+        this.conditions = new ArrayList<>();
+    }
+
+    public TokenCountRouterQueryBuilder(StreamInput in) throws IOException {
+        super(in);
+        analyzer = in.readOptionalString();
+        field = in.readOptionalString();
+        discountOverlaps = in.readBoolean();
+        text = in.readString();
+        conditions = in.readList(Condition::new);
+        fallback = in.readNamedWriteable(QueryBuilder.class);
+    }
+
+    @Override
+    protected void doWriteTo(StreamOutput out) throws IOException {
+        out.writeOptionalString(analyzer);
+        out.writeOptionalString(field);
+        out.writeBoolean(discountOverlaps);
+        out.writeString(text);
+        out.writeList(conditions);
+        out.writeNamedWriteable(fallback);
+    }
+
+    @Override
+    public String getWriteableName() {
+        return NAME.getPreferredName();
+    }
+
+    public TokenCountRouterQueryBuilder condition(ConditionDefinition predicate, int value, QueryBuilder query) {
         conditions.add(new Condition(predicate, value, query));
         return this;
     }
 
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject(TokenCountRouterQueryParser.NAME.getPreferredName());
+        builder.startObject(NAME.getPreferredName());
         if (analyzer != null) {
-            builder.field(TokenCountRouterQueryParser.ANALYZER.getPreferredName(), analyzer);
+            builder.field(ANALYZER.getPreferredName(), analyzer);
         }
         if (field != null) {
-            builder.field(TokenCountRouterQueryParser.FIELD.getPreferredName(), field);
+            builder.field(FIELD.getPreferredName(), field);
         }
-        if (discountOverlaps != null) {
-            builder.field(TokenCountRouterQueryParser.DISCOUNT_OVERLAPS.getPreferredName(), discountOverlaps);
+        if (discountOverlaps != DEFAULT_DISCOUNT_OVERLAPS) {
+            builder.field(DISCOUNT_OVERLAPS.getPreferredName(), discountOverlaps);
         }
         if (text != null) {
-            builder.field(TokenCountRouterQueryParser.TEXT.getPreferredName(), text);
+            builder.field(TEXT.getPreferredName(), text);
         }
         if (fallback != null) {
-            builder.field(TokenCountRouterQueryParser.FALLBACK.getPreferredName());
+            builder.field(FALLBACK.getPreferredName());
             fallback.toXContent(builder, params);
         }
         if (!conditions.isEmpty()) {
-            builder.startArray(TokenCountRouterQueryParser.CONDITIONS.getPreferredName());
-            for(Condition c : conditions) {
+            builder.startArray(CONDITIONS.getPreferredName());
+            for (Condition c : conditions) {
                 builder.startObject();
                 builder.field(c.defition.name(), c.value);
-                builder.field(TokenCountRouterQueryParser.QUERY.getPreferredName());
+                builder.field(QUERY.getPreferredName());
                 c.query.toXContent(builder, params);
                 builder.endObject();
             }
@@ -64,15 +117,247 @@ public class TokenCountRouterQueryBuilder extends QueryBuilder {
         builder.endObject();
     }
 
-    private static class Condition {
-        private TokenCountRouterQueryParser.ConditionDefinition defition;
+    public static Optional<TokenCountRouterQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
+        XContentParser parser = parseContext.parser();
+        String text = null;
+        String field = null;
+        Optional<QueryBuilder> fallback = Optional.empty();
+        String currentFieldName = null;
+        XContentParser.Token token;
+        String analyzer = null;
+        boolean discountOverlaps = DEFAULT_DISCOUNT_OVERLAPS;
+        TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
+
+        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+            if (token == XContentParser.Token.FIELD_NAME) {
+                currentFieldName = parser.currentName();
+            } else if (token.isValue()) {
+                if (parseContext.getParseFieldMatcher().match(currentFieldName, TEXT)) {
+                    text = parser.text();
+                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FIELD)) {
+                    field = parser.text();
+                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, ANALYZER)) {
+                    analyzer = parser.text();
+                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, DISCOUNT_OVERLAPS)) {
+                    discountOverlaps = parser.booleanValue();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
+                }
+            } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FALLBACK)) {
+                if (token == XContentParser.Token.START_OBJECT) {
+                    fallback = parseContext.parseInnerQueryBuilder();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "fallback must be an object");
+                }
+            } else if (parseContext.getParseFieldMatcher().match(currentFieldName, CONDITIONS)) {
+                if (token != XContentParser.Token.START_ARRAY) {
+                    throw new ParsingException(parser.getTokenLocation(), "Expected an array");
+                }
+                while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
+                    parseCondition(parseContext, builder);
+                }
+            } else {
+                throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
+            }
+        }
+
+        if (builder.conditions.isEmpty()) {
+            throw new ParsingException(parser.getTokenLocation(), "No conditions defined");
+        }
+
+        if (text == null) {
+            throw new ParsingException(parser.getTokenLocation(), "No text provided");
+        }
+
+        if (!fallback.isPresent()) {
+            throw new ParsingException(parser.getTokenLocation(), "No fallback query defined");
+        }
+
+        if (analyzer == null && field == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Missing field or analyzer definition");
+        }
+        builder.analyzer(analyzer);
+        builder.field(field);
+        builder.text(text);
+        builder.discountOverlaps(discountOverlaps);
+        return Optional.of(builder);
+    }
+
+    private static void parseCondition(QueryParseContext parseContext, TokenCountRouterQueryBuilder builder) throws IOException {
+        XContentParser parser = parseContext.parser();
+        if (parser.currentToken() != XContentParser.Token.START_OBJECT) {
+            throw new ParsingException(parser.getTokenLocation(), "Expected an object");
+        }
+        String currentFieldName = null;
+        XContentParser.Token token;
+        ConditionDefinition currentCondition = null;
+        int checkValue = 0;
+        Optional<QueryBuilder> query = Optional.empty();
+        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+            if (token == XContentParser.Token.FIELD_NAME) {
+                currentFieldName = parser.currentName();
+            } else if (token.isValue()) {
+                ConditionDefinition condition;
+                if ((condition = ConditionDefinition.parse(parseContext, currentFieldName)) != null) {
+                    currentCondition = condition;
+                    checkValue = parser.intValue(true);
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
+                }
+            } else if (parseContext.getParseFieldMatcher().match(currentFieldName, QUERY)) {
+                if (token == XContentParser.Token.START_OBJECT) {
+                    query = parseContext.parseInnerQueryBuilder();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "query must be an object");
+                }
+            } else {
+                throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
+            }
+        }
+        if (currentCondition == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Missing conditionDef defintion");
+        }
+        if (!query.isPresent()) {
+            throw new ParsingException(parser.getTokenLocation(), "Missing query in conditionDef");
+        }
+        builder.condition(currentCondition, checkValue, query.get());
+    }
+
+    @Override
+    protected Query doToQuery(QueryShardContext queryShardContext) throws IOException {
+        final Analyzer luceneAnalyzer;
+        if (analyzer != null) {
+            luceneAnalyzer = queryShardContext.getIndexAnalyzers().get(analyzer);
+            if (luceneAnalyzer == null) {
+                throw new IllegalArgumentException("Unknown analyzer [" + analyzer + "]");
+            }
+        } else if (field != null) {
+            MappedFieldType fieldMapper = queryShardContext.fieldMapper(field);
+            if (fieldMapper == null) {
+                throw new IllegalArgumentException("Unkwnon field [" + field + "]");
+            }
+            luceneAnalyzer = queryShardContext.getSearchAnalyzer(fieldMapper);
+        } else {
+            throw new IllegalArgumentException("field or analyzer must be set");
+        }
+        if (text == null) {
+            throw new IllegalArgumentException("text cannot be null");
+        }
+        final int count = countToken(luceneAnalyzer, text, discountOverlaps);
+        return conditions.stream()
+                .filter(c -> c.test(count))
+                .findFirst()
+                .map(Condition::query)
+                .orElse(fallback)
+                .toQuery(queryShardContext);
+    }
+
+    private int countToken(Analyzer analyzer, String text, boolean discountOverlaps) throws IOException {
+        try (TokenStream ts = analyzer.tokenStream("", text)) {
+            ts.reset();
+            int count = 0;
+            PositionIncrementAttribute posInc = ts.getAttribute(PositionIncrementAttribute.class);
+            while (ts.incrementToken()) {
+                if (!discountOverlaps || posInc.getPositionIncrement() > 0) {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
+    @Override
+    protected boolean doEquals(TokenCountRouterQueryBuilder other) {
+        return Objects.equals(field, other.field) &&
+                Objects.equals(analyzer, other.analyzer) &&
+                Objects.equals(discountOverlaps, other.discountOverlaps) &&
+                Objects.equals(fallback, other.fallback) &&
+                Objects.equals(conditions, other.conditions);
+    }
+
+    @Override
+    protected int doHashCode() {
+        return Objects.hash(analyzer, field, discountOverlaps, text, fallback, conditions);
+    }
+
+    @EqualsAndHashCode
+    @Getter
+    private static class Condition implements Writeable, IntPredicate {
+        private ConditionDefinition defition;
         private int value;
         private QueryBuilder query;
 
-        public Condition(TokenCountRouterQueryParser.ConditionDefinition defition, int value, QueryBuilder query) {
-            this.defition = defition;
+        public Condition(StreamInput in) throws IOException {
+            this.defition = ConditionDefinition.readFrom(in);
+            value = in.readVInt();
+            query = in.readNamedWriteable(QueryBuilder.class);
+        }
+
+        public Condition(ConditionDefinition defition, int value, QueryBuilder query) {
+            this.defition = Objects.requireNonNull(defition);
             this.value = value;
-            this.query = query;
+            this.query = Objects.requireNonNull(query);
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            defition.writeTo(out);
+            out.writeVInt(value);
+            out.writeNamedWriteable(query);
+        }
+
+        @Override
+        public boolean test(int tokenCount) {
+            return defition.test(tokenCount, value);
+        }
+    }
+
+    @FunctionalInterface
+    public interface BiIntPredicate {
+        boolean test(int a, int b);
+    }
+
+    public enum ConditionDefinition implements BiIntPredicate, Writeable {
+        eq ((a,b) -> a == b),
+        neq ((a,b) -> a != b),
+        lte ((a,b) -> a <= b),
+        lt ((a,b) -> a < b),
+        gte ((a,b) -> a >= b),
+        gt ((a,b) -> a > b);
+
+        private final ParseField parseField;
+        private final BiIntPredicate predicate;
+
+        ConditionDefinition(BiIntPredicate predicate) {
+            this.predicate = predicate;
+            this.parseField = new ParseField(name());
+        }
+
+        static ConditionDefinition parse(QueryParseContext context, String token) {
+            for (ConditionDefinition c : values()) {
+                if (context.getParseFieldMatcher().match(token, c.parseField)) {
+                    return c;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean test(int a, int b) {
+            return predicate.test(a, b);
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            out.writeVInt(ordinal());
+        }
+
+        public static ConditionDefinition readFrom(StreamInput in) throws IOException {
+            int ord = in.readVInt();
+            if (ord < 0 || ord >= values().length) {
+                throw new IOException("Unknown ConditionDefinition ordinal [" + ord + "]");
+            }
+            return values()[ord];
         }
     }
 }

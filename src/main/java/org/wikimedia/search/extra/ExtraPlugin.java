@@ -1,91 +1,77 @@
 package org.wikimedia.search.extra;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.elasticsearch.common.inject.AbstractModule;
-import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.inject.multibindings.Multibinder;
-import org.elasticsearch.index.analysis.AnalysisModule;
-import org.elasticsearch.indices.IndicesModule;
+import org.elasticsearch.index.analysis.TokenFilterFactory;
+import org.elasticsearch.indices.analysis.AnalysisModule.AnalysisProvider;
+import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.script.ScriptModule;
-import org.elasticsearch.search.SearchModule;
+import org.elasticsearch.plugins.ScriptPlugin;
+import org.elasticsearch.plugins.SearchPlugin;
+import org.elasticsearch.script.NativeScriptFactory;
 import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory;
-import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryParser;
-import org.wikimedia.search.extra.idhashmod.IdHashModQueryParser;
-import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreParser;
-import org.wikimedia.search.extra.regex.SourceRegexQueryParser;
+import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
+import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreBuilder;
+import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
 import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
 import org.wikimedia.search.extra.superdetectnoop.VersionedDocumentHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
-import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryParser;
+import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder;
 
 /**
  * Setup the Elasticsearch plugin.
  */
-public class ExtraPlugin extends Plugin {
-    @Override
-    public String description() {
-        return "Extra queries and filters.";
-    }
-
-    @Override
-    public String name() {
-        return "wikimedia-extra";
-    }
-
+public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin, ScriptPlugin {
     /**
      * Register our parsers.
      */
-    public void onModule(IndicesModule module) {
-        module.registerQueryParser(SourceRegexQueryParser.class);
-        module.registerQueryParser(IdHashModQueryParser.class);
-        module.registerQueryParser(FuzzyLikeThisQueryParser.class);
-        module.registerQueryParser(TokenCountRouterQueryParser.class);
-    }
-
-    /**
-     * Register our analysis components.
-     */
-    public void onModule(AnalysisModule module) {
-        module.addTokenFilter("preserve_original", PreserveOriginalFilterFactory.class);
-        module.addTokenFilter("preserve_original_recorder",
-                PreserveOriginalFilterFactory.RecorderFactory.class);
-    }
-
-    /**
-     * Register our scripts.
-     */
-    public void onModule(ScriptModule module) {
-        module.registerScript("super_detect_noop", SuperDetectNoopScript.Factory.class);
-    }
-
-    /**
-     * Register our function scores.
-     */
-    public void onModule(SearchModule module) {
-        module.registerFunctionScoreParser(LevenshteinDistanceScoreParser.class);
+    @Override
+    @SuppressWarnings("deprecation")
+    public List<QuerySpec<?>> getQueries() {
+        return Arrays.asList(
+                new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
+                new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
+                new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent)
+        );
     }
 
     @Override
-    public Collection<Module> nodeModules() {
-        return Collections.<Module>singleton(new CloseEnoughDetectorsModule());
+    public Map<String, AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
+        Map<String, AnalysisProvider<TokenFilterFactory>> map = new HashMap<>();
+        map.put("preserve_original", PreserveOriginalFilterFactory::new);
+        map.put("preserve_original_recorder", PreserveOriginalFilterFactory.RecorderFactory::new);
+        return Collections.unmodifiableMap(map);
     }
 
-    public static class CloseEnoughDetectorsModule extends AbstractModule {
-        @Override
-        protected void configure() {
-            Multibinder<ChangeHandler.Recognizer> handlers = Multibinder
-                    .newSetBinder(binder(), ChangeHandler.Recognizer.class);
-            handlers.addBinding().toInstance(new ChangeHandler.Equal.Recognizer());
-            handlers.addBinding().toInstance(new WithinPercentageHandler.Recognizer());
-            handlers.addBinding().toInstance(new WithinAbsoluteHandler.Recognizer());
-            handlers.addBinding().toInstance(new SetHandler.Recognizer());
-            handlers.addBinding().toInstance(new VersionedDocumentHandler.Recognizer());
-        }
+    @Override
+    public List<NativeScriptFactory> getNativeScripts() {
+        Set<ChangeHandler.Recognizer> recognizers = new HashSet<>(Arrays.asList(
+                new ChangeHandler.Equal.Recognizer(),
+                new WithinPercentageHandler.Recognizer(),
+                new WithinAbsoluteHandler.Recognizer(),
+                new SetHandler.Recognizer(),
+                new VersionedDocumentHandler.Recognizer()
+        ));
+        return Collections.singletonList(new SuperDetectNoopScript.Factory(recognizers));
+    }
+
+    @Override
+    public List<ScoreFunctionSpec<?>> getScoreFunctions() {
+        return Collections.singletonList(
+            new ScoreFunctionSpec<>(
+                    LevenshteinDistanceScoreBuilder.NAME.getPreferredName(),
+                    LevenshteinDistanceScoreBuilder::new,
+                    LevenshteinDistanceScoreBuilder::fromXContent
+            )
+        );
     }
 }

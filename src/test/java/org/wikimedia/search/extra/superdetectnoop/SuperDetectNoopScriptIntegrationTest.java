@@ -12,13 +12,15 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.script.ScriptType;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -27,7 +29,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
+public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrationTest {
     @Test
     public void newField() throws IOException {
         indexSeedData();
@@ -400,17 +402,17 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
             b.field("int", 3);
             b.field("zero", 0);
             b.field("string", "cake");
-            b.field("set", "cat", "dog", "fish");
+            b.array("set", "cat", "dog", "fish");
             b.startObject("o");
             {
                 b.field("bar", 10);
-                b.field("set", "cow", "fish", "bat");
+                b.array("set", "cow", "fish", "bat");
             }
             b.endObject();
         }
         b.endObject();
-        IndexResponse ir = client().prepareIndex("test", "test", "1").setSource(b).setRefresh(true).get();
-        assertTrue("Test data is newly created", ir.isCreated());
+        IndexResponse ir = client().prepareIndex("test", "test", "1").setSource(b).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE).get();
+        assertEquals("Test data is newly created", DocWriteResponse.Result.CREATED, ir.getResult());
     }
 
     private Map<String, Object> update(XContentBuilder b, boolean shouldUpdate) {
@@ -427,9 +429,9 @@ public class SuperDetectNoopScriptTest extends AbstractPluginIntegrationTest {
 
     private UpdateRequestBuilder toUpdateRequest(XContentBuilder b) {
         b.close();
-        Map<String, ? extends Object> m = XContentHelper.convertToMap(b.bytes(), true).v2();
-        return client().prepareUpdate("test", "test", "1").setScript(new Script("super_detect_noop", ScriptType.INLINE, "native", m))
-                .setRefresh(true);
+        Map<String, Object> m = XContentHelper.convertToMap(b.bytes(), true).v2();
+        return client().prepareUpdate("test", "test", "1").setScript(new Script(ScriptType.INLINE, "native", "super_detect_noop", m))
+                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
     }
 }

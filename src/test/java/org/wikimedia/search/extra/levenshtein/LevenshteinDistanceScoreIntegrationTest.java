@@ -18,7 +18,7 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
-public class LevenshteinDistanceScoreTest extends AbstractPluginIntegrationTest {
+public class LevenshteinDistanceScoreIntegrationTest extends AbstractPluginIntegrationTest {
     @Test
     public void testLevenshteinScore() throws ElasticsearchException, IOException {
         assertAcked(prepareCreate("test").addMapping(
@@ -47,60 +47,58 @@ public class LevenshteinDistanceScoreTest extends AbstractPluginIntegrationTest 
         assertions("content_stored");
 
         assertFailures(client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "ignorance")).add(
-                        new LevenshteinDistanceScoreBuilder().field("blah").text("Ignorance is strength"))
-                        .boostMode(CombineFunction.REPLACE)), RestStatus.INTERNAL_SERVER_ERROR,
-                        Matchers.containsString("Unable to load field type for field [blah]"));
+                .setQuery(functionScoreQuery(termQuery("content", "ignorance"),
+                            new LevenshteinDistanceScoreBuilder("blah", "Ignorance is strength"))
+                        .boostMode(CombineFunction.REPLACE)), RestStatus.BAD_REQUEST,
+                        Matchers.containsString("Unable to load field type for field blah"));
 
         assertFailures(client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(matchAllQuery()).add(
-                        new LevenshteinDistanceScoreBuilder().field("content").text("Ignorance is strength"))
+                .setQuery(functionScoreQuery(matchAllQuery(),
+                            new LevenshteinDistanceScoreBuilder("content", "Ignorance is strength"))
                         .boostMode(CombineFunction.REPLACE)), RestStatus.INTERNAL_SERVER_ERROR,
                         Matchers.containsString("content is null"));
 
         assertOrderedSearchHits(client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(matchAllQuery()).add(
-                        new LevenshteinDistanceScoreBuilder()
-                            .field("content")
-                            .text("Ignorance is strength")
+                .setQuery(functionScoreQuery(matchAllQuery(),
+                            new LevenshteinDistanceScoreBuilder("content", "Ignorance is strength")
                             .missing(""))
                         .boostMode(CombineFunction.REPLACE)).setSize(2).get(), new String[]{"6", "3"});
     }
 
     private void assertions(String field) {
         SearchResponse response = client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "makes")).add(
-                        new LevenshteinDistanceScoreBuilder().field(field).text("Haste makes waste"))
+                .setQuery(functionScoreQuery(termQuery("content", "makes"),
+                        new LevenshteinDistanceScoreBuilder(field, "Haste makes waste"))
                         .boostMode(CombineFunction.REPLACE)).get();
         assertOrderedSearchHits(response, "1", "4");
 
         response = client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "makes")).add(
-                        new LevenshteinDistanceScoreBuilder().field(field).text("Paste makes waste"))
+                .setQuery(functionScoreQuery(termQuery("content", "makes"),
+                        new LevenshteinDistanceScoreBuilder(field, "Paste makes waste"))
                         .boostMode(CombineFunction.REPLACE)).get();
         assertOrderedSearchHits(response, "4", "1");
 
         response = client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "stitch")).add(
-                        new LevenshteinDistanceScoreBuilder().field(field).text("A stitch in time saves nine"))
+                .setQuery(functionScoreQuery(termQuery("content", "stitch"),
+                        new LevenshteinDistanceScoreBuilder(field, "A stitch in time saves nine"))
                         .boostMode(CombineFunction.REPLACE)).get();
         assertOrderedSearchHits(response, "2", "5");
 
         response = client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "stitch")).add(
-                        new LevenshteinDistanceScoreBuilder().field(field).text("A stitch in time saves nine essay"))
+                .setQuery(functionScoreQuery(termQuery("content", "stitch"),
+                        new LevenshteinDistanceScoreBuilder(field, "A stitch in time saves nine essay"))
                         .boostMode(CombineFunction.REPLACE)).get();
         assertOrderedSearchHits(response, "5", "2");
 
         response = client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "ignorance")).add(
-                        new LevenshteinDistanceScoreBuilder().field(field).text("Ignorance is bliss"))
+                .setQuery(functionScoreQuery(termQuery("content", "ignorance"),
+                        new LevenshteinDistanceScoreBuilder(field, "Ignorance is bliss"))
                         .boostMode(CombineFunction.REPLACE)).get();
         assertOrderedSearchHits(response, "3", "6");
 
         response = client().prepareSearch("test").setExplain(randomBoolean())
-                .setQuery(functionScoreQuery(termQuery("content", "ignorance")).add(
-                        new LevenshteinDistanceScoreBuilder().field(field).text("Ignorance is strength"))
+                .setQuery(functionScoreQuery(termQuery("content", "ignorance"),
+                        new LevenshteinDistanceScoreBuilder(field, "Ignorance is strength"))
                         .boostMode(CombineFunction.REPLACE)).get();
         assertOrderedSearchHits(response, "6", "3");
     }

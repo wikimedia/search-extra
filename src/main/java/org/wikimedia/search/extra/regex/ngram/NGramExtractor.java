@@ -39,7 +39,7 @@ public class NGramExtractor {
      */
     public Expression<String> extract(Automaton automaton) {
         if (automaton.isAccept(0)) {
-            return True.<String> instance();
+            return True.instance();
         }
         return new NGramAutomaton(automaton, gramSize, maxExpand, maxStatesTraced, maxNgrams).expression().simplify();
     }

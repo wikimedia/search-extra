@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.levenshtein;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Explanation;
@@ -48,22 +49,22 @@ public class LevenshteinDistanceScore extends ScoreFunction {
     private String loadValue(LeafSearchLookup leafLookup) {
         Object value = null;
         if (!fieldType.stored()) {
-            value = leafLookup.source().get(fieldType.names().fullName());
+            value = leafLookup.source().get(fieldType.name());
         } else {
-            FieldLookup fl = (FieldLookup) leafLookup.fields().get(fieldType.names().fullName());
+            FieldLookup fl = (FieldLookup) leafLookup.fields().get(fieldType.name());
             if (fl != null) {
                 value = fl.getValue();
             }
         }
         if (value == null) {
             if (missing == null) {
-                throw new ElasticsearchException(fieldType.names().fullName() + " is null");
+                throw new ElasticsearchException(fieldType.name() + " is null");
             } else {
                 return missing;
             }
         }
         if (!(value instanceof String)) {
-            throw new ElasticsearchException("Expected String for " + fieldType.names().fullName() + ", got " + value.getClass().getName() + " instead");
+            throw new ElasticsearchException("Expected String for " + fieldType.name() + ", got " + value.getClass().getName() + " instead");
         }
         return (String) value;
     }
@@ -87,8 +88,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
                 explanation += "\n field value : " + loadValue(leafLookup);
 
                 Explanation scoreExp = Explanation.match(subQueryScore.getValue(), "_score: ", subQueryScore);
-                Explanation exp = Explanation.match(CombineFunction.toFloat(score), explanation, scoreExp);
-                return exp;
+                return Explanation.match(CombineFunction.toFloat(score), explanation, scoreExp);
             }
         };
     }
@@ -96,5 +96,20 @@ public class LevenshteinDistanceScore extends ScoreFunction {
     @Override
     public boolean needsScores() {
         return false;
+    }
+
+    @Override
+    protected boolean doEquals(ScoreFunction other) {
+        // class equality is checked in super.equals();
+        LevenshteinDistanceScore o = (LevenshteinDistanceScore) other;
+        return Objects.equals(fieldType, o.fieldType) &&
+                Objects.equals(this.value, o.value) &&
+                Objects.equals(this.missing, o.missing);
+
+    }
+
+    @Override
+    protected int doHashCode() {
+        return Objects.hash(fieldType, value, missing);
     }
 }

@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 /**
  * Abstract parent for composite expressions like And and Or.
  */
-@EqualsAndHashCode(exclude={"simplified", "toString", "numClauses"})
+@EqualsAndHashCode(exclude = {"simplified", "toString", "numClauses"})
 public abstract class AbstractCompositeExpression<T> implements Expression<T>, Iterable<Expression<T>> {
     private static final int MAX_COMPONENT_STRING_LENGTH = 1000;
     private static final int MAX_COMPONENTS_SIZE_FOR_TO_STRING = 10;
@@ -120,10 +120,11 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
         if (!changed) {
             this.simplified = true;
             return this;
+        } else {
+            AbstractCompositeExpression<T> result = newFrom(ImmutableSet.copyOf(newComponentsBuilder));
+            result.simplified = true;
+            return result;
         }
-        AbstractCompositeExpression<T> result = newFrom(changed ? ImmutableSet.copyOf(newComponentsBuilder) : components);
-        result.simplified = true;
-        return result;
     }
 
     private Expression<T> extractCommon(Iterable<Expression<T>> newComponents) {
@@ -162,7 +163,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
                     boolean shared = true;
                     Iterator<Expression<T>> current = newComponents.iterator();
                     while (shared && current.hasNext()) {
-                        shared &= ((AbstractCompositeExpression<T>) current.next()).components.contains(component);
+                        shared = ((AbstractCompositeExpression<T>) current.next()).components.contains(component);
                     }
                     if (shared) {
                         if (sharedComponents == null) {
@@ -181,6 +182,8 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
                                 .simplify());
                     }
                     sharedComponents.add(newFrom(extractedComponents.build()).simplify());
+                    // if sharedComponents is not null newComponents is not empty and composite has been set
+                    assert composite != null;
                     return composite.newFrom(ImmutableSet.copyOf(sharedComponents)).simplify();
                 }
             }
@@ -205,7 +208,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
                     return firstNonComposite;
                 }
                 // Add True to represent the extracted common component
-                extractedComponents.add(True.<T>instance());
+                extractedComponents.add(True.instance());
                 sharedComponents.add(newFrom(extractedComponents.build()).simplify());
                 return composite.newFrom(ImmutableSet.copyOf(sharedComponents)).simplify();
             }
@@ -271,11 +274,11 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
 
     @Override
     public int countClauses() {
-        if(numClauses >= 0) {
+        if (numClauses >= 0) {
             return numClauses;
         }
         int cnt = components.size();
-        for(Expression<T> exp : components) {
+        for (Expression<T> exp : components) {
             int size = exp.countClauses();
             assert size >= 0;
             assert cnt >= 0;
@@ -288,7 +291,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
             // the opposite sign. Here we only add positive
             // numbers so a simple negative check on the result
             // is sufficient.
-            if(cnt < 0) {
+            if (cnt < 0) {
                 // int overflow, max out to MAX_INT and break
                 cnt = Integer.MAX_VALUE;
                 break;

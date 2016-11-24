@@ -10,10 +10,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public final class Leaf<T> implements Expression<T> {
     @SafeVarargs
-    public static final <T> ImmutableSet<Expression<T>> leaves(T... ts) {
+    public static <T> ImmutableSet<Expression<T>> leaves(T... ts) {
         ImmutableSet.Builder<Expression<T>> builder = ImmutableSet.builder();
         for (T t : ts) {
-            builder.add(new Leaf<T>(t));
+            builder.add(new Leaf<>(t));
         }
         return builder.build();
     }

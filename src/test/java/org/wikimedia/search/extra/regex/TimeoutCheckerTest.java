@@ -5,16 +5,12 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TimeLimitingCollector;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Counter;
 import org.apache.lucene.util.LuceneTestCase;
-import org.elasticsearch.index.IndexService;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.wikimedia.search.extra.regex.expression.Leaf;
 
 import java.io.IOException;
 import java.util.Iterator;

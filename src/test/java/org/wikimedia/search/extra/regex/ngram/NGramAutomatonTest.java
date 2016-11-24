@@ -2,12 +2,15 @@ package org.wikimedia.search.extra.regex.ngram;
 
 import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
+import com.carrotsearch.randomizedtesting.RandomizedRunner;
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
-import org.elasticsearch.test.ESTestCase;
+import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.Leaf;
@@ -16,7 +19,8 @@ import org.wikimedia.search.extra.regex.expression.True;
 
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
 
-public class NGramAutomatonTest extends ESTestCase {
+@RunWith(RandomizedRunner.class)
+public class NGramAutomatonTest extends RandomizedTest {
     @Test
     public void simple() {
         assertTrigramExpression("cat", new Leaf<>("cat"));
@@ -252,7 +256,7 @@ public class NGramAutomatonTest extends ESTestCase {
 //         System.err.println(expression);
         if (expected != null) {
             // Null means skip the test here.
-            assertEquals(expected, expression);
+            Assert.assertEquals(expected, expression);
         }
     }
 }

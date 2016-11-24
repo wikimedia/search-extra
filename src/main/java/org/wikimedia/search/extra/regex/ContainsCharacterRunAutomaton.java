@@ -17,7 +17,7 @@ class ContainsCharacterRunAutomaton extends RunAutomaton {
         int end = s.length();
         int offset = 0;
         // super.initial is final
-        final int initial = getInitialState();
+        final int initial = 0;
         while (offset < end) {
             int cp = s.codePointAt(offset);
             offset += Character.charCount(cp);

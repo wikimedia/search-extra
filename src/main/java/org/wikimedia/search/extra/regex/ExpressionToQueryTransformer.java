@@ -70,6 +70,7 @@ public class ExpressionToQueryTransformer implements Expression.Transformer<Stri
         if (!allTermQueries) {
             return builder.build();
         }
+        assert allTerms != null;
         return new TermsQuery(ngramField, allTerms);
     }
 }

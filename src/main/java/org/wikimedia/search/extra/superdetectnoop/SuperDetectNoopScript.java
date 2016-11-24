@@ -3,19 +3,14 @@ package org.wikimedia.search.extra.superdetectnoop;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.script.AbstractExecutableScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.NativeScriptFactory;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 
 /**
  * Like the detect_noop option on updates but with pluggable "close enough"
@@ -23,12 +18,11 @@ import com.google.common.collect.ImmutableMap;
  */
 public class SuperDetectNoopScript extends AbstractExecutableScript {
     public static class Factory implements NativeScriptFactory {
-        private final List<ChangeHandler.Recognizer> changeHandlerRecognizers;
+        private final Set<ChangeHandler.Recognizer> changeHandlerRecognizers;
 
-        @Inject
         public Factory(Set<ChangeHandler.Recognizer> recognizers) {
             // Note that recognizers are tried in a random order....
-            this.changeHandlerRecognizers = ImmutableList.copyOf(recognizers);
+            this.changeHandlerRecognizers = Collections.unmodifiableSet(recognizers);
         }
 
         @Override
@@ -44,11 +38,11 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
             if (detectorConfigs == null) {
                 return Collections.emptyMap();
             }
-            ImmutableMap.Builder<String, ChangeHandler<Object>> handlers = ImmutableMap.builder();
+            Map<String, ChangeHandler<Object>> handlers = new HashMap<>();
             for (Map.Entry<String, String> detectorConfig : detectorConfigs.entrySet()) {
                 handlers.put(detectorConfig.getKey(), handler(detectorConfig.getValue()));
             }
-            return handlers.build();
+            return Collections.unmodifiableMap(handlers);
         }
 
         private ChangeHandler<Object> handler(String config) {
@@ -64,6 +58,11 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
         @Override
         public boolean needsScores() {
             return false;
+        }
+
+        @Override
+        public String getName() {
+            return "super_detect_noop";
         }
     }
 
@@ -96,7 +95,7 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
         }
     }
 
-    private enum UpdateStatus {UPDATED, NOT_UPDATED, NOOP_DOCUMENT}
+    private enum UpdateStatus { UPDATED, NOT_UPDATED, NOOP_DOCUMENT }
 
     /**
      * Update old with the source and detector configuration of this script.

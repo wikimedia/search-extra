@@ -25,7 +25,7 @@ public class PreserveOriginalFilter extends TokenFilter {
     /**
      * Builds a new PreserveOriginalFilter, the input TokenStream must be filtered by
      * a PreserveOriginalFilter.Recorder.
-     * @param input
+     * @param input input
      * @throws IllegalArgumentException if the analysis chain does not contain an OriginalTermAttribute
      */
     public PreserveOriginalFilter(TokenStream input) {
@@ -33,7 +33,7 @@ public class PreserveOriginalFilter extends TokenFilter {
         cattr = getAttribute(CharTermAttribute.class);
         posIncr = addAttribute(PositionIncrementAttribute.class);
         original = getAttribute(OriginalTermAttribute.class);
-        if(original == null) {
+        if (original == null) {
             throw new IllegalArgumentException("PreserveOriginalFilter must be used with a PreserveOriginalFilter.Recorder fitler in the same analysis chain.");
         }
     }
@@ -49,7 +49,7 @@ public class PreserveOriginalFilter extends TokenFilter {
 
     @Override
     public final boolean incrementToken() throws IOException {
-        if(preserve != null) {
+        if (preserve != null) {
             restoreState(preserve);
             cattr.copyBuffer(original.buffer(), 0, original.length());
             posIncr.setPositionIncrement(0);
@@ -57,8 +57,8 @@ public class PreserveOriginalFilter extends TokenFilter {
             return true;
         }
 
-        if(input.incrementToken()) {
-            if(!original.equals(cattr)) {
+        if (input.incrementToken()) {
+            if (!original.equals(cattr)) {
                 preserve = captureState();
             }
             return true;
@@ -83,7 +83,7 @@ public class PreserveOriginalFilter extends TokenFilter {
          */
         @Override
         public final boolean incrementToken() throws IOException {
-            if(input.incrementToken()) {
+            if (input.incrementToken()) {
                 original.copyBuffer(cattr.buffer(), 0, cattr.length());
                 return true;
             }
@@ -96,7 +96,7 @@ public class PreserveOriginalFilter extends TokenFilter {
      * is restored by {@link PreserveOriginalFilter} at the same position if
      * the token is different.
      */
-    public static interface OriginalTermAttribute extends CharTermAttribute {}
+    public interface OriginalTermAttribute extends CharTermAttribute {}
 
     /* (non-Javadoc)
      * @see org.apache.lucene.analysis.attributes.CharTermAttributeImpl

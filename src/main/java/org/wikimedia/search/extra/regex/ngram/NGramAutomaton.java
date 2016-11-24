@@ -97,8 +97,6 @@ public class NGramAutomaton {
     /**
      * Recursively walk transitions building the prefixes for the initial state.
      *
-     * @param initialStatesQueue repository for new initial states discovered
-     *            during the walk
      * @param codePoints work array holding codePoints
      * @param offset offset into work array/depth in tree
      * @param currentState current source state
@@ -150,7 +148,7 @@ public class NGramAutomaton {
     }
 
     private void traceRemainingStates() {
-        LinkedList<NGramState> leftToProcess = new LinkedList<NGramState>();
+        LinkedList<NGramState> leftToProcess = new LinkedList<>();
         leftToProcess.addAll(initialStates);
         int[] codePoint = new int[1];
         int statesTraced = 0;
@@ -317,7 +315,7 @@ public class NGramAutomaton {
         @Override
         public Expression<String> expression() {
             if (from.inPath) {
-                return False.<String>instance();
+                return False.instance();
             }
             if (ngram == null) {
                 return from.expression();
@@ -330,7 +328,7 @@ public class NGramAutomaton {
             StringBuilder b = new StringBuilder();
             b.append(from.dotName()).append(" -> ").append(to.dotName());
             if (ngram != null) {
-                b.append(" [label=\"" + ngram.replace(" ", "_") + "\"]");
+                b.append(" [label=\"").append(ngram.replace(" ", "_")).append("\"]");
             }
             return b.toString();
         }

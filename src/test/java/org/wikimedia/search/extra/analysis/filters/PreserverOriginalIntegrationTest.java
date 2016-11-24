@@ -1,9 +1,7 @@
 package org.wikimedia.search.extra.analysis.filters;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertOrderedSearchHits;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoSearchHits;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.*;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -21,19 +19,28 @@ public class PreserverOriginalIntegrationTest extends AbstractPluginIntegrationT
     public void init() throws IOException, InterruptedException, ExecutionException {
         XContentBuilder settings = jsonBuilder()
                 .startObject()
+                .field("number_of_shards", 1)
                 .startObject("analysis")
                 .startObject("analyzer")
                 .startObject("preserve")
                 .field("tokenizer", "whitespace")
-                .field("filter", "preserve_original_recorder", "lowercase", "preserve_original");
+                .array("filter", "preserve_original_recorder", "lowercase", "preserve_original")
+                .endObject()
+                .endObject()
+                .endObject()
+                .endObject();
 
         XContentBuilder mapping = jsonBuilder()
                 .startObject()
-                .startObject("test").startObject("properties")
                 .startObject("test")
-                .field("type", "string")
+                .startObject("properties")
+                .startObject("test")
+                .field("type", "text")
                 .field("analyzer", "preserve")
-                .field("similarity", "bm25")
+                .field("similarity", "BM25")
+                .endObject()
+                .endObject()
+                .endObject()
                 .endObject();
 
         assertAcked(prepareCreate("test").addMapping("test", mapping).setSettings(settings));
@@ -45,7 +52,10 @@ public class PreserverOriginalIntegrationTest extends AbstractPluginIntegrationT
 
     @Test
     public void testSimpleMatchPrefersExact() {
-        SearchResponse sr = client().prepareSearch("test").setTypes("test").setQuery(QueryBuilders.matchQuery("test", "hello")).get();
+        SearchResponse sr = client().prepareSearch("test")
+                .setTypes("test")
+                .setQuery(QueryBuilders.matchQuery("test", "hello"))
+                .get();
         assertOrderedSearchHits(sr, "all_lower", "mixed");
 
         // Prefers exact over folded
@@ -55,7 +65,7 @@ public class PreserverOriginalIntegrationTest extends AbstractPluginIntegrationT
 
     public void testTermPositions() {
         SearchResponse sr = client().prepareSearch("test").setTypes("test").setQuery(QueryBuilders.matchPhraseQuery("test", "hello world")).get();
-        assertOrderedSearchHits(sr, "all_lower", "mixed");
+        assertSearchHits(sr, "all_lower", "mixed");
 
         // Just to make sure that positions are kept
         // We use the plain whitespace so it will only match to original terms.

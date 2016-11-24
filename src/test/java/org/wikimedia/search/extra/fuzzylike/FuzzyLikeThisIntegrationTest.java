@@ -12,21 +12,23 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchHit;
 import org.junit.Before;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
 @Deprecated
-public class FuzzyLikeThisTest extends AbstractPluginIntegrationTest {
+public class FuzzyLikeThisIntegrationTest extends AbstractPluginIntegrationTest {
 
     @Before
     private void setup() throws IOException, InterruptedException, ExecutionException {
         XContentBuilder mapping = jsonBuilder().startObject();
         mapping.startObject("test").startObject("properties");
         mapping.startObject("test");
-        mapping.field("type", "string");
-        mapping.endObject();
+        mapping.field("type", "text");
+        mapping.endObject()
+            .endObject()
+            .endObject()
+            .endObject();
 
         assertAcked(prepareCreate("test").addMapping("test", mapping));
         ensureGreen();
@@ -48,45 +50,39 @@ public class FuzzyLikeThisTest extends AbstractPluginIntegrationTest {
         FuzzyLikeThisQueryBuilder builder;
         SearchResponse resp;
 
-        builder = fuzzyLikeThisQuery("test")
-                .likeText("sharp image fuzzy concpt");
+        builder = fuzzyLikeThisQuery("test", "sharp image fuzzy concpt");
         resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
         assertHitCount(resp, 5);
         assertFirstHit(resp, hasId("image"));
 
-        builder = fuzzyLikeThisQuery("test")
-                .likeText("sharp image concpt");
+        builder = fuzzyLikeThisQuery("test", "sharp image concpt");
         resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
         assertHitCount(resp, 1);
         assertFirstHit(resp, hasId("image"));
 
         // Fuzziness to zero is unsupported and causes some confusion between FuzzyLikeQuery
         // and FuzzyTermEnums. A lot of code still rely on a float instead of maxEdits as a int.
-        builder = fuzzyLikeThisQuery("test")
-                .likeText("nostalagia").fuzziness(Fuzziness.ZERO);
+        builder = fuzzyLikeThisQuery("test", "nostalagia").fuzziness(Fuzziness.ZERO);
         assertFailures(client().prepareSearch("test").setTypes("test").setQuery(builder),
                 RestStatus.INTERNAL_SERVER_ERROR,
                 containsString("with transpositions enabled, distances > 2 are not supported"));
 
-        builder = fuzzyLikeThisQuery("test")
-                .likeText("nostalagio").fuzziness(Fuzziness.ONE);
+        builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.ONE);
         resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
         assertNoSearchHits(resp);
 
         // AUTO is like 1 (auto fuzziness is not really supported)
-        builder = fuzzyLikeThisQuery("test")
-                .likeText("nostalagio").fuzziness(Fuzziness.AUTO);
+        builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.AUTO);
         resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
         assertNoSearchHits(resp);
 
-        builder = fuzzyLikeThisQuery("test")
-                .likeText("nostalagio").fuzziness(Fuzziness.TWO);
+        builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.TWO);
         resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
         assertSearchHits(resp, "nostalgia");
     }
 
     @Deprecated
-    public FuzzyLikeThisQueryBuilder fuzzyLikeThisQuery(String...fields) {
-        return new FuzzyLikeThisQueryBuilder(fields);
+    public FuzzyLikeThisQueryBuilder fuzzyLikeThisQuery(String field, String likeText) {
+        return new FuzzyLikeThisQueryBuilder(new String[]{field}, likeText);
     }
 }
