@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.regex;
 import java.io.IOException;
 import java.util.Locale;
 
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -147,6 +148,15 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
         return this;
     }
 
+    /**
+     * Must be set only if the search is sent with a timeout options
+     * it'll help to make the timeout more accurate.
+     */
+    public SourceRegexQueryBuilder timeout(String timeout) {
+        settings.timeout(timeout);
+        return this;
+    }
+
     @Override
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(SourceRegexQueryParser.NAMES[0]);
@@ -180,6 +190,7 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
         private Locale locale;
         private Boolean rejectUnaccelerated;
         private Integer maxNgramClauses;
+        private long timeout;
 
         /**
          * @param maxExpand Maximum size of range transitions to expand into
@@ -266,6 +277,15 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
             return this;
         }
 
+        public Settings timeout(long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public Settings timeout(String timeout) {
+            return timeout(TimeValue.parseTimeValue(timeout, new TimeValue(-1), "timeout").millis());
+        }
+
         @Override
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
@@ -300,6 +320,9 @@ public class SourceRegexQueryBuilder extends QueryBuilder {
             }
             if (maxNgramClauses != null) {
                 builder.field("max_ngram_clauses", maxNgramClauses);
+            }
+            if (timeout != 0) {
+                builder.field("timeout", timeout);
             }
             return builder;
         }

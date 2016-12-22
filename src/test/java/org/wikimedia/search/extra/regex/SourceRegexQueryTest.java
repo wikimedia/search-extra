@@ -15,11 +15,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
+import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
+import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
@@ -152,6 +155,68 @@ public class SourceRegexQueryTest extends AbstractPluginIntegrationTest {
                 containsString("Unable to accelerate"));
         assertFailures(search(filter("p").rejectUnaccelerated(true)), RestStatus.INTERNAL_SERVER_ERROR,
                 containsString("Unable to accelerate"));
+    }
+
+    @Test
+    @Ignore
+    public void testTimeout() throws InterruptedException, ExecutionException,
+            IOException {
+        // Cannot be tested consistently it'd require a very large index... the purpose of this method is
+        // only to help debug the timeout issues with this query.
+        setup();
+        for (int i = 1; i < 10; i++) {
+            indexRandom(false, doc("findmefound" + i, "findmefound"));
+        }
+        for (int i = 1; i < 100000; i++) {
+            indexRandom(false, doc("findmenotfound" + i, "findmenotfound "));
+        }
+        client().admin().indices().prepareForceMerge("test")
+                .setMaxNumSegments(1)
+                .setFlush(true)
+                .get();
+        refresh();
+
+        // warmup
+        SearchResponse resp = search(filter("findme")).get();
+        Assert.assertTrue(resp.getHits().getTotalHits() > 0);
+        long testOverhead = 2000;
+        long timeout = 100; // 3243, 2212
+        long st = -System.currentTimeMillis();
+        resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}afound")).setSize(10).setTimeout(timeout + "ms").get();
+        st += System.currentTimeMillis();
+        //System.out.println(st);
+        // Test the accuracy of the timeout
+        Assert.assertTrue((double)(timeout+testOverhead)*1.5 > st);
+        //Assert.assertTrue(resp.getHits().getTotalHits() > 0); // partial results are very hard to simulate...
+        Assert.assertTrue(resp.isTimedOut());
+    }
+
+    @Test
+    public void testTimeoutIsPassed() throws ExecutionException, InterruptedException, IOException {
+        setup();
+        for (int i = 1; i < 100; i++) {
+            indexRandom(false, doc("findmefound" + i, randomAsciiOfLength(2000)+"findmefound"));
+        }
+        refresh();
+        client().admin().indices().prepareForceMerge("test").setMaxNumSegments(1).setFlush(true).get();
+        // Horrible test that checks for the assertion:
+        // https://github.com/elastic/elasticsearch/blob/v2.4.1/core/src/main/java/org/elasticsearch/search/query/QueryPhase.java#L387
+        // This a way to make sure that the timeout exception is actually thrown
+        assertFailures(search(filter("findmefound").timeout("1ms")).setSize(10),
+                    RestStatus.INTERNAL_SERVER_ERROR, containsString("TimeExceededException thrown even though timeout wasn't set"));
+
+        // When running with a timeout set on the search body no assertion should fail
+        long timeSpentWithInnerTimeout = -System.currentTimeMillis();
+        // This query should match no docs
+        SearchResponse resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found").timeout("1ms")).setTimeout("1s").setSize(10).get();
+        assertTrue(resp.isTimedOut());
+        timeSpentWithInnerTimeout += System.currentTimeMillis();
+
+        long timeSpentWithOuterTimeout = -System.currentTimeMillis();
+        resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found")).setTimeout("1ms").setSize(10).get();
+        assertFalse(resp.isTimedOut()); // I suppose this could randomly fail...
+        timeSpentWithOuterTimeout += System.currentTimeMillis();
+
     }
 
     @Test

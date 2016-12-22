@@ -304,6 +304,6 @@ public class SourceRegexQuery extends Query {
         private Locale locale = Locale.ROOT;
         private boolean rejectUnaccelerated = false;
         private int maxNgramClauses = ExpressionRewriter.MAX_BOOLEAN_CLAUSES;
-
+        private long timeout;
     }
 }

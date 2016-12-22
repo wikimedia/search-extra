@@ -19,7 +19,7 @@ import org.wikimedia.search.extra.util.FieldValues.Loader;
 /**
  * Accelerated version of the source_regex query.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode( callSuper = true )
 class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     private final Query approximation;
 
@@ -39,11 +39,13 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     @Override
     public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
         // Build the approximation based on trigrams
-        final Weight approxWeight = approximation.createWeight(searcher, false);
+        // Creating the Weight from the Searcher with needScore:false allows the searcher to cache our approximation.
+        final Weight approxWeight = searcher.createWeight(approximation, false);
         return new ConstantScoreWeight(this) {
             // TODO: Get rid of this shared mutable state, we should be able to use
             // the generic timeout system.
             private final MutableValueInt inspected = new MutableValueInt();
+            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.getTimeout());
 
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
@@ -51,7 +53,8 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
                 if(approxScorer == null) {
                     return null;
                 }
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, inspected));
+                timeoutChecker.nextSegment(context);
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, inspected, timeoutChecker));
             }
         };
     }
@@ -69,5 +72,4 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     public String toString(String field) {
         return "source_regex(accelerated):" + field;
     }
-
 }

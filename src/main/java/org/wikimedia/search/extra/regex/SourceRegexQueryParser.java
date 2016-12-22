@@ -140,6 +140,9 @@ public class SourceRegexQueryParser implements QueryParser {
         case "maxNGramClauses":
             settings.setMaxNgramClauses(parser.intValue());
             break;
+        case "timeout":
+            settings.setTimeout(parser.intValue());
+            break;
         default:
             return false;
         }
