@@ -5,7 +5,7 @@ The plan is for this to include any extra queries, filters, native scripts,
 score functions, and anything else we think we end up creating to make search
 nice for Wikimedia. At this point it only contains:
 
-Filters:
+Queries:
 * [source_regex](docs/source_regex.md) - An nGram accelerated regular
 expression filter that is generally much much faster than sequentially checking
 all documents.
@@ -13,6 +13,8 @@ all documents.
 independantly. For example, it can be used by multiple processes to reindex
 all documents without any interprocess communication. Added in 1.5.0, 1.4.1,
 and 1.3.0.
+* [token_count_router](docs/token_count_router.md) - Simple query wrapper that
+evaluates some conditions based on the number of tokens of the input query.
 
 Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but

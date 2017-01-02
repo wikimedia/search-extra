@@ -22,6 +22,7 @@ import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
 import org.wikimedia.search.extra.superdetectnoop.VersionedDocumentHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
+import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryParser;
 
 /**
  * Setup the Elasticsearch plugin.
@@ -44,6 +45,7 @@ public class ExtraPlugin extends Plugin {
         module.registerQueryParser(SourceRegexQueryParser.class);
         module.registerQueryParser(IdHashModQueryParser.class);
         module.registerQueryParser(FuzzyLikeThisQueryParser.class);
+        module.registerQueryParser(TokenCountRouterQueryParser.class);
     }
 
     /**
