@@ -226,7 +226,7 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
                     prefixLength = parser.intValue();
                 } else if (parseContext.getParseFieldMatcher().match(currentFieldName, ANALYZER)) {
                     analyzer = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, ANALYZER)) {
+                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FAIL_ON_UNSUPPORTED_FIELD)) {
                     failOnUnsupportedField = parser.booleanValue();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "[flt] query does not support [" + currentFieldName + "]");
