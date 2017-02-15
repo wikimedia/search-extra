@@ -371,17 +371,17 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if (context.getParseFieldMatcher().match(currentFieldName, FIELD)) {
+                if (FIELD.match(currentFieldName)) {
                     fieldPath = parser.text();
-                } else if (context.getParseFieldMatcher().match(currentFieldName, REGEX)) {
+                } else if (REGEX.match(currentFieldName)) {
                     regex = parser.text();
-                } else if (context.getParseFieldMatcher().match(currentFieldName, LOAD_FROM_SOURCE)) {
+                } else if (LOAD_FROM_SOURCE.match(currentFieldName)) {
                     loadFromSource = parser.booleanValue();
-                } else if (context.getParseFieldMatcher().match(currentFieldName, NGRAM_FIELD)) {
+                } else if (NGRAM_FIELD.match(currentFieldName)) {
                     ngramFieldPath = parser.text();
-                } else if (context.getParseFieldMatcher().match(currentFieldName, GRAM_SIZE)) {
+                } else if (GRAM_SIZE.match(currentFieldName)) {
                     ngramGramSize = parser.intValue();
-                } else if (!parseInto(settings, currentFieldName, parser, context)) {
+                } else if (!parseInto(settings, currentFieldName, parser)) {
                     throw new ParsingException(parser.getTokenLocation(), "[source-regex] filter does not support [" + currentFieldName
                             + "]");
                 }
@@ -402,26 +402,26 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         return Optional.of(builder);
     }
 
-    private static boolean parseInto(Settings settings, String fieldName, XContentParser parser, QueryParseContext context) throws IOException {
-        if (context.getParseFieldMatcher().match(fieldName, Settings.MAX_EXPAND)) {
+    private static boolean parseInto(Settings settings, String fieldName, XContentParser parser) throws IOException {
+        if (Settings.MAX_EXPAND.match(fieldName)) {
             settings.maxExpand = parser.intValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.MAX_STATES_TRACED)) {
+        } else if (Settings.MAX_STATES_TRACED.match(fieldName)) {
             settings.maxStatesTraced = parser.intValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.MAX_INSPECT)) {
+        } else if (Settings.MAX_INSPECT.match(fieldName)) {
             settings.maxInspect = parser.intValue() ;
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.MAX_DETERMINIZED_STATES)) {
+        } else if (Settings.MAX_DETERMINIZED_STATES.match(fieldName)) {
             settings.maxDeterminizedStates = parser.intValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.MAX_NGRAMS_EXTRACTED)) {
+        } else if (Settings.MAX_NGRAMS_EXTRACTED.match(fieldName)) {
             settings.maxNgramsExtracted = parser.intValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.CASE_SENSITIVE)) {
+        } else if (Settings.CASE_SENSITIVE.match(fieldName)) {
             settings.caseSensitive = parser.booleanValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.LOCALE)) {
+        } else if (Settings.LOCALE.match(fieldName)) {
             settings.locale = LocaleUtils.parse(parser.text());
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.REJECT_UNACCELERATED)) {
+        } else if (Settings.REJECT_UNACCELERATED.match(fieldName)) {
             settings.rejectUnaccelerated = parser.booleanValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.MAX_NGRAM_CLAUSES)) {
+        } else if (Settings.MAX_NGRAM_CLAUSES.match(fieldName)) {
             settings.maxNgramClauses = parser.intValue();
-        } else if (context.getParseFieldMatcher().match(fieldName, Settings.TIMEOUT)) {
+        } else if (Settings.TIMEOUT.match(fieldName)) {
             settings.timeout(parser.text());
         } else {
             return false;

@@ -214,25 +214,25 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if (parseContext.getParseFieldMatcher().match(currentFieldName, LIKE_TEXT)) {
+                if (LIKE_TEXT.match(currentFieldName)) {
                     likeText = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, MAX_QUERY_TERMS)) {
+                } else if (MAX_QUERY_TERMS.match(currentFieldName)) {
                     maxNumTerms = parser.intValue();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, IGNORE_TF)) {
+                } else if (IGNORE_TF.match(currentFieldName)) {
                     ignoreTF = parser.booleanValue();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FUZZINESS)) {
+                } else if (FUZZINESS.match(currentFieldName)) {
                     fuzziness = Fuzziness.parse(parser);
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, PREFIX_LENGTH)) {
+                } else if (PREFIX_LENGTH.match(currentFieldName)) {
                     prefixLength = parser.intValue();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, ANALYZER)) {
+                } else if (ANALYZER.match(currentFieldName)) {
                     analyzer = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FAIL_ON_UNSUPPORTED_FIELD)) {
+                } else if (FAIL_ON_UNSUPPORTED_FIELD.match(currentFieldName)) {
                     failOnUnsupportedField = parser.booleanValue();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "[flt] query does not support [" + currentFieldName + "]");
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
-                if (parseContext.getParseFieldMatcher().match(currentFieldName, FIELDS)) {
+                if (FIELDS.match(currentFieldName)) {
                     fields = new ArrayList<>();
                     while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
                         fields.add(parser.text());

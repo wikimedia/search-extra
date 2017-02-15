@@ -132,24 +132,24 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if (parseContext.getParseFieldMatcher().match(currentFieldName, TEXT)) {
+                if (TEXT.match(currentFieldName)) {
                     text = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FIELD)) {
+                } else if (FIELD.match(currentFieldName)) {
                     field = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, ANALYZER)) {
+                } else if (ANALYZER.match(currentFieldName)) {
                     analyzer = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, DISCOUNT_OVERLAPS)) {
+                } else if (DISCOUNT_OVERLAPS.match(currentFieldName)) {
                     discountOverlaps = parser.booleanValue();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
                 }
-            } else if (parseContext.getParseFieldMatcher().match(currentFieldName, FALLBACK)) {
+            } else if (FALLBACK.match(currentFieldName)) {
                 if (token == XContentParser.Token.START_OBJECT) {
                     fallback = parseContext.parseInnerQueryBuilder();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "fallback must be an object");
                 }
-            } else if (parseContext.getParseFieldMatcher().match(currentFieldName, CONDITIONS)) {
+            } else if (CONDITIONS.match(currentFieldName)) {
                 if (token != XContentParser.Token.START_ARRAY) {
                     throw new ParsingException(parser.getTokenLocation(), "Expected an array");
                 }
@@ -198,13 +198,13 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
                 ConditionDefinition condition;
-                if ((condition = ConditionDefinition.parse(parseContext, currentFieldName)) != null) {
+                if ((condition = ConditionDefinition.parse(currentFieldName)) != null) {
                     currentCondition = condition;
                     checkValue = parser.intValue(true);
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
                 }
-            } else if (parseContext.getParseFieldMatcher().match(currentFieldName, QUERY)) {
+            } else if (QUERY.match(currentFieldName)) {
                 if (token == XContentParser.Token.START_OBJECT) {
                     query = parseContext.parseInnerQueryBuilder();
                 } else {
@@ -333,9 +333,9 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
             this.parseField = new ParseField(name());
         }
 
-        static ConditionDefinition parse(QueryParseContext context, String token) {
+        static ConditionDefinition parse(String token) {
             for (ConditionDefinition c : values()) {
-                if (context.getParseFieldMatcher().match(token, c.parseField)) {
+                if (c.parseField.match(token)) {
                     return c;
                 }
             }

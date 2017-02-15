@@ -101,11 +101,11 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder<Levens
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if (parseContext.getParseFieldMatcher().match(currentFieldName, FIELD)) {
+                if (FIELD.match(currentFieldName)) {
                     field = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, TEXT)) {
+                } else if (TEXT.match(currentFieldName)) {
                     text = parser.text();
-                } else if (parseContext.getParseFieldMatcher().match(currentFieldName, MISSING)) {
+                } else if (MISSING.match(currentFieldName)) {
                     missing = parser.text();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "{} query does not support {}", NAME,  currentFieldName);
