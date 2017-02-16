@@ -26,7 +26,8 @@ Installation
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 5.1.2, master branch             | 5.1.2           |
+| 5.2.0, master branch             | 5.2.0           |
+| 5.1.2                            | 5.1.2           |
 | 2.4.1, 2.4 branch                | 2.4.1           |
 | 2.4.0                            | 2.4.0           |
 | 2.3.5, 2.3 branch                | 2.3.5           |
