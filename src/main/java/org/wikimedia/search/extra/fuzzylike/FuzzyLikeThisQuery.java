@@ -63,6 +63,7 @@ import lombok.EqualsAndHashCode;
  * term) and this is factored into the variant's boost. If the source query term does not exist in the
  * index the average IDF of the variants is used.
  */
+@Deprecated
 @EqualsAndHashCode(callSuper = false, of = {"analyzer", "fieldVals", "ignoreTF", "maxNumTerms"})
 public class FuzzyLikeThisQuery extends Query
 {
