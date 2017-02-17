@@ -1,17 +1,8 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertThrows;
-import static org.hamcrest.Matchers.anything;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.not;
-
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.WriteRequest;
@@ -22,16 +13,22 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.hamcrest.Matcher;
-import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
-public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrationTest {
-    @Test
-    public void newField() throws IOException {
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertThrows;
+import static org.hamcrest.Matchers.anything;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.not;
+
+public class SuperDetectNoopScriptIntegrationTests extends AbstractPluginIntegrationTest {
+    public void testNewField() throws IOException {
         indexSeedData();
         XContentBuilder b = x("bar", 2);
         Map<String, Object> r = update(b, true);
@@ -39,80 +36,70 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         assertThat(r, hasEntry("bar", (Object) 2));
     }
 
-    @Test
-    public void notModified() throws IOException {
+    public void testNotModified() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 3);
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("int", (Object) 3));
     }
 
-    @Test
-    public void assignToNull() throws IOException {
+    public void testAssignToNull() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", null);
         Map<String, Object> r = update(b, true);
         assertThat(r, not(hasEntry(equalTo("int"), anything())));
     }
 
-    @Test
-    public void newValue() throws IOException {
+    public void testNewValue() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 2);
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("int", (Object) 2));
     }
 
-    @Test
-    public void withinPercentage() throws IOException {
+    public void testWithinPercentage() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 5, "within 200%");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("int", (Object) 3));
     }
 
-    @Test
-    public void withinPercentageNegative() throws IOException {
+    public void testWithinPercentageNegative() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", -1, "within 200%");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("int", (Object) 3));
     }
 
-    @Test
-    public void outsidePercentage() throws IOException {
+    public void testOutsidePercentage() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 9, "within 200%");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("int", (Object) 9));
     }
 
-    @Test
-    public void outsidePercentageNegative() throws IOException {
+    public void testOutsidePercentageNegative() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", -3, "within 200%");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("int", (Object) (-3)));
     }
 
-    @Test
-    public void withinPercentageZeroMatch() throws IOException {
+    public void testWithinPercentageZeroMatch() throws IOException {
         indexSeedData();
         XContentBuilder b = x("zero", 0, "within 200%");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("zero", (Object) 0));
     }
 
-    @Test
-    public void withinPercentageZeroChanged() throws IOException {
+    public void testWithinPercentageZeroChanged() throws IOException {
         indexSeedData();
         XContentBuilder b = x("zero", 1, "within 200%");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("zero", (Object) 1));
     }
 
-    @Test
-    public void percentageOnString() throws IOException {
+    public void testPercentageOnString() throws IOException {
         indexSeedData();
         XContentBuilder b = x("string", "cat", "within 200%");
         Map<String, Object> r = update(b, true);
@@ -120,40 +107,35 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         assertThat(r, hasEntry("string", (Object) "cat"));
     }
 
-    @Test
-    public void withinAbsolute() throws IOException {
+    public void testWithinAbsolute() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 4, "within 2");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("int", (Object) 3));
     }
 
-    @Test
-    public void withinAbsoluteNegative() throws IOException {
+    public void testWithinAbsoluteNegative() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", -1, "within 7");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("int", (Object) 3));
     }
 
-    @Test
-    public void outsideAbsolute() throws IOException {
+    public void testOutsideAbsolute() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 5, "within 2");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("int", (Object) 5));
     }
 
-    @Test
-    public void outsideAbsoluteNegative() throws IOException {
+    public void testOutsideAbsoluteNegative() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", -4, "within 7");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("int", (Object) (-4)));
     }
 
-    @Test
-    public void absoluteOnString() throws IOException {
+    public void testAbsoluteOnString() throws IOException {
         indexSeedData();
         XContentBuilder b = x("string", "cat", "within 2");
         Map<String, Object> r = update(b, true);
@@ -161,104 +143,91 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         assertThat(r, hasEntry("string", (Object) "cat"));
     }
 
-    @Test
-    public void setNewField() throws IOException {
+    public void testSetNewField() throws IOException {
         indexSeedData();
         XContentBuilder b = x("another_set", ImmutableMap.of("add", ImmutableList.of("cat", "tree")), "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("another_set", (Object) ImmutableList.of("cat", "tree")));
     }
 
-    @Test
-    public void setNewFieldRemoveDoesntAddField() throws IOException {
+    public void testSetNewFieldRemoveDoesntAddField() throws IOException {
         indexSeedData();
         XContentBuilder b = x("another_set", ImmutableMap.of("remove", "cat"), "set");
         Map<String, Object> r = update(b, false);
         assertThat(r, not(hasEntry(equalTo("another_set"), anything())));
     }
 
-    @Test
-    public void setNullRemovesField() throws IOException {
+    public void testSetNullRemovesField() throws IOException {
         indexSeedData();
         XContentBuilder b = x("set", null, "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, not(hasEntry(equalTo("set"), anything())));
     }
 
-    @Test
-    public void setNoop() throws IOException {
+    public void testSetNoop() throws IOException {
         indexSeedData();
         XContentBuilder b = x("set", ImmutableMap.of("add", "cat"), "set");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "fish")));
     }
 
-    @Test
-    public void setNoopFromRemove() throws IOException {
+    public void testSetNoopFromRemove() throws IOException {
         indexSeedData();
         XContentBuilder b = x("set", ImmutableMap.of("remove", "tree"), "set");
         Map<String, Object> r = update(b, false);
         assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "fish")));
     }
 
-    @Test
-    public void setAdd() throws IOException {
+    public void testSetAdd() throws IOException {
         indexSeedData();
         XContentBuilder b = x("set", ImmutableMap.of("add", "cow"), "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "fish", "cow")));
     }
 
-    @Test
-    public void setRemove() throws IOException {
+    public void testSetRemove() throws IOException {
         indexSeedData();
         XContentBuilder b = x("set", ImmutableMap.of("remove", "fish"), "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog")));
     }
 
-    @Test
-    public void setAddAndRemove() throws IOException {
+    public void testSetAddAndRemove() throws IOException {
         indexSeedData();
         XContentBuilder b = x("set", ImmutableMap.of("add", "cow", "remove", "fish"), "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry("set", (Object) ImmutableList.of("cat", "dog", "cow")));
     }
 
-    @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void setNewFieldDeep() throws IOException {
+    public void testSetNewFieldDeep() throws IOException {
         indexSeedData();
         XContentBuilder b = x("o.new_set", ImmutableMap.of("add", "cow", "remove", "fish"), "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry(equalTo("o"), (Matcher<Object>) (Matcher) hasEntry("new_set", ImmutableList.of("cow"))));
     }
 
-    @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void setAddFieldDeep() throws IOException {
+    public void testSetAddFieldDeep() throws IOException {
         indexSeedData();
         XContentBuilder b = x("o.set", ImmutableMap.of("add", "cow", "remove", "fish"), "set");
         Map<String, Object> r = update(b, true);
         assertThat(r, hasEntry(equalTo("o"), (Matcher<Object>) (Matcher) hasEntry("set", ImmutableList.of("cow", "bat"))));
     }
 
-    @Test
-    public void garbageDetector() throws IOException {
+    public void testGarbageDetector() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", "cat", "not a valid detector");
         assertThrows(toUpdateRequest(b), IllegalArgumentException.class, RestStatus.BAD_REQUEST);
     }
 
-    @Test
-    public void noopDocumentWithLowerVersion() throws IOException {
+    public void testNoopDocumentWithLowerVersion() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 1, "documentVersion");
         update(b, false);
     }
 
-    @Test
-    public void dontNoopDocumentWithEqualVersionAndDifferentData() throws IOException {
+    public void testDontNoopDocumentWithEqualVersionAndDifferentData() throws IOException {
         indexSeedData();
         XContentBuilder b = jsonBuilder().startObject();
         b.startObject("source");
@@ -276,8 +245,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         update(b, true);
     }
 
-    @Test
-    public void noopDocumentWithEqualVersionAndSameData() throws IOException {
+    public void testNoopDocumentWithEqualVersionAndSameData() throws IOException {
         indexSeedData();
         XContentBuilder b = jsonBuilder().startObject();
         b.startObject("source");
@@ -296,43 +264,37 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
     }
 
 
-    @Test
-    public void dontNoopDocumentWithMissingPrevVersion() throws IOException {
+    public void testDontNoopDocumentWithMissingPrevVersion() throws IOException {
         indexSeedData();
         XContentBuilder b = x("nonexistent", 5, "documentVersion");
         update(b, true);
     }
 
-    @Test
-    public void dontNoopDocumentWithHigherVersion() throws IOException {
+    public void testDontNoopDocumentWithHigherVersion() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 5, "documentVersion");
         update(b, true);
     }
 
-    @Test
-    public void dontNoopDocumentWithInvalidOldVersion() throws IOException {
+    public void testDontNoopDocumentWithInvalidOldVersion() throws IOException {
         indexSeedData();
         XContentBuilder b = x("string", 5, "documentVersion");
         update(b, true);
     }
 
-    @Test
-    public void dontNoopDocumentWithMaximumVersion() throws IOException {
+    public void testDontNoopDocumentWithMaximumVersion() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 9223372036854775807L, "documentVersion");
         update(b, true);
     }
 
-    @Test
-    public void noopsDocumentWithOutOfBoundsVersion() throws IOException {
+    public void testNoopsDocumentWithOutOfBoundsVersion() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", 9223372036854775807L + 1L, "documentVersion");
         update(b, false);
     }
 
-    @Test
-    public void noopsEntireDocumentUpdate() throws IOException {
+    public void testNoopsEntireDocumentUpdate() throws IOException {
         indexSeedData();
         XContentBuilder b = jsonBuilder().startObject();
         b.startObject("source");
@@ -353,9 +315,8 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
     /**
      * Tests path matching.
      */
-    @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void path() throws IOException {
+    public void testPath() throws IOException {
         indexSeedData();
         XContentBuilder b = x("o.bar", 9, "within 10");
         Map<String, Object> r = update(b, false);
@@ -411,7 +372,11 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
             b.endObject();
         }
         b.endObject();
-        IndexResponse ir = client().prepareIndex("test", "test", "1").setSource(b).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE).get();
+        IndexResponse ir = client()
+                .prepareIndex("test", "test", "1")
+                .setSource(b)
+                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
+                .get();
         assertEquals("Test data is newly created", DocWriteResponse.Result.CREATED, ir.getResult());
     }
 

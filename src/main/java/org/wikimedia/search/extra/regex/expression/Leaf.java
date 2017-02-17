@@ -1,8 +1,9 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableSet;
 import lombok.EqualsAndHashCode;
+
+import java.util.Objects;
 
 /**
  * A leaf expression.
@@ -21,7 +22,7 @@ public final class Leaf<T> implements Expression<T> {
     private final T t;
 
     public Leaf(T t) {
-        this.t = checkNotNull(t);
+        this.t = Objects.requireNonNull(t);
     }
 
     public String toString() {

@@ -1,0 +1,28 @@
+# Integration tests for source_regex_query
+#
+---
+"source_regex_query test":
+    - do:
+        indices.create:
+            index:  test
+            body:
+                settings:
+                    analysis:
+                        analyzer:
+                            trigram:
+                                type: custom
+                                tokenizer: trigram
+                                filter: [lowercase]
+                        tokenizer:
+                            trigram:
+                                type: nGram
+                                min_gram: 3
+                                max_gram: 3
+                mappings:
+                    test:
+                        properties:
+                            text:
+                                type: text
+    - do:
+       cluster.health:
+           wait_for_status: yellow

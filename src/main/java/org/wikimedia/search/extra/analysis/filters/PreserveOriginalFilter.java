@@ -26,7 +26,6 @@ public class PreserveOriginalFilter extends TokenFilter {
      * Builds a new PreserveOriginalFilter, the input TokenStream must be filtered by
      * a PreserveOriginalFilter.Recorder.
      * @param input input
-     * @throws IllegalArgumentException if the analysis chain does not contain an OriginalTermAttribute
      */
     public PreserveOriginalFilter(TokenStream input) {
         super(input);
@@ -34,7 +33,8 @@ public class PreserveOriginalFilter extends TokenFilter {
         posIncr = addAttribute(PositionIncrementAttribute.class);
         original = getAttribute(OriginalTermAttribute.class);
         if (original == null) {
-            throw new IllegalArgumentException("PreserveOriginalFilter must be used with a PreserveOriginalFilter.Recorder fitler in the same analysis chain.");
+            throw new IllegalArgumentException("PreserveOriginalFilter must be used with a " +
+                    "PreserveOriginalFilter.Recorder fitler in the same analysis chain.");
         }
     }
 

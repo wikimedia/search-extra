@@ -1,0 +1,72 @@
+# Integration tests for preserve_original
+#
+---
+"preserve original search test":
+    - do:
+        indices.create:
+            index:  test
+            body:
+                settings:
+                    index:
+                        number_of_shards: 1
+                        analysis:
+                            analyzer:
+                                preserve:
+                                    tokenizer: whitespace
+                                    filter: ["preserve_original_recorder", "lowercase", "preserve_original"]
+                mappings:
+                    type:
+                        properties:
+                            text:
+                                type:       text
+                                analyzer:   preserve
+    - do:
+       cluster.health:
+           wait_for_status: yellow
+
+    - do:
+      index:
+          index:  test
+          type:   type
+          id:     all_lower
+          body:   { "text": "hello world" }
+    - do:
+      index:
+          index:  test
+          type:   type
+          id:     mixed
+          body:   { "text": "Hello World" }
+    - do:
+      indices.refresh: {}
+
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    match:
+                        text: "hello"
+    - match: { hits.total: 2 }
+    - match: { hits.hits.0._id: all_lower }
+    - match: { hits.hits.1._id: mixed }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    match:
+                        text: "Hello"
+    - match: { hits.total: 2 }
+    - match: { hits.hits.0._id: mixed }
+    - match: { hits.hits.1._id: all_lower }
+    - do: # Make sure we keep positions
+        search:
+            index: test
+            body:
+                query:
+                    match_phrase:
+                        text:
+                            query:    "Hello World"
+                            analyzer: whitespace
+    - match: { hits.total: 1 }
+    - match: { hits.hits.0._id: mixed }

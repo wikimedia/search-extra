@@ -61,7 +61,6 @@ public class SetHandler implements ChangeHandler<Object> {
 
         if (add.size() + remove.size() > maxKeepAsList && minConvert < value.size() && value.size() < maxConvert) {
             // Theoretically this is O(commands + values)
-//            System.err.printf("Convert %s > %s && %s < %s < %s\n", add.size() + remove.size(), maxKeepAsList, minConvert, value.size(), maxConvert);
             value = new LinkedHashSet<>(value);
             // Note the bitwise boolean or - we don't want short circuiting.
             boolean changed = value.addAll(add) | value.removeAll(remove);
@@ -72,7 +71,6 @@ public class SetHandler implements ChangeHandler<Object> {
             return new Changed(value);
         }
         // Theoretically this is O(commands * values)
-//        System.err.printf("NoConvert %s > %s && %s < %s < %s\n", add.size() + remove.size(), maxKeepAsList, minConvert, value.size(), maxConvert);
         boolean changed = false;
         for (Object toAdd: add) {
             if (!value.contains(toAdd)) {

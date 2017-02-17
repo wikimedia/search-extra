@@ -1,151 +1,137 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
-
-import com.carrotsearch.randomizedtesting.RandomizedRunner;
-import com.carrotsearch.randomizedtesting.RandomizedTest;
+import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
+import static com.google.common.collect.ImmutableSet.of;
+import static org.wikimedia.search.extra.TestUtils.assertThrows;
+import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
-@RunWith(RandomizedRunner.class)
-public class NGramAutomatonTest extends RandomizedTest {
-    @Test
-    public void simple() {
+public class NGramAutomatonTests extends LuceneTestCase {
+    public void testSimple() {
         assertTrigramExpression("cat", new Leaf<>("cat"));
     }
 
-    @Test
-    public void options() {
+    public void testOptions() {
         assertTrigramExpression("(cat)|(dog)|(cow)", new Or<String>(leaves("cat", "dog", "cow")));
     }
 
-    @Test
-    public void leadingWildcard() {
+    public void testLeadingWildcard() {
         assertTrigramExpression(".*cat", new Leaf<>("cat"));
     }
 
-    @Test
-    public void followingWildcard() {
+    public void testFollowingWildcard() {
         assertTrigramExpression("cat.*", new Leaf<>("cat"));
     }
 
-    @Test
-    public void initialCharClassExpanded() {
-        assertTrigramExpression("[abcd]oop", new And<String>(new Or<String>(leaves("aoo", "boo", "coo", "doo")), new Leaf<>("oop")));
+    public void testInitialCharClassExpanded() {
+        assertTrigramExpression("[abcd]oop", new And<String>(of(new Or<String>(leaves("aoo", "boo", "coo", "doo")), new Leaf<>("oop"))));
     }
 
-    @Test
-    public void initialCharClassSkipped() {
+    public void testInitialCharClassSkipped() {
         assertTrigramExpression("[abcde]oop", new Leaf<>("oop"));
     }
 
-    @Test
-    public void followingCharClassExpanded() {
-        assertTrigramExpression("oop[abcd]", new And<String>(
+    public void testFollowingCharClassExpanded() {
+        assertTrigramExpression("oop[abcd]", new And<String>(of(
                 new Leaf<>("oop"),
-                new Or<String>(leaves("opa", "opb", "opc", "opd"))));
+                new Or<String>(leaves("opa", "opb", "opc", "opd")))));
     }
 
-    @Test
-    public void followingCharClassSkipped() {
+    public void testFollowingCharClassSkipped() {
         assertTrigramExpression("oop[abcde]", new Leaf<>("oop"));
     }
 
-    @Test
-    public void shortCircuit() {
+    public void testShortCircuit() {
         assertTrigramExpression("a|(lopi)", True.<String> instance());
     }
 
-    @Test
-    public void optional() {
+    public void testOptional() {
         assertTrigramExpression("(a|[j-t])lopi", new And<String>(leaves("lop", "opi")));
     }
 
-    @Test
-    public void loop() {
-        assertTrigramExpression("ab(cdef)*gh", new Or<String>(
+    public void testLoop() {
+        assertTrigramExpression("ab(cdef)*gh", new Or<String>(of(
                 new And<String>(leaves("abc", "bcd", "cde", "def", "efg", "fgh")),
-                new And<String>(leaves("abg", "bgh"))));
+                new And<String>(leaves("abg", "bgh")))));
     }
 
-    @Test
-    public void converge() {
-        assertTrigramExpression("(ajdef)|(cdef)", new And<String>(
-                new Or<String>(
+    public void testConverge() {
+        assertTrigramExpression("(ajdef)|(cdef)", new And<String>(of(
+                new Or<String>(of(
                         new And<String>(leaves("ajd", "jde")),
-                        new Leaf<>("cde")),
-                        new Leaf<>("def")));
+                        new Leaf<>("cde"))),
+                        new Leaf<>("def"))));
     }
 
-    @Test
-    public void complex() {
-        assertTrigramExpression("h[efas] te.*me", new And<String>(
-                new Or<String>(
+    public void testComplex() {
+        assertTrigramExpression("h[efas] te.*me", new And<String>(of(
+                new Or<String>(of(
                         new And<String>(leaves("ha ", "a t")),
                         new And<String>(leaves("he ", "e t")),
                         new And<String>(leaves("hf ", "f t")),
-                        new And<String>(leaves("hs ", "s t"))),
-                new Leaf<>(" te")));
+                        new And<String>(leaves("hs ", "s t")))),
+                new Leaf<>(" te"))));
     }
 
-    // The pgTrgmExample methods below test examples from the slides at
-    // http://www.pgcon.org/2012/schedule/attachments/248_Alexander%20Korotkov%20-%20Index%20support%20for%20regular%20expression%20search.pdf
-    @Test
-    public void pgTrgmExample1() {
-        assertTrigramExpression("a(b+|c+)d", new Or<String>(
+    /**
+     * The pgTrgmExample methods below test examples from the slides at
+     * http://www.pgcon.org/2012/schedule/attachments/248_Alexander%20Korotkov
+     * %20-%20Index%20support%20for%20regular%20expression%20search.pdf
+     */
+    public void testPgTrgmExample1() {
+        assertTrigramExpression("a(b+|c+)d", new Or<String>(of(
                 new Leaf<>("abd"),
                 new And<String>(leaves("abb", "bbd")),
                 new Leaf<>("acd"),
-                new And<String>(leaves("acc", "ccd"))));
+                new And<String>(leaves("acc", "ccd")))));
     }
 
-    @Test
-    public void pgTrgmExample2() {
-        assertTrigramExpression("(abc|cba)def", new And<String>(
-                new Leaf<>("def"), new Or<String>(
+    public void testPgTrgmExample2() {
+        assertTrigramExpression("(abc|cba)def", new And<String>(of(
+                new Leaf<>("def"),
+                new Or<String>(of(
                         new And<String>(leaves("abc", "bcd", "cde")),
-                        new And<String>(leaves("cba", "bad", "ade")))));
+                        new And<String>(leaves("cba", "bad", "ade"))
+                )))));
     }
 
-    @Test
-    public void pgTrgmExample3() {
-        assertTrigramExpression("abc+de", new And<String>(
+    public void testPgTrgmExample3() {
+        assertTrigramExpression("abc+de", new And<String>(of(
                 new Leaf<>("abc"),
                 new Leaf<>("cde"),
-                new Or<String>(
+                new Or<String>(of(
                         new Leaf<>("bcd"),
-                        new And<String>(leaves("bcc", "ccd")))));
+                        new And<String>(leaves("bcc", "ccd"))
+                )))));
     }
 
-    @Test
-    public void pgTrgmExample4() {
-        assertTrigramExpression("(abc*)+de", new Or<String>(
+    public void testPgTrgmExample4() {
+        assertTrigramExpression("(abc*)+de", new Or<String>(of(
                 new And<String>(leaves("abd", "bde")),
-                new And<String>(
+                new And<String>(of(
                         new Leaf<>("abc"),
                         new Leaf<>("cde"),
-                        new Or<String>(
+                        new Or<String>(of(
                                 new Leaf<>("bcd"),
-                                new And<String>(leaves("bcc", "ccd"))))));
+                                new And<String>(leaves("bcc", "ccd")))
+                        ))))
+        ));
     }
 
-    @Test
-    public void pgTrgmExample5() {
-        assertTrigramExpression("ab(cd)*ef", new Or<String>(
+    public void testPgTrgmExample5() {
+        assertTrigramExpression("ab(cd)*ef", new Or<String>(of(
                 new And<String>(leaves("abe", "bef")),
-                new And<String>(leaves("abc", "bcd", "cde", "def"))));
+                new And<String>(leaves("abc", "bcd", "cde", "def")))));
     }
 
     /**
@@ -165,44 +151,39 @@ public class NGramAutomatonTest extends RandomizedTest {
      * This would periodically fail when we were removing cycles rather
      * preventing them from being added to the expression.
      */
-    @Test
-    public void bigramFailsSometimes() {
+    public void testBigramFailsSometimes() {
         assertExpression("te.*me", 2, new And<String>(leaves("te", "me")));
     }
 
-    @Test(expected=TooComplexToDeterminizeException.class)
-    public void tooBig() {
-        assertTrigramExpression("\\[\\[(Datei|File|Bild|Image):[^]]*alt=[^]|}]{50,200}",
-                null /* ignored */);
+    public void testTooBig() {
+        assertThrows(TooComplexToDeterminizeException.class,
+                () -> assertTrigramExpression("\\[\\[(Datei|File|Bild|Image):[^]]*alt=[^]|}]{50,200}",
+                    null /* ignored */));
     }
 
-    @Test(expected=TooComplexToDeterminizeException.class)
-    public void tooBigToo() {
-        assertTrigramExpression("[^]]*alt=[^]\\|}]{80,}",
-                null /* ignored */);
+    public void testTooBigToo() {
+        assertThrows(TooComplexToDeterminizeException.class,
+                () -> assertTrigramExpression("[^]]*alt=[^]\\|}]{80,}",
+                    null /* ignored */));
     }
 
-    @Test
-    public void bigButNotTooBig() {
+    public void testBigButNotTooBig() {
         // I'd like to verify that this _doesn't_ take 26 seconds to run and
         // instead takes .26 seconds but such assertions are foolhardy in unit
         // tests.
         assertTrigramExpression("[^]]*alt=[^]\\|}]{10,20}", new And<>(leaves("alt", "lt=")));
     }
 
-    @Test
-    public void huge() {
+    public void testHuge() {
         assertTrigramExpression("[ac]*a[de]{50,80}", null);
     }
 
-    @Test
-    @Repeat(iterations=100)
-    public void randomRegexp() {
+    public void testRandomRegexp() {
         // Some of the regex strings don't actually compile so just retry until we get a good one.
         String str;
         while (true) {
             try {
-                str = AutomatonTestUtil.randomRegexp(getRandom());
+                str = AutomatonTestUtil.randomRegexp(random());
                 new RegExp(str);
                 break;
             } catch (Exception e) {
@@ -215,13 +196,11 @@ public class NGramAutomatonTest extends RandomizedTest {
     /**
      * Tests that building the automaton doesn't blow up in unexpected ways.
      */
-    @Test
-    @Repeat(iterations=100)
-    public void randomAutomaton() {
-        Automaton automaton = AutomatonTestUtil.randomAutomaton(getRandom());
+    public void testRandomAutomaton() {
+        Automaton automaton = AutomatonTestUtil.randomAutomaton(random());
         NGramAutomaton ngramAutomaton;
         try {
-            ngramAutomaton = new NGramAutomaton(automaton, between(2, 7), 4, 10000, 500);
+            ngramAutomaton = new NGramAutomaton(automaton, random().nextInt(5) + 2, 4, 10000, 500);
         } catch (AutomatonTooComplexException e) {
             // This is fine - some automata are genuinely too complex to ngramify.
             return;

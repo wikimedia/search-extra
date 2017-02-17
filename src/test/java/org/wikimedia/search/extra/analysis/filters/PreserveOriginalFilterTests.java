@@ -1,14 +1,13 @@
 package org.wikimedia.search.extra.analysis.filters;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-
-import org.apache.lucene.analysis.*;
+import com.google.common.base.Charsets;
+import com.google.common.primitives.Ints;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.BaseTokenStreamTestCase;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.TokenFilter;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
@@ -23,16 +22,22 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
-import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.primitives.Ints;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
-public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
+import static org.wikimedia.search.extra.TestUtils.assertThrows;
+
+public class PreserveOriginalFilterTests extends BaseTokenStreamTestCase {
     private final int shingleMaxSize = random().nextInt(3) + 3;
     private final int shingleMinSize = random().nextInt(shingleMaxSize-2) + 2;
-    @Test
-    public void simpleTest() throws IOException {
+
+    public void testSimple() throws IOException {
         String input = "Hello the World";
         try (Analyzer ws = newPreserveOriginalLowerCase()) {
             TokenStream ts = ws.tokenStream("", input);
@@ -61,8 +66,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
         };
     }
 
-    @Test
-    public void simpleTestWithStop() throws IOException {
+    public void testSimpleWithStop() throws IOException {
         // Same test but with a stop filter wrapped
         // testing that if a term is removed our states are still valid
         String input = "Hello the World";
@@ -96,20 +100,22 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     }
 
 
-    @Test(expected=IllegalArgumentException.class)
     public void testBadSetup() throws IOException {
-        try (Analyzer a = new Analyzer() {
-             @Override
-             protected TokenStreamComponents createComponents(String fieldName) {
-                 Tokenizer tok =  new StandardTokenizer();
-                 TokenStream ts = new StopFilter(tok, FrenchAnalyzer.getDefaultStopSet());
-                 ts = new ASCIIFoldingFilter(ts, false);
-                 ts = new PreserveOriginalFilter(ts); // should fail here
-                 return new TokenStreamComponents(tok, ts);
-            }
-        }) {
-            a.tokenStream("", "");
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> {
+                    try (Analyzer a = new Analyzer() {
+                        @Override
+                        protected TokenStreamComponents createComponents(String fieldName) {
+                            Tokenizer tok = new StandardTokenizer();
+                            TokenStream ts = new StopFilter(tok, FrenchAnalyzer.getDefaultStopSet());
+                            ts = new ASCIIFoldingFilter(ts, false);
+                            ts = new PreserveOriginalFilter(ts); // should fail here
+                            return new TokenStreamComponents(tok, ts);
+                        }
+                    }) {
+                        a.tokenStream("", "");
+                    }
+                });
     }
 
     /**
@@ -117,10 +123,8 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
      * preserve strategies:
      * - ascii folding
      * - KeywordRepeatFilter + RemoveDuplicatesTokenFilter
-     * @throws IOException
      */
-    @Test
-    public void longTextTest() throws IOException {
+    public void testLongTextTest() throws IOException {
         String textRes = "/Prise de possession.txt";
         try (Analyzer expected = stopAndASCIIFoldingPreserve();
              Analyzer actual = stopGenericPreserveASCIIFolding()) {
@@ -273,7 +277,18 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             }
             expected.end();
             finalOffset = oattr.endOffset();
-            assertTokenStreamContents(actual, output.toArray(new String[0]), Ints.toArray(startOffsets), Ints.toArray(endOffsets), null, Ints.toArray(posInc), null, finalOffset, null, true);
+            assertTokenStreamContents(
+                    actual,
+                    output.toArray(new String[0]),
+                    Ints.toArray(startOffsets),
+                    Ints.toArray(endOffsets),
+                    null,
+                    Ints.toArray(posInc),
+                    null,
+                    finalOffset,
+                    null,
+                    true
+            );
         }
     }
 }

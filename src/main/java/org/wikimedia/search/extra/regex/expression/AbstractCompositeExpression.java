@@ -178,8 +178,11 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
                     AbstractCompositeExpression<T> composite = null;
                     for (Expression<T> component : newComponents) {
                         composite = (AbstractCompositeExpression<T>) component;
-                        extractedComponents.add(composite.newFrom(ImmutableSet.copyOf(Sets.difference(composite.components, sharedComponents)))
-                                .simplify());
+                        extractedComponents.add(
+                                composite.newFrom(
+                                        ImmutableSet.copyOf(Sets.difference(composite.components, sharedComponents))
+                                ).simplify()
+                        );
                     }
                     sharedComponents.add(newFrom(extractedComponents.build()).simplify());
                     // if sharedComponents is not null newComponents is not empty and composite has been set

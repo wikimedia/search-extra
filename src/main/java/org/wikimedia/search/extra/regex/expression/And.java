@@ -10,11 +10,6 @@ public final class And<T> extends AbstractCompositeExpression<T> {
         super(components);
     }
 
-    @SafeVarargs
-    public And(Expression<T>... components) {
-        this(ImmutableSet.copyOf(components));
-    }
-
     @Override
     protected boolean doesNotAffectOutcome(Expression<T> expression) {
         return expression.alwaysTrue();

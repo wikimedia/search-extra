@@ -1,76 +1,74 @@
 package org.wikimedia.search.extra.regex;
 
-import static org.junit.Assert.assertTrue;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.util.LuceneTestCase;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingOnTheFlyCaseConvertingRechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingRechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQuery.SlowRechecker;
+import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 
 import java.io.IOException;
 import java.util.Locale;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingOnTheFlyCaseConvertingRechecker;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.NonBacktrackingRechecker;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
-import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
-import org.wikimedia.search.extra.regex.SourceRegexQuery.SlowRechecker;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
-
-public class SourceRegexQueryRecheckTest {
-    private static final Logger log = LogManager.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());
+public class SourceRegexQueryRecheckTests extends LuceneTestCase {
+    private static final Logger log = LogManager.getLogger(SourceRegexQueryRecheckTests.class.getPackage().getName());
 
     private final String rashidun;
     private final String obama;
 
-    public SourceRegexQueryRecheckTest() throws IOException {
+    public SourceRegexQueryRecheckTests() throws IOException {
         rashidun = Resources.toString(Resources.getResource("Rashidun Caliphate.txt"), Charsets.UTF_8);
         obama = Resources.toString(Resources.getResource("Barack Obama.txt"), Charsets.UTF_8);
     }
 
-    @Test
-    public void insensitiveShortRegex() {
+    public void testInsensitiveShortRegex() {
         Settings settings = new Settings();
         many("case insensitive", "cat", settings, 1000, false);
     }
 
-    @Test
-    public void sensitiveShortRegex() {
+    public void testSensitiveShortRegex() {
         Settings settings = new Settings();
         settings.caseSensitive = true;
         many("case sensitive", "cat", settings, 1000, false);
     }
 
-    @Test
-    public void insensitiveLongerRegex() {
+    public void testInsensitiveLongerRegex() {
         Settings settings = new Settings();
         many("case insensitive", "\\[\\[Category:", settings, 1000, true);
     }
 
-    @Test
-    public void sensitiveLongerRegex() {
+    public void testSensitiveLongerRegex() {
         Settings settings = new Settings();
         settings.caseSensitive = true;
         many("case sensitive", "\\[\\[Category:", settings, 1000, true);
     }
 
-    @Test
-    public void insensitiveBacktrackyRegex() {
+    public void testInsensitiveBacktrackyRegex() {
         Settings settings = new Settings();
         settings.caseSensitive = true;
         many("case sensitive", "days.+and", settings, 1000, true);
     }
 
-    @Test
-    public void sensitiveBacktrackyRegex() {
+    public void testSensitiveBacktrackyRegex() {
         Settings settings = new Settings();
         many("case sensitive", "days.+and", settings, 1000, true);
     }
 
     private void many(String name, String regex, Settings settings, int times, boolean matchIsNearTheEnd) {
         long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex);
-        long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex);
+        long nonBacktracking = manyTestCase(
+                new NonBacktrackingRechecker(regex, settings),
+                "non backtracking",
+                name,
+                settings,
+                times,
+                regex
+        );
         assertTrue("Nonbacktracking is faster than slow", slow > nonBacktracking);
         if (!settings.caseSensitive) {
             long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),

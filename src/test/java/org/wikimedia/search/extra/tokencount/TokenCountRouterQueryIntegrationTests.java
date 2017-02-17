@@ -1,16 +1,17 @@
 package org.wikimedia.search.extra.tokencount;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.*;
-
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
 import java.io.IOException;
 
-public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrationTest {
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoSearchHits;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchHits;
+
+public class TokenCountRouterQueryIntegrationTests extends AbstractPluginIntegrationTest {
     private void init() throws IOException {
         assertAcked(prepareCreate("test")
                 .addMapping(
@@ -41,7 +42,6 @@ public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrat
         refresh();
     }
 
-    @Test
     public void test() throws IOException {
         init();
         TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();

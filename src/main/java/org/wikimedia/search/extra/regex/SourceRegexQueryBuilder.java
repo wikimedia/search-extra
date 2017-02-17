@@ -34,11 +34,11 @@ import org.wikimedia.search.extra.util.FieldValues;
 public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQueryBuilder> {
     public static final ParseField NAME = new ParseField("source_regex", "sourceRegex", "source-regex");
 
-    public static ParseField FIELD = new ParseField("field");
-    public static ParseField REGEX = new ParseField("regex");
-    public static ParseField LOAD_FROM_SOURCE = new ParseField("load_from_source");
-    public static ParseField NGRAM_FIELD = new ParseField("ngram_field");
-    public static ParseField GRAM_SIZE = new ParseField("gram_size");
+    public static final ParseField FIELD = new ParseField("field");
+    public static final ParseField REGEX = new ParseField("regex");
+    public static final ParseField LOAD_FROM_SOURCE = new ParseField("load_from_source");
+    public static final ParseField NGRAM_FIELD = new ParseField("ngram_field");
+    public static final ParseField GRAM_SIZE = new ParseField("gram_size");
 
     public static final boolean DEFAULT_LOAD_FROM_SOURCE = true;
     public static final int DEFAULT_GRAM_SIZE = 3;
@@ -174,16 +174,16 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
      * Field independent settings for the SourceRegexFilter.
      */
     static class Settings {
-        final static ParseField MAX_EXPAND = new ParseField("max_expand");
-        final static ParseField MAX_STATES_TRACED = new ParseField("max_states_traced");
-        final static ParseField MAX_DETERMINIZED_STATES = new ParseField("max_determinized_states");
-        final static ParseField MAX_NGRAMS_EXTRACTED = new ParseField("max_ngrams_extracted");
-        final static ParseField MAX_INSPECT = new ParseField("max_inspect");
-        final static ParseField CASE_SENSITIVE = new ParseField("case_sensitive");
-        final static ParseField LOCALE = new ParseField("locale");
-        final static ParseField REJECT_UNACCELERATED = new ParseField("reject_unaccelerated");
-        final static ParseField MAX_NGRAM_CLAUSES = new ParseField("max_ngram_clauses");
-        final static ParseField TIMEOUT = new ParseField("timeout");
+        static final ParseField MAX_EXPAND = new ParseField("max_expand");
+        static final ParseField MAX_STATES_TRACED = new ParseField("max_states_traced");
+        static final ParseField MAX_DETERMINIZED_STATES = new ParseField("max_determinized_states");
+        static final ParseField MAX_NGRAMS_EXTRACTED = new ParseField("max_ngrams_extracted");
+        static final ParseField MAX_INSPECT = new ParseField("max_inspect");
+        static final ParseField CASE_SENSITIVE = new ParseField("case_sensitive");
+        static final ParseField LOCALE = new ParseField("locale");
+        static final ParseField REJECT_UNACCELERATED = new ParseField("reject_unaccelerated");
+        static final ParseField MAX_NGRAM_CLAUSES = new ParseField("max_ngram_clauses");
+        static final ParseField TIMEOUT = new ParseField("timeout");
 
         private static final int DEFAULT_MAX_EXPAND = 4;
         private static final int DEFAULT_MAX_STATES_TRACED = 10000;

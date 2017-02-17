@@ -1,0 +1,112 @@
+# Integration tests for preserve_original
+#
+---
+"fuzzy like this test":
+    - do:
+        indices.create:
+            index:  test
+            body:
+                mappings:
+                    test:
+                        properties:
+                            text:
+                                type: text
+    - do:
+       cluster.health:
+           wait_for_status: yellow
+
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     image
+          body:   { "text": "There is nothing worse than a sharp image of a fuzzy concept." }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     humans
+          body:   { "text": "From time to time, it is worth wandering around the fuzzy border regions of what you do, if only to remind yourself that no human activity is an island." }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     engineers
+          body:   { "text": "Unfortunately, I'm an engineer. I'm always thinking about, what's the task and how do I get it done? And some of my tasks are pretty broad, and pretty fuzzy, and pretty funky, but that's the way I think." }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     science
+          body:   { "text": "People assume that science is a very cold sort of profession, whereas writing novels is a warm and fuzzy intuitive thing. But in fact, they are not at all different." }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     nostalgia
+          body:   { "text": "Nostalgia is something we think of as fuzzy. But it's pain. Pain concerning the past." }
+    - do:
+      indices.refresh: {}
+
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    fuzzy_like_this:
+                        like_text: "sharp image fuzzy concpt"
+                        fields: [text]
+    - match: { hits.total: 5 }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    fuzzy_like_this:
+                        like_text: "sharp image concpt"
+                        fields: [text]
+    - match: { hits.total: 1 }
+    - match: { hits.hits.0._id: image }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    fuzzy_like_this:
+                        like_text: "nostalagio"
+                        fields: [text]
+                        fuzziness: 1
+    - match: { hits.total: 0 }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    fuzzy_like_this:
+                        like_text: "nostalagio"
+                        fields: [text]
+                        # AUTO is like 1 (auto fuzziness is not really supported)
+                        fuzziness: AUTO
+    - match: { hits.total: 0 }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    fuzzy_like_this:
+                        like_text: "nostalagio"
+                        fields: [text]
+                        fuzziness: 2
+    - match: { hits.total: 1 }
+    - match: { hits.hits.0._id: nostalgia }
+# TODO: figure out how to return errors without failing the test
+#    - do:
+#        search:
+#            index: test
+#            body:
+#                query:
+#                    fuzzy_like_this:
+#                        like_text: "nostalagia"
+#                        fields: [text]
+#                        fuzziness: 0
+#    - match: { _shards.failures.0.reason: "with transpositions enabled, distances > 2 are not supported " }

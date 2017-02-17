@@ -1,24 +1,19 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import static org.junit.Assert.assertEquals;
+import com.google.common.collect.ImmutableList;
+import org.apache.lucene.util.LuceneTestCase;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
-
-public class SetHandlerTest {
-    @Test
-    public void neverConvert() {
+public class SetHandlerTests extends LuceneTestCase {
+    public void testNeverConvert() {
         testCase(new SetHandler(0, 0, 0));
     }
 
-    @Test
-    public void alwaysConvert() {
+    public void testAlwaysConvert() {
         testCase(new SetHandler(0, Integer.MAX_VALUE, 0));
     }
 

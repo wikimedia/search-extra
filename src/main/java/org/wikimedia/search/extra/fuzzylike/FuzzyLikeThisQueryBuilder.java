@@ -284,7 +284,8 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
                 List<String> unsupportedFields = Stream.of(this.fields)
                         .filter(x -> !fields.contains(x))
                         .collect(Collectors.toList());
-                throw new QueryShardException(context, "fuzzy_like_this some fields are either unknown/untokenized/non-text: {}", unsupportedFields);
+                throw new QueryShardException(context, "fuzzy_like_this some fields are either " +
+                        "unknown/untokenized/non-text: {}", unsupportedFields);
             }
         }
 

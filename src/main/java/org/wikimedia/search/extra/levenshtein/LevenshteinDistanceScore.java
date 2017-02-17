@@ -23,6 +23,7 @@ import org.elasticsearch.search.lookup.SearchLookup;
  * return new LevensteinDistance().getDistance(srctxt, _source['content'])
  * </pre>
  * used by the Translate extension.
+ *
  */
 public class LevenshteinDistanceScore extends ScoreFunction {
     private final MappedFieldType fieldType;
@@ -44,7 +45,6 @@ public class LevenshteinDistanceScore extends ScoreFunction {
      *
      * Loads field data from stored fields or source if not stored
      * @return the field data
-     * @throws ElasticsearchException if the data is not found or if it's not a string.
      */
     private String loadValue(LeafSearchLookup leafLookup) {
         Object value = null;
@@ -64,7 +64,8 @@ public class LevenshteinDistanceScore extends ScoreFunction {
             }
         }
         if (!(value instanceof String)) {
-            throw new ElasticsearchException("Expected String for " + fieldType.name() + ", got " + value.getClass().getName() + " instead");
+            throw new ElasticsearchException("Expected String for " + fieldType.name() +
+                    ", got " + value.getClass().getName() + " instead");
         }
         return (String) value;
     }

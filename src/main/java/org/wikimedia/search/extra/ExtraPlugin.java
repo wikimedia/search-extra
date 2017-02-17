@@ -38,9 +38,21 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
     @SuppressWarnings("deprecation")
     public List<QuerySpec<?>> getQueries() {
         return Arrays.asList(
-                new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
-                new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
-                new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent)
+                new QuerySpec<>(
+                        SourceRegexQueryBuilder.NAME,
+                        SourceRegexQueryBuilder::new,
+                        SourceRegexQueryBuilder::fromXContent
+                ),
+                new QuerySpec<>(
+                        FuzzyLikeThisQueryBuilder.NAME,
+                        FuzzyLikeThisQueryBuilder::new,
+                        FuzzyLikeThisQueryBuilder::fromXContent
+                ),
+                new QuerySpec<>(
+                        TokenCountRouterQueryBuilder.NAME,
+                        TokenCountRouterQueryBuilder::new,
+                        TokenCountRouterQueryBuilder::fromXContent
+                )
         );
     }
 

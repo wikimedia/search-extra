@@ -1,19 +1,16 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
-
+import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.RegExp;
-import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.True;
 
-import static org.junit.Assert.assertEquals;
+import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
-public class NGramExtractorTest {
-    @Test
-    public void simple() {
+public class NGramExtractorTests extends LuceneTestCase {
+    public void testSimple() {
         NGramExtractor gram = new NGramExtractor(3, 4, 10000, 100);
         Automaton automaton = new RegExp("hero of legend").toAutomaton();
         assertEquals(
@@ -30,8 +27,7 @@ public class NGramExtractorTest {
         assertEquals(new Leaf<>("her"), gram.extract(automaton));
     }
 
-    @Test
-    public void maxNgrams() {
+    public void testMaxNgrams() {
         NGramExtractor gram = new NGramExtractor(3, 4, 10000, 3);
         Automaton automaton = new RegExp("hero of legend").toAutomaton();
         assertEquals(

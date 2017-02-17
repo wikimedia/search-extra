@@ -6,7 +6,18 @@ import java.util.List;
 
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.ConstantScoreWeight;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.LeafCollector;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.TimeLimitingCollector;
+import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Counter;
 import org.apache.lucene.util.mutable.MutableValueInt;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
@@ -81,7 +92,8 @@ class UnacceleratedSourceRegexQuery extends Query {
         private final TimeoutChecker timeoutChecker;
         private final MutableValueInt inspected;
 
-        protected RegexTwoPhaseIterator(DocIdSetIterator approximation, LeafReaderContext context, MutableValueInt inspected, TimeoutChecker timeoutChecker) {
+        protected RegexTwoPhaseIterator(DocIdSetIterator approximation, LeafReaderContext context,
+                                        MutableValueInt inspected, TimeoutChecker timeoutChecker) {
             super(approximation);
             this.context = context;
             this.inspected = inspected;

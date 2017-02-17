@@ -23,11 +23,6 @@ public final class Or<T> extends AbstractCompositeExpression<T> {
         }
     }
 
-    @SafeVarargs
-    public Or(Expression<T>... components) {
-        this(ImmutableSet.copyOf(components));
-    }
-
     public Or(ImmutableSet<Expression<T>> components) {
         super(components);
     }

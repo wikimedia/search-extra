@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableSet;
  * @param <T> type holding leaves
  */
 public class ExpressionRewriter<T> {
-    public final static int MAX_BOOLEAN_CLAUSES = 1024;
+    public static final int MAX_BOOLEAN_CLAUSES = 1024;
 
     private final Expression<T> expression;
 

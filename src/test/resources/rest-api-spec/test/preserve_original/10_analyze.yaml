@@ -1,0 +1,18 @@
+# Basic integration tests for the preserve original token filter
+#
+---
+"Preserve original filter simple test":
+    - do:
+        indices.analyze:
+          body:
+            tokenizer: whitespace
+            filter:    ["preserve_original_recorder", "lowercase", "preserve_original"]
+            text:      Hello World
+    - length: { tokens: 4 }
+    - match:  { tokens.0.token: hello }
+    - match:  { tokens.1.token: Hello }
+    - match:  { tokens.1.position: 0 }
+    - match:  { tokens.2.token: world }
+    - match:  { tokens.3.token: World }
+    - match:  { tokens.3.position: 1 }
+

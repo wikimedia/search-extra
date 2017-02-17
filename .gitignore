@@ -6,3 +6,11 @@ target
 
 .idea
 *.iml
+*.ipr
+*.iws
+
+build
+.gradle
+
+.local-unspecified-integTest-execution-times.log
+.local-unspecified-test-execution-times.log

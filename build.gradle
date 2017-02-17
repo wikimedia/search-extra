@@ -1,0 +1,137 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath "org.elasticsearch.gradle:build-tools:5.2.1"
+    }
+}
+
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'elasticsearch.esplugin'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply plugin: 'maven'
+
+group = 'org.wikimedia.search'
+archivesBaseName = name
+version = '5.2.1'
+description = 'Extra queries and filters for Elasticsearch.'
+
+compileJava {
+    // javac options needed to apply lombok
+    // elastic build system will disable all annotation processor
+    // if none is provided on the cmdline
+    options.compilerArgs += ['-Xlint:-processing', '-processor', 'lombok.launch.AnnotationProcessorHider$AnnotationProcessor']
+}
+
+// by default elastic will set this to compact3
+// which disallow generated code (lombok)
+compactProfile = "full"
+
+esplugin {
+    description = project.description
+    classname = 'org.wikimedia.search.extra.ExtraPlugin'
+    name = project.name
+    version = project.version
+}
+
+licenseHeaders.enabled = false
+
+test {
+    // 3 by default
+    parallelism = 1
+}
+
+
+dependencies {
+    compile "com.google.guava:guava:20.0"
+    compileOnly "org.projectlombok:lombok:1.16.14"
+}
+
+// This section should be used by maven-publish unfortunately We cannot use it
+// yet it lacks support for signing artifactes (required by OOSRH)
+publishing {
+    publications {
+        DefaultPublication(MavenPublication) {
+            groupId project.group
+            artifactId project.archivesBaseName
+            from components.java
+            artifact javadocJar
+            artifact sourcesJar
+            artifact bundlePlugin
+        }
+    }
+}
+
+// OOSRH deploy config
+
+artifacts {
+    archives javadocJar, sourcesJar, bundlePlugin
+}
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment {
+                if ( version.endsWith( '-SNAPSHOT' ) ) {
+                    throw new Exception("Cannot upload SNAPSHOTS to OSSRH")
+                }
+            }
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name project.name
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description project.description
+                url 'https://github.com/wikimedia/search-extra'
+
+                scm {
+                    connection 'scm:git:https://gerrit.wikimedia.org/r/search/extra'
+                    developerConnection 'scm:git:https://gerrit.wikimedia.org/r/search/extra'
+                    url 'https://gerrit.wikimedia.org/r/#/admin/projects/search/extra'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'manybubbles'
+                        name 'Nik Everett'
+                        email 'nik9000+extra@gmail.com'
+                    }
+                    developer {
+                        id 'ebernhardson'
+                        name 'Erik Bernhardson'
+                        email 'ebernhardson@wikimedia.org'
+                        timezone 'America/Los Angeles'
+                    }
+                    developer {
+                        id 'dcausse'
+                        name 'David Causse'
+                        email 'dcausse@wikimedia.org'
+                        timezone 'Europe/Paris'
+                    }
+                }
+            }
+        }
+    }
+}
+// TODO: temporary workaround until it's fixed in elasticsearch
+thirdPartyAudit.enabled = false

@@ -54,7 +54,8 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
                     return null;
                 }
                 timeoutChecker.nextSegment(context);
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, inspected, timeoutChecker));
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(),
+                        context, inspected, timeoutChecker));
             }
         };
     }

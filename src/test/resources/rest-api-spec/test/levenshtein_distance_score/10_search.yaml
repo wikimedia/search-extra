@@ -1,0 +1,135 @@
+# Integration tests for LevenshteinDistanceScore
+#
+---
+"levenshtein distance score":
+    - do:
+        indices.create:
+            index:  test
+            body:
+                mappings:
+                    test:
+                        properties:
+                            content:
+                                type: text
+                                store: false
+                                copy_to: content_stored
+                            content_stored:
+                                type: text
+                                store: true
+    - do:
+       cluster.health:
+           wait_for_status: yellow
+
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     1
+          body:   { "content": "Haste makes waste" }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     2
+          body:   { "content": "A stitch in time saves nine" }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     3
+          body:   { "content": "Ignorance is bliss" }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     4
+          body:   { "content": "Paste makes waste" }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     5
+          body:   { "content": "A stitch in time saves nine essay" }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     6
+          body:   { "content": "Ignorance is strength" }
+    - do:
+      index:
+          index:  test
+          type:   test
+          id:     7
+          body:   {}
+    - do:
+      indices.refresh: {}
+
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    function_score:
+                        query:
+                            match:
+                                content: makes
+                        functions:
+                            - levenshtein_distance_score:
+                                field: content
+                                text:  "Haste makes waste"
+                        boost_mode: replace
+    - match: { hits.total: 2 }
+    - match: { hits.hits.0._id: "1" }
+    - match: { hits.hits.1._id: "4" }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    function_score:
+                        query:
+                            match:
+                                content: makes
+                        functions:
+                            - levenshtein_distance_score:
+                                field: content_stored
+                                text:  "Haste makes waste"
+                        boost_mode: replace
+    - match: { hits.total: 2 }
+    - match: { hits.hits.0._id: "1" }
+    - match: { hits.hits.1._id: "4" }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    function_score:
+                        query:
+                            match:
+                                content: makes
+                        functions:
+                            - levenshtein_distance_score:
+                                field: content
+                                text:  "Paste makes waste"
+                        boost_mode: replace
+    - match: { hits.total: 2 }
+    - match: { hits.hits.0._id: "4" }
+    - match: { hits.hits.1._id: "1" }
+    - do:
+        search:
+            index: test
+            body:
+                query:
+                    function_score:
+                        query:
+                            match:
+                                content: makes
+                        functions:
+                            - levenshtein_distance_score:
+                                field: content_stored
+                                text:  "Paste makes waste"
+                        boost_mode: replace
+    - match: { hits.total: 2 }
+    - match: { hits.hits.0._id: "4" }
+    - match: { hits.hits.1._id: "1" }
