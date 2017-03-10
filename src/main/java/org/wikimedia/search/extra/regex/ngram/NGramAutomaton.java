@@ -2,8 +2,12 @@ package org.wikimedia.search.extra.regex.ngram;
 
 import com.google.common.collect.ImmutableSet;
 import lombok.EqualsAndHashCode;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.Transition;
+import org.elasticsearch.common.io.FastStringReader;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.ExpressionSource;
@@ -12,6 +16,7 @@ import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,6 +36,7 @@ public class NGramAutomaton {
     private final List<NGramState> initialStates = new ArrayList<>();
     private final List<NGramState> acceptStates = new ArrayList<>();
     private final Map<NGramState, NGramState> states = new HashMap<>();
+    private final Analyzer ngramAnalyzer;
 
     /**
      * Build it.
@@ -44,12 +50,13 @@ public class NGramAutomaton {
      *            functions. Higher number allow more complex automata to be
      *            converted to ngram expressions at the cost of more time.
      */
-    public NGramAutomaton(Automaton source, int gramSize, int maxExpand, int maxStatesTraced, int maxTransitions) {
+    public NGramAutomaton(Automaton source, int gramSize, int maxExpand, int maxStatesTraced, int maxTransitions, Analyzer ngramAnalyzer) {
         this.source = source;
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
         this.maxTransitions = maxTransitions;
+        this.ngramAnalyzer = ngramAnalyzer;
         if (source.getNumStates() == 0) {
             return;
         }
@@ -194,12 +201,34 @@ public class NGramAutomaton {
                         continue;
                     }
                     currentTransitions++;
-                    NGramTransition ngramTransition = new NGramTransition(from, next, ngram);
+                    NGramTransition ngramTransition = new NGramTransition(from, next, analyze(ngram));
                     from.outgoingTransitions.add(ngramTransition);
                     ngramTransition.to.incomingTransitions.add(ngramTransition);
                 }
             }
         }
+    }
+
+    private String analyze(String ngram) {
+        if (ngram == null) {
+            return ngram;
+        }
+        try (TokenStream ts = ngramAnalyzer.tokenStream("", new FastStringReader(ngram))) {
+            CharTermAttribute cattr = ts.addAttribute(CharTermAttribute.class);
+            ts.reset();
+            if (ts.incrementToken()) {
+                ngram = cattr.toString();
+                if (ts.incrementToken()) {
+                    throw new IllegalArgumentException("Analyzer provided generate more than one tokens, " +
+                            "if using 3grams make sure to use a 3grams analyzer, " +
+                            "for input [" + ngram + "] first is [" + ngram + "] " +
+                            "but [" + cattr.toString() + "] was generated.");
+                }
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+        return ngram;
     }
 
     private NGramState buildOrFind(LinkedList<NGramState> leftToProcess, int sourceState, String prefix) {

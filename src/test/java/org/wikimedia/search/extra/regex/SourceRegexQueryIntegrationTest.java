@@ -267,7 +267,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
 
         // But that limits the regexes you can accelerate to those from which
         // appropriate grams can be extracted
-        assertFailures(search(filter("tes.*me").gramSize(4).rejectUnaccelerated(true)), RestStatus.INTERNAL_SERVER_ERROR,
+        assertFailures(search(filter("tes.*me").ngramField("test.quadgram").gramSize(4).rejectUnaccelerated(true)), RestStatus.INTERNAL_SERVER_ERROR,
                 containsString("Unable to accelerate"));
         // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
         // I can't find any way from here to mark it otherwise.
@@ -342,6 +342,28 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
                  * This lowercases to i in English and ı in Turkish
                  */
                 doc("turkish", "It"));
+    }
+
+    /**
+     * Test that we analyze extracted ngrams
+     * in this test case at index time
+     * außer will be tokenized as ["auß", "uße", "ßer"]
+     * The pattern token filter will simulate the effect of case folding by icu normalization
+     * by emmiting: ["auss", "usse", "sser"]
+     * We make sure that the trigrams extram from the regualar expression benefit
+     * from the same analysis. Otherwize we may search for inexistent trigrams like "auß"
+     * while applying the approximation query.
+     *
+     * @throws ExecutionException
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    @Test
+    public void testSpecialTrigram() throws ExecutionException, InterruptedException, IOException {
+        setup();
+        indexRandom(true, doc("eszett", "außer"));
+        SearchResponse response = search(filter("außer").gramSize(3).ngramField("test.spectrigram").rejectUnaccelerated(true)).get();
+        assertSearchHits(response, "eszett");
     }
 
     /**
@@ -424,6 +446,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         buildSubfield(mapping, "bigram");
         buildSubfield(mapping, "trigram");
         buildSubfield(mapping, "quadgram");
+        buildSubfield(mapping, "spectrigram");
         mapping.endObject()
             .endObject()
             .endObject()
@@ -437,16 +460,20 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         buildNgramAnalyzer(settings, "bigram", locale);
         buildNgramAnalyzer(settings, "trigram", locale);
         buildNgramAnalyzer(settings, "quadgram", locale);
+        buildNgramAnalyzer(settings, "spectrigram", locale, new String[]{"pattern"});
+
         settings.endObject();
         settings.startObject("tokenizer");
         buildNgramTokenizer(settings, "bigram", 2);
         buildNgramTokenizer(settings, "trigram", 3);
+        buildNgramTokenizer(settings, "spectrigram", 3);
         buildNgramTokenizer(settings, "quadgram", 4);
         settings.endObject();
         settings.startObject("filter");
         buildLowercaseFilter(settings, "greek");
         buildLowercaseFilter(settings, "irish");
         buildLowercaseFilter(settings, "turkish");
+        buildPatternFilter(settings);
         settings.endObject();
         settings.endObject().endObject().endObject();
         // System.err.println(settings.string());
@@ -463,10 +490,17 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     private void buildNgramAnalyzer(XContentBuilder settings, String name, String locale) throws IOException {
+        buildNgramAnalyzer(settings, name, locale, new String[]{});
+    }
+
+    private void buildNgramAnalyzer(XContentBuilder settings, String name, String locale, String[] extraFilters) throws IOException {
         settings.startObject(name);
         settings.field("type", "custom");
         settings.field("tokenizer", name);
-        settings.field("filter", new String[] { lowercaseForLocale(locale) });
+        String[] filters = new String[1 + extraFilters.length];
+        filters[0] = lowercaseForLocale(locale);
+        System.arraycopy(extraFilters, 0, filters, 1, extraFilters.length);
+        settings.field("filter", filters);
         settings.endObject();
     }
 
@@ -495,6 +529,14 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         settings.startObject(language + "_lowercase");
         settings.field("type", "lowercase");
         settings.field("language", language);
+        settings.endObject();
+    }
+
+    public void buildPatternFilter(XContentBuilder settings) throws IOException {
+        settings.startObject("pattern");
+        settings.field("type", "pattern_replace");
+        settings.field("pattern", "ß");
+        settings.field("replacement", "ss");
         settings.endObject();
     }
 }

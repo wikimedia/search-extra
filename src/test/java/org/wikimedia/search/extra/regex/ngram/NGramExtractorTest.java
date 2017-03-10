@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex.ngram;
 
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.RegExp;
 import org.junit.Test;
@@ -13,7 +14,7 @@ import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 public class NGramExtractorTest {
     @Test
     public void simple() {
-        NGramExtractor gram = new NGramExtractor(3, 4, 10000, 100);
+        NGramExtractor gram = new NGramExtractor(3, 4, 10000, 100, new KeywordAnalyzer());
         Automaton automaton = new RegExp("hero of legend").toAutomaton();
         assertEquals(
                 new And<String>(leaves("her", "ero", "ro ", "o o", " of",
@@ -31,7 +32,7 @@ public class NGramExtractorTest {
 
     @Test
     public void maxNgrams() {
-        NGramExtractor gram = new NGramExtractor(3, 4, 10000, 3);
+        NGramExtractor gram = new NGramExtractor(3, 4, 10000, 3, new KeywordAnalyzer());
         Automaton automaton = new RegExp("hero of legend").toAutomaton();
         assertEquals(
                 new And<String>(leaves("her", "ero", "ro ")),

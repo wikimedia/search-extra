@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
@@ -14,6 +15,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
@@ -329,10 +331,23 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
+        final Analyzer ngramAnalyzer;
+        if (ngramField != null) {
+            MappedFieldType mapper = context.fieldMapper(ngramField);
+            if (mapper == null) {
+                throw new IllegalArgumentException("ngramField [" + ngramField + "] is unknown.");
+            }
+            ngramAnalyzer = context.getSearchAnalyzer(mapper);
+            if (ngramAnalyzer == null) {
+                throw new IllegalArgumentException("Cannot find an analyzer for ngramField [" + ngramField + "], is this field indexed?");
+            }
+        } else {
+            ngramAnalyzer = null;
+        }
         return new SourceRegexQuery(
                 field, ngramField, regex,
                 loadFromSource ? FieldValues.loadFromSource() : FieldValues.loadFromStoredField(),
-                settings, gramSize);
+                settings, gramSize, ngramAnalyzer);
     }
 
     @Override
