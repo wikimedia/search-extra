@@ -1,7 +1,5 @@
 package org.wikimedia.search.extra.regex;
 
-import java.io.IOException;
-
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -15,6 +13,8 @@ import org.apache.lucene.util.mutable.MutableValueInt;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
+
+import java.io.IOException;
 
 /**
  * Accelerated version of the source_regex query.

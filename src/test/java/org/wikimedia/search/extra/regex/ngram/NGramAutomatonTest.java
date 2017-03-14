@@ -1,9 +1,8 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
-
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.RegExp;
@@ -17,7 +16,7 @@ import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
+import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
 @RunWith(RandomizedRunner.class)
 public class NGramAutomatonTest extends RandomizedTest {

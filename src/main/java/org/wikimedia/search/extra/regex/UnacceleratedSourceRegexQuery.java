@@ -1,18 +1,29 @@
 package org.wikimedia.search.extra.regex;
 
 
-import java.io.IOException;
-import java.util.List;
-
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.ConstantScoreScorer;
+import org.apache.lucene.search.ConstantScoreWeight;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.LeafCollector;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.TimeLimitingCollector;
+import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Counter;
 import org.apache.lucene.util.mutable.MutableValueInt;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Unaccelerated source_regex query.

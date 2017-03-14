@@ -1,9 +1,5 @@
 package org.wikimedia.search.extra.regex;
 
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Objects;
-
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
@@ -18,6 +14,10 @@ import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Objects;
 
 @EqualsAndHashCode(callSuper = false)
 public class SourceRegexQuery extends Query {

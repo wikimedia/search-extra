@@ -1,17 +1,5 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import static org.apache.lucene.util.TestUtil.randomSimpleString;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-
-import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.google.common.base.Function;
@@ -19,6 +7,17 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Ordering;
+import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+
+import static org.apache.lucene.util.TestUtil.randomSimpleString;
 
 /**
  * Runs Monte Carlo method to help you pick the best parameters for

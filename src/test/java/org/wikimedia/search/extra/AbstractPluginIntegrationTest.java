@@ -1,11 +1,11 @@
 package org.wikimedia.search.extra;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
+
+import java.util.Collection;
+import java.util.Collections;
 
 @ClusterScope(scope = ESIntegTestCase.Scope.SUITE, transportClientRatio = 0.0)
 public class AbstractPluginIntegrationTest extends ESIntegTestCase {

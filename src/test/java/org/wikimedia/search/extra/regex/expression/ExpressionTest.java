@@ -1,14 +1,16 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.RegExp;
 import org.junit.Test;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 
-import static org.junit.Assert.*;
-
 import java.util.Locale;
 
-import org.apache.lucene.util.automaton.Automaton;
-import org.apache.lucene.util.automaton.RegExp;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ExpressionTest {
     private final Leaf<String> foo = new Leaf<>("foo");

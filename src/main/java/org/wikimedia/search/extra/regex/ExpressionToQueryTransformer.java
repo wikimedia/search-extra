@@ -1,8 +1,6 @@
 package org.wikimedia.search.extra.regex;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.collect.ImmutableSet;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -12,7 +10,8 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.wikimedia.search.extra.regex.expression.Expression;
 
-import com.google.common.collect.ImmutableSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Transforms expressions to queries.

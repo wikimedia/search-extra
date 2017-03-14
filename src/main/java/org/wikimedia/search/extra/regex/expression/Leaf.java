@@ -1,8 +1,9 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableSet;
 import lombok.EqualsAndHashCode;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A leaf expression.

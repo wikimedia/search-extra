@@ -1,9 +1,9 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Boolean expression rewriter

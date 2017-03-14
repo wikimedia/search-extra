@@ -1,8 +1,8 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import java.util.List;
-
 import com.google.common.collect.ImmutableSet;
+
+import java.util.List;
 
 /**
  * Disjunction.

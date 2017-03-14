@@ -1,8 +1,7 @@
 package org.wikimedia.search.extra.levenshtein;
 
-import java.io.IOException;
-import java.util.Objects;
-
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -16,8 +15,8 @@ import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Builds the levenshtein_distance_score score function.

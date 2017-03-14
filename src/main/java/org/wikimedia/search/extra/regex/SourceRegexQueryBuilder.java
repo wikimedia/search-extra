@@ -1,11 +1,5 @@
 package org.wikimedia.search.extra.regex;
 
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-
-import org.elasticsearch.common.unit.TimeValue;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,6 +10,7 @@ import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -24,6 +19,11 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.util.FieldValues;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Builds source_regex filters.

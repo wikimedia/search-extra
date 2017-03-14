@@ -1,14 +1,14 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import lombok.EqualsAndHashCode;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import lombok.EqualsAndHashCode;
 
 
 /**
