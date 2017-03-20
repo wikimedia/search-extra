@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.regex.ngram;
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.RegExp;
@@ -220,7 +221,7 @@ public class NGramAutomatonTest extends RandomizedTest {
         Automaton automaton = AutomatonTestUtil.randomAutomaton(getRandom());
         NGramAutomaton ngramAutomaton;
         try {
-            ngramAutomaton = new NGramAutomaton(automaton, between(2, 7), 4, 10000, 500);
+            ngramAutomaton = new NGramAutomaton(automaton, between(2, 7), 4, 10000, 500, new KeywordAnalyzer());
         } catch (AutomatonTooComplexException e) {
             // This is fine - some automata are genuinely too complex to ngramify.
             return;
@@ -247,7 +248,7 @@ public class NGramAutomatonTest extends RandomizedTest {
 //         System.err.println(regex);
         Automaton automaton = new RegExp(regex).toAutomaton(20000);
 //         System.err.println(automaton.toDot());
-        NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000, 500);
+        NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000, 500, new KeywordAnalyzer());
 //         System.err.println(ngramAutomaton.toDot());
         Expression<String> expression = ngramAutomaton.expression();
 //         System.err.println(expression);

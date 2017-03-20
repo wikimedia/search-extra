@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex.ngram;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.util.automaton.Automaton;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.True;
@@ -12,6 +13,7 @@ public class NGramExtractor {
     private final int maxExpand;
     private final int maxStatesTraced;
     private final int maxNgrams;
+    private final Analyzer ngramAnalyzer;
 
     /**
      * Build it.
@@ -26,12 +28,14 @@ public class NGramExtractor {
      *            converted to ngram expressions at the cost of more time.
      * @param maxNgrams the maximum number of ngrams extracted from the regex.
      *            If more could be exracted from the regex they are ignored.
+     * @param ngramAnalyzer the analyzer used to generate indexed ngrams
      */
-    public NGramExtractor(int gramSize, int maxExpand, int maxStatesTraced, int maxNgrams) {
+    public NGramExtractor(int gramSize, int maxExpand, int maxStatesTraced, int maxNgrams, Analyzer ngramAnalyzer) {
         this.gramSize = gramSize;
         this.maxExpand = maxExpand;
         this.maxStatesTraced = maxStatesTraced;
         this.maxNgrams = maxNgrams;
+        this.ngramAnalyzer = ngramAnalyzer;
     }
 
     /**
@@ -41,6 +45,6 @@ public class NGramExtractor {
         if (automaton.isAccept(0)) {
             return True.instance();
         }
-        return new NGramAutomaton(automaton, gramSize, maxExpand, maxStatesTraced, maxNgrams).expression().simplify();
+        return new NGramAutomaton(automaton, gramSize, maxExpand, maxStatesTraced, maxNgrams, ngramAnalyzer).expression().simplify();
     }
 }

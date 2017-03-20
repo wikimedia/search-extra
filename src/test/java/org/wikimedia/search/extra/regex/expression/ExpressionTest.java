@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex.expression;
 
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.RegExp;
 import org.junit.Test;
@@ -73,7 +74,7 @@ public class ExpressionTest {
         int maxNgramsExtracted = 100;
 
         Automaton automaton = new RegExp(regex.toLowerCase(Locale.ENGLISH), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
-        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted);
+        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted, new KeywordAnalyzer());
 
         Expression<String> expression = extractor.extract(automaton);
         assertTrue(expression.countClauses() > 1024);
@@ -93,7 +94,7 @@ public class ExpressionTest {
         int maxNgramsExtracted = 10000;
 
         Automaton automaton = new RegExp(regex.toLowerCase(Locale.ENGLISH), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
-        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted);
+        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted, new KeywordAnalyzer());
 
         Expression<String> expression = extractor.extract(automaton);
         // This one is huge... but most of its branches are reused
