@@ -41,7 +41,7 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
     static final ParseField FIELD = new ParseField("field");
     static final ParseField ANALYZER = new ParseField("analyzer");
     static final ParseField DISCOUNT_OVERLAPS = new ParseField("discount_overlaps");
-    static final ParseField CONDITIONS = new ParseField("contitions");
+    static final ParseField CONDITIONS = new ParseField("conditions", "contitions");
     static final ParseField FALLBACK = new ParseField(("fallback"));
     static final ParseField QUERY = new ParseField("query");
 
