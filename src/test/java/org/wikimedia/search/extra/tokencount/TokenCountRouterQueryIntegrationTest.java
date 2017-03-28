@@ -16,20 +16,20 @@ public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrat
     private void init() throws IOException {
         assertAcked(prepareCreate("test")
                 .addMapping(
-                    "type1",
-                    jsonBuilder().startObject().startObject("type1").startObject("properties")
-                        .startObject("content")
-                            .field("type", "string")
-                            .field("store", false)
-                            .field("analyzer", "standard")
-                        .endObject().endObject().endObject().endObject())
+                        "type1",
+                        jsonBuilder().startObject().startObject("type1").startObject("properties")
+                                .startObject("content")
+                                .field("type", "string")
+                                .field("store", false)
+                                .field("analyzer", "standard")
+                                .endObject().endObject().endObject().endObject())
                 .setSettings(jsonBuilder().startObject().startObject("index")
                         .field("number_of_shards", 1)
                         .startObject("analysis").startObject("analyzer")
-                            .startObject("emit_dups")
-                                .field("tokenizer", "standard")
-                                .array("filter", "keyword_repeat")
-                            .endObject()
+                        .startObject("emit_dups")
+                        .field("tokenizer", "standard")
+                        .array("filter", "keyword_repeat")
+                        .endObject()
                         .endObject().endObject()
                         .endObject().endObject()).get());
 
@@ -48,9 +48,9 @@ public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrat
         init();
         TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
         builder.field("content")
-            .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gt, 4, QueryBuilders.termQuery("content", "absent"))
-            .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gte, 2, QueryBuilders.termQuery("content", "haste"))
-            .fallback(QueryBuilders.termQuery("content", "strength"));
+                .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gt, 4, QueryBuilders.termQuery("content", "absent"))
+                .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gte, 2, QueryBuilders.termQuery("content", "haste"))
+                .fallback(QueryBuilders.termQuery("content", "strength"));
         SearchResponse sr;
         builder.text("one and two and three");
         sr = client().prepareSearch("test").setQuery(builder).get();

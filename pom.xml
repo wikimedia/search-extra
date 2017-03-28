@@ -210,6 +210,26 @@
           <groupId>com.carrotsearch.randomizedtesting</groupId>
           <artifactId>junit4-maven-plugin</artifactId>
           <version>2.4.0</version>
+          <configuration>
+            <skipTests>${skip.unit.tests}</skipTests>
+            <listeners>
+              <report-text showThrowable="true" showStackTraces="true" showOutput="onerror" showStatusOk="false" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showSuiteSummary="true" showNumFailures="30" timestamps="false">
+              </report-text>
+              <report-ant-xml mavenExtensions="true" dir="${project.build.directory}/surefire-reports" />
+            </listeners>
+            <heartbeat>20</heartbeat>
+            <jvmOutputAction>warn</jvmOutputAction>
+            <leaveTemporary>true</leaveTemporary>
+            <sysouts>false</sysouts>
+            <assertions>
+              <enable />
+            </assertions>
+            <jvmArgs>
+              <param>-Xmx512m</param>
+              <param>-XX:MaxDirectMemorySize=512m</param>
+              <param>-Des.logger.prefix=</param>
+            </jvmArgs>
+          </configuration>
           <executions>
             <!-- Separate unit tests from integration tests
                  The elastic security manager may cause issues
@@ -222,56 +242,36 @@
               </goals>
               <configuration>
                 <excludes>
-                  <exclude>**/*IntegrationTest*</exclude>
+                  <exclude>**/*IntegrationTest.class</exclude>
+                  <exclude>**/*ESTest.class</exclude>
                 </excludes>
-                <skipTests>${skip.unit.tests}</skipTests>
-                <listeners>
-                  <report-text showThrowable="true" showStackTraces="true" showOutput="onerror" showStatusOk="false" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showSuiteSummary="true" showNumFailures="30" timestamps="false">
-                  </report-text>
-                  <report-ant-xml mavenExtensions="true" dir="${project.build.directory}/surefire-reports" />
-                </listeners>
-                <heartbeat>20</heartbeat>
-                <jvmOutputAction>warn</jvmOutputAction>
-                <leaveTemporary>true</leaveTemporary>
-                <sysouts>false</sysouts>
-                <assertions>
-                  <enable />
-                </assertions>
-                <jvmArgs>
-                  <param>-Xmx512m</param>
-                  <param>-XX:MaxDirectMemorySize=512m</param>
-                  <param>-Des.logger.prefix=</param>
-                </jvmArgs>
               </configuration>
             </execution>
             <execution>
-              <id>tests</id>
+              <!-- separate integration test because it loads the security manager -->
+              <id>tests-integ</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>junit4</goal>
+              </goals>
+              <configuration>
+                <includes>
+                  <include>**/*IntegrationTest.class</include>
+                </includes>
+              </configuration>
+            </execution>
+            <execution>
+              <!-- separate estest because of dirty context between ESIntegTest and ESTestCase -->
+              <id>tests-estest</id>
               <phase>test</phase>
               <goals>
                 <goal>junit4</goal>
               </goals>
               <configuration>
                 <includes>
-                  <include>**/*IntegrationTest*</include>
+                  <include>**/*ESTest.class</include>
                 </includes>
                 <skipTests>${skip.unit.tests}</skipTests>
-                <listeners>
-                  <report-text showThrowable="true" showStackTraces="true" showOutput="onerror" showStatusOk="false" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showSuiteSummary="true" showNumFailures="30" timestamps="false">
-                  </report-text>
-                  <report-ant-xml mavenExtensions="true" dir="${project.build.directory}/surefire-reports" />
-                </listeners>
-                <heartbeat>20</heartbeat>
-                <jvmOutputAction>warn</jvmOutputAction>
-                <leaveTemporary>true</leaveTemporary>
-                <sysouts>false</sysouts>
-                <assertions>
-                  <enable />
-                </assertions>
-                <jvmArgs>
-                  <param>-Xmx512m</param>
-                  <param>-XX:MaxDirectMemorySize=512m</param>
-                  <param>-Des.logger.prefix=</param>
-                </jvmArgs>
               </configuration>
             </execution>
           </executions>
@@ -394,6 +394,20 @@
         <groupId>org.elasticsearch.test</groupId>
         <artifactId>framework</artifactId>
         <version>${elasticsearch.version}</version>
+        <scope>test</scope>
+    </dependency>
+    <!-- Needed by elastic test framework -->
+    <dependency>
+        <groupId>com.vividsolutions</groupId>
+        <artifactId>jts</artifactId>
+        <version>1.13</version>
+        <scope>test</scope>
+    </dependency>
+    <!-- Needed by elastic test framework -->
+    <dependency>
+        <groupId>org.locationtech.spatial4j</groupId>
+        <artifactId>spatial4j</artifactId>
+        <version>0.6</version>
         <scope>test</scope>
     </dependency>
     <dependency>

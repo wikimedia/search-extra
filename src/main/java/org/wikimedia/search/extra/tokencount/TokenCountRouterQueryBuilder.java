@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.IntPredicate;
+import java.util.stream.Stream;
 
 /**
  * Builds a token_count_router query
@@ -41,8 +42,8 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
     static final ParseField FIELD = new ParseField("field");
     static final ParseField ANALYZER = new ParseField("analyzer");
     static final ParseField DISCOUNT_OVERLAPS = new ParseField("discount_overlaps");
-    static final ParseField CONDITIONS = new ParseField("conditions", "contitions");
-    static final ParseField FALLBACK = new ParseField(("fallback"));
+    static final ParseField CONDITIONS = new ParseField("conditions");
+    static final ParseField FALLBACK = new ParseField("fallback");
     static final ParseField QUERY = new ParseField("query");
 
     static final boolean DEFAULT_DISCOUNT_OVERLAPS = true;
@@ -68,6 +69,46 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
         text = in.readString();
         conditions = in.readList(Condition::new);
         fallback = in.readNamedWriteable(QueryBuilder.class);
+    }
+
+    private void parseCondition(QueryParseContext parseContext) throws IOException {
+        XContentParser parser = parseContext.parser();
+        if (parser.currentToken() != XContentParser.Token.START_OBJECT) {
+            throw new ParsingException(parser.getTokenLocation(), "Expected an object");
+        }
+        String currentFieldName = null;
+        XContentParser.Token token;
+        ConditionDefinition currentCondition = null;
+        int checkValue = 0;
+        Optional<QueryBuilder> query = Optional.empty();
+        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
+            if (token == XContentParser.Token.FIELD_NAME) {
+                currentFieldName = parser.currentName();
+            } else if (token.isValue()) {
+                ConditionDefinition condition;
+                if ((condition = ConditionDefinition.parse(currentFieldName)) != null) {
+                    currentCondition = condition;
+                    checkValue = parser.intValue(true);
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
+                }
+            } else if (QUERY.match(currentFieldName)) {
+                if (token == XContentParser.Token.START_OBJECT) {
+                    query = parseContext.parseInnerQueryBuilder();
+                } else {
+                    throw new ParsingException(parser.getTokenLocation(), "query must be an object");
+                }
+            } else {
+                throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
+            }
+        }
+        if (currentCondition == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Missing conditionDef defintion");
+        }
+        if (!query.isPresent()) {
+            throw new ParsingException(parser.getTokenLocation(), "Missing query in conditionDef");
+        }
+        condition(currentCondition, checkValue, query.get());
     }
 
     @Override
@@ -120,6 +161,7 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
             }
             builder.endArray();
         }
+        this.printBoostAndQueryName(builder);
         builder.endObject();
     }
 
@@ -133,6 +175,8 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
         String analyzer = null;
         boolean discountOverlaps = DEFAULT_DISCOUNT_OVERLAPS;
         TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
+        float boost = AbstractQueryBuilder.DEFAULT_BOOST;
+        String queryName = null;
 
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
@@ -146,6 +190,10 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
                     analyzer = parser.text();
                 } else if (DISCOUNT_OVERLAPS.match(currentFieldName)) {
                     discountOverlaps = parser.booleanValue();
+                } else if (AbstractQueryBuilder.BOOST_FIELD.match(currentFieldName)) {
+                    boost = parser.floatValue();
+                } else if (AbstractQueryBuilder.NAME_FIELD.match(currentFieldName)) {
+                    queryName = parser.text();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
                 }
@@ -160,7 +208,7 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
                     throw new ParsingException(parser.getTokenLocation(), "Expected an array");
                 }
                 while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
-                    parseCondition(parseContext, builder);
+                    builder.parseCondition(parseContext);
                 }
             } else {
                 throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
@@ -186,47 +234,10 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
         builder.field(field);
         builder.text(text);
         builder.discountOverlaps(discountOverlaps);
+        builder.fallback(fallback.get());
+        builder.boost(boost);
+        builder.queryName(queryName);
         return Optional.of(builder);
-    }
-
-    private static void parseCondition(QueryParseContext parseContext, TokenCountRouterQueryBuilder builder) throws IOException {
-        XContentParser parser = parseContext.parser();
-        if (parser.currentToken() != XContentParser.Token.START_OBJECT) {
-            throw new ParsingException(parser.getTokenLocation(), "Expected an object");
-        }
-        String currentFieldName = null;
-        XContentParser.Token token;
-        ConditionDefinition currentCondition = null;
-        int checkValue = 0;
-        Optional<QueryBuilder> query = Optional.empty();
-        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentFieldName = parser.currentName();
-            } else if (token.isValue()) {
-                ConditionDefinition condition;
-                if ((condition = ConditionDefinition.parse(currentFieldName)) != null) {
-                    currentCondition = condition;
-                    checkValue = parser.intValue(true);
-                } else {
-                    throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
-                }
-            } else if (QUERY.match(currentFieldName)) {
-                if (token == XContentParser.Token.START_OBJECT) {
-                    query = parseContext.parseInnerQueryBuilder();
-                } else {
-                    throw new ParsingException(parser.getTokenLocation(), "query must be an object");
-                }
-            } else {
-                throw new ParsingException(parser.getTokenLocation(), "Unexpected field name " + currentFieldName);
-            }
-        }
-        if (currentCondition == null) {
-            throw new ParsingException(parser.getTokenLocation(), "Missing conditionDef defintion");
-        }
-        if (!query.isPresent()) {
-            throw new ParsingException(parser.getTokenLocation(), "Missing query in conditionDef");
-        }
-        builder.condition(currentCondition, checkValue, query.get());
     }
 
     @Override
@@ -240,7 +251,7 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
         } else if (field != null) {
             MappedFieldType fieldMapper = queryShardContext.fieldMapper(field);
             if (fieldMapper == null) {
-                throw new IllegalArgumentException("Unkwnon field [" + field + "]");
+                throw new IllegalArgumentException("Unknown field [" + field + "]");
             }
             luceneAnalyzer = queryShardContext.getSearchAnalyzer(fieldMapper);
         } else {
@@ -258,7 +269,7 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
                 .toQuery(queryShardContext);
     }
 
-    private int countToken(Analyzer analyzer, String text, boolean discountOverlaps) throws IOException {
+    static int countToken(Analyzer analyzer, String text, boolean discountOverlaps) throws IOException {
         try (TokenStream ts = analyzer.tokenStream("", text)) {
             ts.reset();
             int count = 0;
@@ -270,6 +281,10 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
             }
             return count;
         }
+    }
+
+    Stream<Condition> conditionStream() {
+        return conditions.stream();
     }
 
     @Override
@@ -288,10 +303,10 @@ public class TokenCountRouterQueryBuilder extends AbstractQueryBuilder<TokenCoun
 
     @EqualsAndHashCode
     @Getter
-    private static class Condition implements Writeable, IntPredicate {
-        private ConditionDefinition defition;
-        private int value;
-        private QueryBuilder query;
+    static class Condition implements Writeable, IntPredicate {
+        private final ConditionDefinition defition;
+        private final int value;
+        private final QueryBuilder query;
 
         public Condition(StreamInput in) throws IOException {
             this.defition = ConditionDefinition.readFrom(in);

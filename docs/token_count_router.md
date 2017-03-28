@@ -21,7 +21,7 @@ GET /_search
                 "gte": 2,
                 "query": {
                     "match_phrase": {
-                        "text": "input query",
+                        "text": "input query"
                     }
                 }
             }
