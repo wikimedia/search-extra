@@ -85,7 +85,7 @@ public class ExpressionTest {
         assertTrue(expression.countClauses() <= maxNgramsExtracted);
     }
 
-    @Test(timeout=500)
+    @Test(timeout=1000)
     public void testBooleanExplosion() {
         String regex = "[0-9]*a[0-9]{50,80}";
         int maxExpand = 10;
