@@ -48,6 +48,7 @@
     <lucene.version>6.4.1</lucene.version>
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
   </properties>
 
   <build>
@@ -169,6 +170,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.5.1</version>
+          <configuration>
+            <compilerArgument>-Xlint:all</compilerArgument>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

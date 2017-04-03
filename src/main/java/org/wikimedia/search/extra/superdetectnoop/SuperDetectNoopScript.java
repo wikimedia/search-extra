@@ -125,7 +125,7 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
                     }
                     continue;
                 }
-                handler = ChangeHandler.EQUALS;
+                handler = ChangeHandler.Equal.INSTANCE;
             }
             ChangeHandler.Result result = handler.handle(sourceValue, sourceEntry.getValue());
             if (result.isDocumentNooped()) {
