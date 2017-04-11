@@ -7,6 +7,7 @@ import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.rest.RestStatus;
@@ -17,15 +18,18 @@ import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertThrows;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 
 public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrationTest {
@@ -349,9 +353,99 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         update(b, false);
     }
 
-    /**
-     * Tests path matching.
-     */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testReplaceMap() throws IOException {
+        indexSeedData();
+        Function<XContentBuilder, XContentBuilder> addSource = (builder) -> {
+            try {
+                return builder.startObject("source")
+                        .startObject("labels")
+                        .array("fr", "main", "poignet")
+                        .endObject()
+                        .endObject();
+            } catch(IOException ioe) {
+                throw new AssertionError(ioe);
+            }
+        };
+        XContentBuilder b = addSource.apply(jsonBuilder().startObject()).endObject();
+
+        // default behavior is to only lookup map entry sent in the script
+        // here "en" entry is not sent and not detected.
+        update(b, false);
+
+        // Now uses the equals handler to properly reset the map keys
+        b = addSource.apply(jsonBuilder().startObject())
+                .startObject("handlers")
+                    .field("labels", "equals")
+                .endObject()
+                .endObject();
+
+        Map<String, Object> updated = update(b, true);
+        assertThat(updated, hasEntry(equalTo("labels"), instanceOf(Map.class)));
+        Map<String, Object> labels = (Map<String, Object>) updated.get("labels");
+        assertFalse(labels.containsKey("en"));
+        assertTrue(labels.containsKey("fr"));
+        assertEquals(Arrays.asList("main", "poignet"), labels.get("fr"));
+        // Calling a second time should be a noop
+        updated = update(b, false);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testReplaceMapEdgeCases() throws IOException {
+        indexSeedData();
+        // Test that indexed content is not a map
+        XContentBuilder b = jsonBuilder().startObject()
+                .startObject("source")
+                    .startObject("int")
+                        .array("fr", "main", "poignet")
+                    .endObject()
+                .endObject()
+                .startObject("handlers")
+                    .field("int", "equals")
+                .endObject()
+                .endObject();
+        Map<String, Object> updated = update(b, true);
+        assertThat(updated, hasEntry(equalTo("int"), instanceOf(Map.class)));
+        Map<String, Object> labels = (Map<String, Object>) updated.get("int");
+        assertTrue(labels.containsKey("fr"));
+        assertEquals(Arrays.asList("main", "poignet"), labels.get("fr"));
+
+        // Inverse case, indexed content is a map, new doc is not
+        b = jsonBuilder().startObject()
+                .startObject("source")
+                .field("int", 3)
+                .endObject()
+                .startObject("handlers")
+                .field("int", "equals")
+                .endObject()
+                .endObject();
+        updated = update(b, true);
+        assertThat(updated, hasEntry(equalTo("int"), instanceOf(Number.class)));
+        assertEquals(3, updated.get("int"));
+
+        // Test that indexed content does not exist
+        b = jsonBuilder().startObject()
+                .startObject("source")
+                .startObject("unknown_field")
+                .array("fr", "main", "poignet")
+                .endObject()
+                .endObject()
+                .startObject("handlers")
+                .field("int", "equals")
+                .endObject()
+                .endObject();
+        updated = update(b, true);
+        assertThat(updated, hasEntry(equalTo("unknown_field"), instanceOf(Map.class)));
+        labels = (Map<String, Object>) updated.get("unknown_field");
+        assertTrue(labels.containsKey("fr"));
+        assertEquals(Arrays.asList("main", "poignet"), labels.get("fr"));
+    }
+
+        /**
+         * Tests path matching.
+         */
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void path() throws IOException {
@@ -396,33 +490,42 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
     }
 
     private void indexSeedData() throws IOException {
+        XContentBuilder mapping = jsonBuilder().startObject()
+                // We test doc updates we do not care about mapping and types
+                // Disabling dynamic mapping so that we are free to experiment
+                // with edge cases (changing types)
+                .startObject("test").field("dynamic", false).endObject()
+                .endObject();
+
+        assertAcked(prepareCreate("test").addMapping("test", mapping));
+        ensureGreen();
+
         XContentBuilder b = jsonBuilder().startObject();
         {
             b.field("int", 3);
             b.field("zero", 0);
             b.field("string", "cake");
             b.array("set", "cat", "dog", "fish");
-            b.startObject("o");
-            {
-                b.field("bar", 10);
-                b.array("set", "cow", "fish", "bat");
-            }
+            b.startObject("o")
+                .field("bar", 10)
+                .array("set", "cow", "fish", "bat");
+            b.endObject();
+
+            b.startObject("labels")
+                .array("fr", "main", "poignet")
+                .array("en", "hand", "fist");
             b.endObject();
         }
         b.endObject();
+
         IndexResponse ir = client().prepareIndex("test", "test", "1").setSource(b).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE).get();
         assertEquals("Test data is newly created", DocWriteResponse.Result.CREATED, ir.getResult());
     }
 
     private Map<String, Object> update(XContentBuilder b, boolean shouldUpdate) {
-        long beforeNoops = client().admin().indices().prepareStats("test").get().getTotal().indexing.getTotal().getNoopUpdateCount();
-        toUpdateRequest(b).get();
-        long afterNoops = client().admin().indices().prepareStats("test").get().getTotal().indexing.getTotal().getNoopUpdateCount();
-        if (shouldUpdate) {
-            assertEquals("there haven't been noop updates", beforeNoops, afterNoops);
-        } else {
-            assertThat("there have been noop updates", afterNoops, greaterThan(beforeNoops));
-        }
+        UpdateResponse resp = toUpdateRequest(b).get();
+        DocWriteResponse.Result expected = shouldUpdate ? DocWriteResponse.Result.UPDATED : DocWriteResponse.Result.NOOP;
+        assertEquals(expected, resp.getResult());
         return client().prepareGet("test", "test", "1").get().getSource();
     }
 

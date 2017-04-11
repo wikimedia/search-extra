@@ -12,8 +12,12 @@ Options
 * ```handlers``` Object mapping path to change handler. Optional, defaults to
 behaving exactly as Elasticsearch's ```detect_noop```. Possible field values:
     * ```equals``` If the new value isn't equal to the old value then the new
-    value is written to the source. This is the default if no value is
-    specified in the ```handlers``` object.
+    value is written to the source. This is the default for leaves if no value
+    is specified in the ```handlers``` object. When explicitly set on fields
+    with `object` type or other types that are internally represented as maps
+    it will disable recursion making sure that the map sent is the map stored.
+    This will disable any other handler that may have been set on subfields of
+    this field.
     * ```within nnn%``` If the new value isn't within nnn percent of the old
     value then its written to the source. nnn is parsed as a double and all
     math is performed with doubles.

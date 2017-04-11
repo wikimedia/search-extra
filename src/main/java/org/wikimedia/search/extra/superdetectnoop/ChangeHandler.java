@@ -1,16 +1,13 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
+import java.util.Objects;
+
 /**
  * Detects if two values are different enough to be changed.
  *
  * @param <T> type of the thin being checked
  */
 public interface ChangeHandler<T> {
-    /**
-     * Two objects are never close enough.
-     */
-    ChangeHandler<Object> EQUALS = new NullSafe<>(Equal.INSTANCE);
-
     /**
      * Handle a proposed change.
      */
@@ -76,8 +73,7 @@ public interface ChangeHandler<T> {
 
     /**
      * Objects are only close enough if they are {@link Object#equals(Object)}
-     * to each other. Doesn't do any null checking - wrap in NullSafe or just
-     * use CloseEnoughDetector.EQUALS if you need it.
+     * to each other.
      */
     class Equal implements ChangeHandler<Object> {
         public static final ChangeHandler<Object> INSTANCE = new Equal();
@@ -97,7 +93,7 @@ public interface ChangeHandler<T> {
 
         @Override
         public Result handle(Object oldValue, Object newValue) {
-            return Changed.forBoolean(oldValue.equals(newValue), newValue);
+            return Changed.forBoolean(Objects.equals(oldValue, newValue), newValue);
         }
     }
 
