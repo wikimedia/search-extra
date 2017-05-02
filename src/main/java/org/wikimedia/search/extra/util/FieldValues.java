@@ -56,6 +56,9 @@ public abstract class FieldValues {
             CustomFieldsVisitor visitor = new CustomFieldsVisitor(Collections.emptySet(), true);
             reader.document(docId, visitor);
             BytesReference source = visitor.source();
+            // deprecated but still in use in core
+            // Monitor how it evolves in core and FetchSubPhase.java
+            // https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/search/fetch/FetchPhase.java#L233
             Map<String, Object> map = XContentHelper.convertToMap(source, false).v2();
             return XContentMapValues.extractRawValues(path, map).stream()
                     .map(Object::toString)

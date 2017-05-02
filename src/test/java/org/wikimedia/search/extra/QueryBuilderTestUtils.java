@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.common.ParseFieldMatcher.STRICT;
-
 /**
  * Various test utils to parse json queries
  */
@@ -38,13 +36,13 @@ public class QueryBuilderTestUtils {
         List<NamedXContentRegistry.Entry> entries = querySpecs.stream()
                 .map((spec) -> new NamedXContentRegistry.Entry(Optional.class,
                         spec.getName(),
-                        (XContentParser p, Object c) -> (Optional) spec.getParser().fromXContent((QueryParseContext) c)))
+                        p -> spec.getParser().fromXContent(new QueryParseContext(p))))
                 .collect(Collectors.toList());
         this.xContentRegistry = new NamedXContentRegistry(entries);
     }
 
     public Optional<QueryBuilder> parseQuery(String query) throws IOException {
         XContentParser parser = JsonXContent.jsonXContent.createParser(xContentRegistry, query);
-        return new QueryParseContext(parser, STRICT).parseInnerQueryBuilder();
+        return new QueryParseContext(parser).parseInnerQueryBuilder();
     }
 }
