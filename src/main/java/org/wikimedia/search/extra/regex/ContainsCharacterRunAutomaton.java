@@ -5,7 +5,7 @@ import org.apache.lucene.util.automaton.RunAutomaton;
 
 class ContainsCharacterRunAutomaton extends RunAutomaton {
     public ContainsCharacterRunAutomaton(Automaton a) {
-        super(a, Character.MAX_CODE_POINT, true);
+        super(a, Character.MAX_CODE_POINT);
     }
 
     /**

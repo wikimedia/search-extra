@@ -70,14 +70,9 @@ public class SourceRegexQueryRecheckTest {
     private void many(String name, String regex, Settings settings, int times, boolean matchIsNearTheEnd) {
         long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex);
         long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex);
-        assertTrue("Nonbacktracking is faster than slow", slow > nonBacktracking);
         if (!settings.caseSensitive) {
             long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),
                     "case converting", name, settings, times, regex);
-            if (!matchIsNearTheEnd) {
-                assertTrue("On the fly case conversion is faster than up front case conversion",
-                        nonBacktracking > nonBacktrackingCaseConverting);
-            }
         }
     }
 

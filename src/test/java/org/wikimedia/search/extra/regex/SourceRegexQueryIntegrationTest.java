@@ -195,7 +195,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     public void testTimeoutIsPassed() throws ExecutionException, InterruptedException, IOException {
         setup();
         for (int i = 1; i < 100; i++) {
-            indexRandom(false, doc("findmefound" + i, randomAsciiOfLength(2000)+"findmefound"));
+            indexRandom(false, doc("findmefound" + i, randomAlphaOfLength(2000)+"findmefound"));
         }
         refresh();
         client().admin().indices().prepareForceMerge("test").setMaxNumSegments(1).setFlush(true).get();
