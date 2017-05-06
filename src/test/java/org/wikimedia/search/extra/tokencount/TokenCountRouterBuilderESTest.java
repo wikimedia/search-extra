@@ -2,6 +2,7 @@ package org.wikimedia.search.extra.tokencount;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -16,6 +17,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
@@ -28,6 +30,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.ConditionDefinition.gt;
 import static org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.ConditionDefinition.gte;
@@ -86,10 +89,12 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
                 .filter(x -> x.test(tokCount))
                 .findFirst();
 
+        query = rewrite(query);
+
         if(qb.isPresent()) {
             assertThat(query, instanceOf(TermQuery.class));
             TermQuery tq = (TermQuery) query;
-            assertEquals(new Term(qb.get().defition().name(), String.valueOf(qb.get().value())), tq.getTerm());
+            assertEquals(new Term(qb.get().definition().name(), String.valueOf(qb.get().value())), tq.getTerm());
         } else {
             if(queryBuilder.field() != null) {
                 assertThat(query, instanceOf(MatchNoDocsQuery.class));
@@ -147,7 +152,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         assertTrue(tok.discountOverlaps());
         assertEquals(1, tok.conditionStream().count());
         Condition cond = tok.conditionStream().findFirst().get();
-        assertEquals(gte, cond.defition());
+        assertEquals(gte, cond.definition());
         assertEquals(2, cond.value());
         assertThat(cond.query(), instanceOf(MatchPhraseQueryBuilder.class));
         assertThat(tok.fallback(), instanceOf(MatchNoneQueryBuilder.class));
@@ -160,6 +165,50 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         assertEquals(expected, tok);
     }
 
+    public void testFailOnMultiplePredicate() throws IOException {
+        String json = "{\"token_count_router\": {\n" +
+                "   \"field\": \"text\",\n" +
+                "   \"text\": \"input query\",\n" +
+                "   \"conditions\" : [\n" +
+                "       {\n" +
+                "           \"gte\": 2,\n" +
+                "           \"gt\": 2,\n" +
+                "           \"query\": {\n" +
+                "               \"match_phrase\": {\n" +
+                "                   \"text\": \"input query\"\n" +
+                "               }\n" +
+                "           }\n" +
+                "       }\n" +
+                "   ],\n" +
+                "   \"fallback\": {\n" +
+                "       \"match_none\": {}\n" +
+                "   }\n" +
+                "}}";
+        Throwable t = expectThrows(ParsingException.class, () -> parseQuery(json));
+        assertThat(t.getMessage(), equalTo("[token_count_router] failed to parse field [conditions]"));
+        t = t.getCause();
+        assertThat(t.getMessage(), equalTo("[condition] failed to parse field [gt]"));
+        t = t.getCause();
+        assertThat(t.getMessage(), equalTo("Cannot set extra predicate [gt] on condition: [gte] already set"));
+    }
+
+        @Override
+    public void testMustRewrite() throws IOException {
+        TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
+        builder.text(randomAlphaOfLength(20));
+        builder.analyzer(randomAnalyzer());
+        QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
+        builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
+        int nbCond = randomInt(10);
+        for(int i = randomIntBetween(1,10); i > 0; i--) {
+            TokenCountRouterQueryBuilder.ConditionDefinition cond = randomFrom(TokenCountRouterQueryBuilder.ConditionDefinition.values());
+            int value = randomInt(10);
+            builder.condition(cond, value, new WrapperQueryBuilder(toRewrite.toString()));
+        }
+        QueryBuilder rewrittenBuilder = QueryBuilder.rewriteQuery(builder, createShardContext());
+        assertEquals(rewrittenBuilder, toRewrite);
+    }
+
     public void testUnknownAnalyzer() {
         TokenCountRouterQueryBuilder expected = new TokenCountRouterQueryBuilder();
         expected.field("unknown_field");
@@ -167,12 +216,25 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         expected.condition(gte, 2, QueryBuilders.matchPhraseQuery("text", "input query"));
         expected.fallback(new MatchNoneQueryBuilder());
         QueryShardContext context = createShardContext();
-        assertThat(expectThrows(IllegalArgumentException.class, () -> expected.doToQuery(context)).getMessage(),
+        assertThat(expectThrows(IllegalArgumentException.class, () -> QueryBuilder.rewriteQuery(expected, context)).getMessage(),
                 containsString("Unknown field [unknown_field]"));
 
         expected.field(null);
         expected.analyzer("unknown_analyzer");
-        assertThat(expectThrows(IllegalArgumentException.class, () -> expected.doToQuery(context)).getMessage(),
+        assertThat(expectThrows(IllegalArgumentException.class, () -> QueryBuilder.rewriteQuery(expected, context)).getMessage(),
                 containsString("Unknown analyzer [unknown_analyzer]"));
+    }
+
+    @Override
+    protected Query rewrite(Query query) throws IOException {
+        if (query != null) {
+            // When rewriting q QueryBuilder with a boost or a name
+            // we end up with a wrapping bool query.
+            // see doRewrite
+            // rewrite as lucene does to have the real inner query
+            MemoryIndex idx = new MemoryIndex();
+            return idx.createSearcher().rewrite(query);
+        }
+        return new MatchAllDocsQuery(); // null == *:*
     }
 }

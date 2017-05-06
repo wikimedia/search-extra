@@ -47,7 +47,7 @@ public class TokenCountRouterParserTest extends LuceneTestCase {
         assertTrue(tok.discountOverlaps());
         assertEquals(1, tok.conditionStream().count());
         Condition cond = tok.conditionStream().findFirst().get();
-        assertEquals(gte, cond.defition());
+        assertEquals(gte, cond.definition());
         assertEquals(2, cond.value());
         assertThat(cond.query(), instanceOf(MatchPhraseQueryBuilder.class));
         assertThat(tok.fallback(), instanceOf(MatchNoneQueryBuilder.class));
