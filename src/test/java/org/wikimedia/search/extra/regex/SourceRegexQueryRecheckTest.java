@@ -37,7 +37,7 @@ public class SourceRegexQueryRecheckTest {
     @Test
     public void sensitiveShortRegex() {
         Settings settings = new Settings();
-        settings.caseSensitive = true;
+        settings.caseSensitive(true);
         many("case sensitive", "cat", settings, 1000, false);
     }
 
@@ -50,14 +50,14 @@ public class SourceRegexQueryRecheckTest {
     @Test
     public void sensitiveLongerRegex() {
         Settings settings = new Settings();
-        settings.caseSensitive = true;
+        settings.caseSensitive(true);
         many("case sensitive", "\\[\\[Category:", settings, 1000, true);
     }
 
     @Test
     public void insensitiveBacktrackyRegex() {
         Settings settings = new Settings();
-        settings.caseSensitive = true;
+        settings.caseSensitive(true);
         many("case sensitive", "days.+and", settings, 1000, true);
     }
 
@@ -70,7 +70,7 @@ public class SourceRegexQueryRecheckTest {
     private void many(String name, String regex, Settings settings, int times, boolean matchIsNearTheEnd) {
         long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex);
         long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex);
-        if (!settings.caseSensitive) {
+        if (!settings.caseSensitive()) {
             long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),
                     "case converting", name, settings, times, regex);
         }

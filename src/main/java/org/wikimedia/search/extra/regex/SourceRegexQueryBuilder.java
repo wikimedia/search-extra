@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.regex;
 
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -13,8 +14,8 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.LocaleUtils;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
@@ -26,6 +27,8 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constructorArg;
 
 /**
  * Builds source_regex filters.
@@ -44,6 +47,29 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
 
     public static final boolean DEFAULT_LOAD_FROM_SOURCE = true;
     public static final int DEFAULT_GRAM_SIZE = 3;
+
+    private static final ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> PARSER;
+
+    static {
+        PARSER = new ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext>(NAME.getPreferredName(),
+                (o) -> new SourceRegexQueryBuilder((String) o[0], (String) o[1]));
+        PARSER.declareString(constructorArg(), FIELD);
+        PARSER.declareString(constructorArg(), REGEX);
+        PARSER.declareBoolean(SourceRegexQueryBuilder::loadFromSource, LOAD_FROM_SOURCE);
+        PARSER.declareString(SourceRegexQueryBuilder::ngramField, NGRAM_FIELD);
+        PARSER.declareInt(SourceRegexQueryBuilder::gramSize, GRAM_SIZE);
+        PARSER.declareInt((x,i) -> x.settings().maxExpand(i), Settings.MAX_EXPAND);
+        PARSER.declareInt((x,i) -> x.settings().maxStatesTraced(i), Settings.MAX_STATES_TRACED);
+        PARSER.declareInt((x,i) -> x.settings().maxDeterminizedStates(i), Settings.MAX_DETERMINIZED_STATES);
+        PARSER.declareInt((x,i) -> x.settings().maxNgramsExtracted(i), Settings.MAX_NGRAMS_EXTRACTED);
+        PARSER.declareInt((x,i) -> x.settings().maxInspect(i), Settings.MAX_INSPECT);
+        PARSER.declareBoolean((x,b) -> x.settings().caseSensitive(b), Settings.CASE_SENSITIVE);
+        PARSER.declareString((x,s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
+        PARSER.declareBoolean((x,b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
+        PARSER.declareInt((x,i) -> x.settings().maxNgramClauses(i), Settings.MAX_NGRAM_CLAUSES);
+        PARSER.declareString((x,s) -> x.settings().timeout(s), Settings.TIMEOUT);
+        declareStandardFields(PARSER);
+    }
 
     private final String field;
     private final String regex;
@@ -172,9 +198,34 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         return this;
     }
 
+    @Override
+    protected Query doToQuery(QueryShardContext context) throws IOException {
+        final Analyzer ngramAnalyzer;
+        if (ngramField != null) {
+            MappedFieldType mapper = context.fieldMapper(ngramField);
+            if (mapper == null) {
+                throw new IllegalArgumentException("ngramField [" + ngramField + "] is unknown.");
+            }
+            ngramAnalyzer = context.getSearchAnalyzer(mapper);
+            if (ngramAnalyzer == null) {
+                throw new IllegalArgumentException("Cannot find an analyzer for ngramField [" + ngramField + "], is this field indexed?");
+            }
+        } else {
+            ngramAnalyzer = null;
+        }
+        return new SourceRegexQuery(
+                field, ngramField, regex,
+                loadFromSource ? FieldValues.loadFromSource() : FieldValues.loadFromStoredField(),
+                settings, gramSize, ngramAnalyzer);
+    }
+
     /**
      * Field independent settings for the SourceRegexFilter.
      */
+    @Accessors(chain = true, fluent = true)
+    @Setter
+    @Getter
+    @EqualsAndHashCode
     static class Settings {
         final static ParseField MAX_EXPAND = new ParseField("max_expand");
         final static ParseField MAX_STATES_TRACED = new ParseField("max_states_traced");
@@ -206,7 +257,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
          * before it is considered a wildcard for optimization
          * purposes.
          */
-        int maxExpand = DEFAULT_MAX_EXPAND;
+        private int maxExpand = DEFAULT_MAX_EXPAND;
 
         /**
          * the maximum number of automaton states processed
@@ -217,7 +268,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
          * effectively disabled regexes more complex than exact sequences
          * of characters
          */
-        int maxStatesTraced = DEFAULT_MAX_STATES_TRACED;
+        private int maxStatesTraced = DEFAULT_MAX_STATES_TRACED;
 
         /**
          * the maximum number of automaton states that
@@ -226,7 +277,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
          * for longer and use more memory needed to compile more complex
          * regexes.
          */
-        int maxDeterminizedStates = DEFAULT_MAX_DETERMINIZED_STATES;
+        private int maxDeterminizedStates = DEFAULT_MAX_DETERMINIZED_STATES;
 
         /**
          * the maximum number of ngrams extracted from the
@@ -237,24 +288,24 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
          * but it limits the number of term queries while degrading
          * reasonably well.
          */
-        int maxNgramsExtracted = DEFAULT_MAX_NGRAMS_EXTRACTED;
+        private int maxNgramsExtracted = DEFAULT_MAX_NGRAMS_EXTRACTED;
         /**
          * @deprecated use a generic time limiting collector
          */
         @Deprecated
-        int maxInspect = DEFAULT_MAX_INSPECT;
-        boolean caseSensitive = DEFAULT_CASE_SENSITIVE;
+        private int maxInspect = DEFAULT_MAX_INSPECT;
+        private boolean caseSensitive = DEFAULT_CASE_SENSITIVE;
         @NonNull
-        Locale locale = DEFAULT_LOCALE;
+        private Locale locale = DEFAULT_LOCALE;
 
         /**
          * should the filter reject regexes it cannot
          * accelerate?
          */
-        boolean rejectUnaccelerated = DEFAULT_REJECT_UNACCELERATED;
-        int maxNgramClauses = DEFAULT_MAX_BOOLEAN_CLAUSES;
+        private boolean rejectUnaccelerated = DEFAULT_REJECT_UNACCELERATED;
+        private int maxNgramClauses = DEFAULT_MAX_BOOLEAN_CLAUSES;
 
-        long timeout;
+        private long timeout;
 
         public Settings() {
         }
@@ -323,31 +374,10 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
                 builder.field(MAX_NGRAM_CLAUSES.getPreferredName(), maxNgramClauses);
             }
             if (timeout != DEFAULT_TIMEOUT) {
-                builder.field(TIMEOUT.getPreferredName(), TimeValue.timeValueMillis(timeout).format());
+                builder.field(TIMEOUT.getPreferredName(), timeout + "ms");
             }
             return builder;
         }
-    }
-
-    @Override
-    protected Query doToQuery(QueryShardContext context) throws IOException {
-        final Analyzer ngramAnalyzer;
-        if (ngramField != null) {
-            MappedFieldType mapper = context.fieldMapper(ngramField);
-            if (mapper == null) {
-                throw new IllegalArgumentException("ngramField [" + ngramField + "] is unknown.");
-            }
-            ngramAnalyzer = context.getSearchAnalyzer(mapper);
-            if (ngramAnalyzer == null) {
-                throw new IllegalArgumentException("Cannot find an analyzer for ngramField [" + ngramField + "], is this field indexed?");
-            }
-        } else {
-            ngramAnalyzer = null;
-        }
-        return new SourceRegexQuery(
-                field, ngramField, regex,
-                loadFromSource ? FieldValues.loadFromSource() : FieldValues.loadFromStoredField(),
-                settings, gramSize, ngramAnalyzer);
     }
 
     @Override
@@ -366,82 +396,15 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             builder.field(GRAM_SIZE.getPreferredName(), gramSize);
         }
         settings.innerXContent(builder, params);
-
+        printBoostAndQueryName(builder);
         builder.endObject();
     }
 
     public static Optional<SourceRegexQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
-        // Stuff for our filter
-        String regex = null;
-        String fieldPath = null;
-        boolean loadFromSource = DEFAULT_LOAD_FROM_SOURCE;
-        String ngramFieldPath = null;
-        int ngramGramSize = DEFAULT_GRAM_SIZE;
-        Settings settings = new Settings();
-
-        XContentParser parser = context.parser();
-        String currentFieldName = null;
-        XContentParser.Token token;
-        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentFieldName = parser.currentName();
-            } else if (token.isValue()) {
-                if (FIELD.match(currentFieldName)) {
-                    fieldPath = parser.text();
-                } else if (REGEX.match(currentFieldName)) {
-                    regex = parser.text();
-                } else if (LOAD_FROM_SOURCE.match(currentFieldName)) {
-                    loadFromSource = parser.booleanValue();
-                } else if (NGRAM_FIELD.match(currentFieldName)) {
-                    ngramFieldPath = parser.text();
-                } else if (GRAM_SIZE.match(currentFieldName)) {
-                    ngramGramSize = parser.intValue();
-                } else if (!parseInto(settings, currentFieldName, parser)) {
-                    throw new ParsingException(parser.getTokenLocation(), "[source-regex] filter does not support [" + currentFieldName
-                            + "]");
-                }
-            }
+        try {
+            return Optional.of(PARSER.parse(context.parser(), context));
+        } catch (IllegalArgumentException iae) {
+            throw new ParsingException(context.parser().getTokenLocation(), iae.getMessage(), iae);
         }
-
-        if (regex == null || regex.isEmpty()) {
-            throw new ParsingException(parser.getTokenLocation(), "[source-regex] filter must specify [regex]");
-        }
-        if (fieldPath == null) {
-            throw new ParsingException(parser.getTokenLocation(), "[source-regex] filter must specify [field]");
-        }
-        SourceRegexQueryBuilder builder = new SourceRegexQueryBuilder(fieldPath, regex, settings);
-        builder.ngramField(ngramFieldPath);
-        builder.loadFromSource(loadFromSource);
-        builder.gramSize(ngramGramSize);
-
-        return Optional.of(builder);
     }
-
-    private static boolean parseInto(Settings settings, String fieldName, XContentParser parser) throws IOException {
-        if (Settings.MAX_EXPAND.match(fieldName)) {
-            settings.maxExpand = parser.intValue();
-        } else if (Settings.MAX_STATES_TRACED.match(fieldName)) {
-            settings.maxStatesTraced = parser.intValue();
-        } else if (Settings.MAX_INSPECT.match(fieldName)) {
-            settings.maxInspect = parser.intValue() ;
-        } else if (Settings.MAX_DETERMINIZED_STATES.match(fieldName)) {
-            settings.maxDeterminizedStates = parser.intValue();
-        } else if (Settings.MAX_NGRAMS_EXTRACTED.match(fieldName)) {
-            settings.maxNgramsExtracted = parser.intValue();
-        } else if (Settings.CASE_SENSITIVE.match(fieldName)) {
-            settings.caseSensitive = parser.booleanValue();
-        } else if (Settings.LOCALE.match(fieldName)) {
-            settings.locale = LocaleUtils.parse(parser.text());
-        } else if (Settings.REJECT_UNACCELERATED.match(fieldName)) {
-            settings.rejectUnaccelerated = parser.booleanValue();
-        } else if (Settings.MAX_NGRAM_CLAUSES.match(fieldName)) {
-            settings.maxNgramClauses = parser.intValue();
-        } else if (Settings.TIMEOUT.match(fieldName)) {
-            settings.timeout(parser.text());
-        } else {
-            return false;
-        }
-        return true;
-    }
-
 }

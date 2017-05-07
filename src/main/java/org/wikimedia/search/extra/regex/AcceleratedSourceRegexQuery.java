@@ -45,7 +45,7 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
             // TODO: Get rid of this shared mutable state, we should be able to use
             // the generic timeout system.
             private final MutableValueInt inspected = new MutableValueInt();
-            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout);
+            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout());
 
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {

@@ -68,7 +68,7 @@ class UnacceleratedSourceRegexQuery extends Query {
             // TODO: Get rid of this shared mutable state, we should be able to use
             // the generic timeout system.
             private final MutableValueInt inspected = new MutableValueInt();
-            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout);
+            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout());
 
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
@@ -76,7 +76,7 @@ class UnacceleratedSourceRegexQuery extends Query {
                 // We can stop matching early if we are allowed to inspect less
                 // doc than the number of docs available in this segment.
                 // This is because we use a DocIdSetIterator.all.
-                int remaining = settings.maxInspect - inspected.value;
+                int remaining = settings.maxInspect() - inspected.value;
                 if (remaining < 0) {
                     remaining = 0;
                 }
@@ -102,7 +102,7 @@ class UnacceleratedSourceRegexQuery extends Query {
         @Override
         public boolean matches() throws IOException {
             timeoutChecker.check(approximation.docID());
-            if (inspected.value >= settings.maxInspect) {
+            if (inspected.value >= settings.maxInspect()) {
                 return false;
             }
             List<String> values = loader.load(fieldPath, context.reader(), approximation.docID());

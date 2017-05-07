@@ -1,6 +1,9 @@
 package org.wikimedia.search.extra.regex;
 
+import com.google.common.annotations.VisibleForTesting;
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
@@ -21,6 +24,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 @EqualsAndHashCode(callSuper = false)
+@VisibleForTesting
+@Getter(AccessLevel.PACKAGE)
 public class SourceRegexQuery extends Query {
     private final String fieldPath;
     private final String ngramFieldPath;
@@ -42,9 +47,9 @@ public class SourceRegexQuery extends Query {
         this.loader = loader;
         this.settings = settings;
         this.gramSize = gramSize;
-        if (!settings.caseSensitive
-                && !settings.locale.getLanguage().equals("ga")
-                && !settings.locale.getLanguage().equals("tr")) {
+        if (!settings.caseSensitive()
+                && !settings.locale().getLanguage().equals("ga")
+                && !settings.locale().getLanguage().equals("tr")) {
             rechecker = new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings);
         } else {
             rechecker = new NonBacktrackingRechecker(regex, settings);
@@ -60,7 +65,7 @@ public class SourceRegexQuery extends Query {
             assert ngramAnalyzer == null;
             // Don't bother expanding the regex if there isn't a field to check
             // it against. Its unlikely to resolve to all false anyway.
-            if (settings.rejectUnaccelerated) {
+            if (settings.rejectUnaccelerated()) {
                 throw new UnableToAccelerateRegexException(regex, gramSize, null);
             }
             return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings);
@@ -70,19 +75,19 @@ public class SourceRegexQuery extends Query {
             // The accelerating filter is always assumed to be case
             // insensitive/always lowercased
             Automaton automaton = regexToAutomaton(
-                    new RegExp(regex.toLowerCase(settings.locale), RegExp.ALL ^ RegExp.AUTOMATON),
-                    settings.maxDeterminizedStates);
-            Expression<String> expression = new NGramExtractor(gramSize, settings.maxExpand, settings.maxStatesTraced,
-                    settings.maxNgramsExtracted, ngramAnalyzer).extract(automaton).simplify();
+                    new RegExp(regex.toLowerCase(settings.locale()), RegExp.ALL ^ RegExp.AUTOMATON),
+                    settings.maxDeterminizedStates());
+            Expression<String> expression = new NGramExtractor(gramSize, settings.maxExpand(), settings.maxStatesTraced(),
+                    settings.maxNgramsExtracted(), ngramAnalyzer).extract(automaton).simplify();
             if (expression.alwaysTrue()) {
-                if (settings.rejectUnaccelerated) {
+                if (settings.rejectUnaccelerated()) {
                     throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                 }
                 return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
             } else if (expression.alwaysFalse()) {
                 return Queries.newMatchNoDocsQuery("Expression is always false").rewrite(reader);
             } else {
-                if (expression.countClauses() > settings.maxNgramClauses) {
+                if (expression.countClauses() > settings.maxNgramClauses()) {
                     // The expression is too large we will try to use a degraded disjunction
                     // Even if we limit the number of trigram generated (number of transition)
                     // Some loops may generate huge boolean expression. If it's the case
@@ -93,11 +98,11 @@ public class SourceRegexQuery extends Query {
                     // regex, if one of the ngram is very common we will certainly scan nearly all
                     // the docs in the index resulting in a UnacceleratedSourceRegexQuery.
 
-                    expression = new ExpressionRewriter<>(expression).degradeAsDisjunction(settings.maxNgramClauses);
-                    if (expression.countClauses() > settings.maxNgramClauses || expression.alwaysTrue()) {
+                    expression = new ExpressionRewriter<>(expression).degradeAsDisjunction(settings.maxNgramClauses());
+                    if (expression.countClauses() > settings.maxNgramClauses() || expression.alwaysTrue()) {
                         // Still too large, it's likely a bug or improper settings:
                         // maxTrigramClauses very low and a large max_ngrams_extracted
-                        if (settings.rejectUnaccelerated) {
+                        if (settings.rejectUnaccelerated()) {
                             throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                         }
                         return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
@@ -110,7 +115,7 @@ public class SourceRegexQuery extends Query {
         } catch (AutomatonTooComplexException e) {
             throw new InvalidRegexException(String.format(Locale.ROOT,
                     "Regex /%s/ too complex for maxStatesTraced setting [%s].  Use a simpler regex or raise maxStatesTraced.", regex,
-                    settings.maxStatesTraced), e);
+                    settings.maxStatesTraced()), e);
         } catch (IllegalArgumentException e) {
             throw new InvalidRegexException(e.getMessage(), e);
         }
@@ -168,12 +173,12 @@ public class SourceRegexQuery extends Query {
         private ContainsCharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
-                if (!settings.caseSensitive) {
-                    regexString = regexString.toLowerCase(settings.locale);
+                if (!settings.caseSensitive()) {
+                    regexString = regexString.toLowerCase(settings.locale());
                 }
                 Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
-                        settings.maxDeterminizedStates);
-                if (settings.locale.getLanguage().equals("el")) {
+                        settings.maxDeterminizedStates());
+                if (settings.locale().getLanguage().equals("el")) {
                     charRun = new ContainsCharacterRunAutomaton.GreekLowerCasing(automaton);
                 } else {
                     charRun = new ContainsCharacterRunAutomaton.LowerCasing(automaton);
@@ -207,8 +212,8 @@ public class SourceRegexQuery extends Query {
         @Override
         public boolean recheck(Iterable<String> values) {
             for (String value : values) {
-                if (!settings.caseSensitive) {
-                    value = value.toLowerCase(settings.locale);
+                if (!settings.caseSensitive()) {
+                    value = value.toLowerCase(settings.locale());
                 }
                 if (getCharRun().contains(value)) {
                     return true;
@@ -220,11 +225,11 @@ public class SourceRegexQuery extends Query {
         private ContainsCharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
-                if (!settings.caseSensitive) {
-                    regexString = regexString.toLowerCase(settings.locale);
+                if (!settings.caseSensitive()) {
+                    regexString = regexString.toLowerCase(settings.locale());
                 }
                 Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
-                        settings.maxDeterminizedStates);
+                        settings.maxDeterminizedStates());
                 charRun = new ContainsCharacterRunAutomaton(automaton);
             }
             return charRun;
@@ -259,8 +264,8 @@ public class SourceRegexQuery extends Query {
         @Override
         public boolean recheck(Iterable<String> values) {
             for (String value : values) {
-                if (!settings.caseSensitive) {
-                    value = value.toLowerCase(settings.locale);
+                if (!settings.caseSensitive()) {
+                    value = value.toLowerCase(settings.locale());
                 }
                 if (getCharRun().run(value)) {
                     return true;
@@ -272,11 +277,11 @@ public class SourceRegexQuery extends Query {
         private CharacterRunAutomaton getCharRun() {
             if (charRun == null) {
                 String regexString = regex;
-                if (!settings.caseSensitive) {
-                    regexString = regexString.toLowerCase(settings.locale);
+                if (!settings.caseSensitive()) {
+                    regexString = regexString.toLowerCase(settings.locale());
                 }
                 Automaton automaton = regexToAutomaton(new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON),
-                        settings.maxDeterminizedStates);
+                        settings.maxDeterminizedStates());
                 charRun = new CharacterRunAutomaton(automaton);
             }
             return charRun;
