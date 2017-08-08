@@ -1,4 +1,4 @@
-package org.wikimedia.search.extra.tokencount;
+package org.wikimedia.search.extra.router;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
@@ -22,7 +22,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.wikimedia.search.extra.ExtraPlugin;
-import org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.Condition;
+import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -32,8 +32,8 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gt;
-import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gte;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCountRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {

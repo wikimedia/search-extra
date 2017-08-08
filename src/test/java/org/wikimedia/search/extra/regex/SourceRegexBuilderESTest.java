@@ -13,7 +13,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.wikimedia.search.extra.ExtraPlugin;
-import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder;
+import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.util.FieldValues;
 
 import java.io.IOException;
@@ -23,7 +23,7 @@ import java.util.Locale;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gte;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {

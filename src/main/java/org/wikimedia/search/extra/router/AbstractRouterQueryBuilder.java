@@ -1,4 +1,4 @@
-package org.wikimedia.search.extra.tokencount;
+package org.wikimedia.search.extra.router;
 
 import com.google.common.annotations.VisibleForTesting;
 import lombok.AccessLevel;
@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
-import org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.Condition;
+import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
 import java.io.IOException;
 import java.util.ArrayList;

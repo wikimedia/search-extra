@@ -11,13 +11,13 @@ import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory
 import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreBuilder;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder;
+import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
 import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
 import org.wikimedia.search.extra.superdetectnoop.VersionedDocumentHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
-import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;

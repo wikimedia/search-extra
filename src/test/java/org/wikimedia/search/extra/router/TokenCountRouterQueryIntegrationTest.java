@@ -1,4 +1,4 @@
-package org.wikimedia.search.extra.tokencount;
+package org.wikimedia.search.extra.router;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
