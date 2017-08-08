@@ -24,7 +24,7 @@ public class QueryBuilderTestUtils {
     private final NamedXContentRegistry xContentRegistry;
 
     private QueryBuilderTestUtils() {
-        SearchModule module = new SearchModule(Settings.EMPTY, false, Collections.singletonList(new ExtraPlugin()));
+        SearchModule module = new SearchModule(Settings.EMPTY, false, Collections.singletonList(new ExtraPlugin(Settings.EMPTY)));
         xContentRegistry = new NamedXContentRegistry(module.getNamedXContents());
     }
 

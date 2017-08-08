@@ -1,7 +1,9 @@
 package org.wikimedia.search.extra;
 
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.analysis.TokenFilterFactory;
 import org.elasticsearch.indices.analysis.AnalysisModule.AnalysisProvider;
+import org.elasticsearch.monitor.os.OsService;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
@@ -11,6 +13,7 @@ import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory
 import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreBuilder;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder;
+import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder;
 import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
@@ -31,6 +34,14 @@ import java.util.Set;
  * Setup the Elasticsearch plugin.
  */
 public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin, ScriptPlugin {
+
+    private OsService osService;
+
+    public ExtraPlugin(Settings settings) {
+        // TODO: This collects way more info than we care about
+        osService = new OsService(settings);
+    }
+
     /**
      * Register our parsers.
      */
@@ -40,7 +51,8 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
         return Arrays.asList(
                 new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
                 new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
-                new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent)
+                new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent),
+                new QuerySpec<>(DegradedRouterQueryBuilder.NAME, (in) -> new DegradedRouterQueryBuilder(in, osService), (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, osService))
         );
     }
 
