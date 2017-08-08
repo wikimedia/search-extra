@@ -48,8 +48,8 @@ public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrat
         init();
         TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
         builder.field("content")
-                .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gt, 4, QueryBuilders.termQuery("content", "absent"))
-                .condition(TokenCountRouterQueryBuilder.ConditionDefinition.gte, 2, QueryBuilders.termQuery("content", "haste"))
+                .condition(AbstractRouterQueryBuilder.ConditionDefinition.gt, 4, QueryBuilders.termQuery("content", "absent"))
+                .condition(AbstractRouterQueryBuilder.ConditionDefinition.gte, 2, QueryBuilders.termQuery("content", "haste"))
                 .fallback(QueryBuilders.termQuery("content", "strength"));
         SearchResponse sr;
         builder.text("one and two and three");

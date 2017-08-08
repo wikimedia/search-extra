@@ -23,7 +23,7 @@ import java.util.Locale;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.ConditionDefinition.gte;
+import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {

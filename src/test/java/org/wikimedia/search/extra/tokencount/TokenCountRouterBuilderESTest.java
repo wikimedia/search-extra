@@ -22,7 +22,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.wikimedia.search.extra.ExtraPlugin;
-import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.Condition;
+import org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.Condition;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -32,8 +32,8 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.ConditionDefinition.gt;
-import static org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.ConditionDefinition.gte;
+import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gt;
+import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCountRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
@@ -62,7 +62,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         }
 
         for(int i = randomIntBetween(1,10); i > 0; i--) {
-            TokenCountRouterQueryBuilder.ConditionDefinition cond = randomFrom(TokenCountRouterQueryBuilder.ConditionDefinition.values());
+            AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
             builder.condition(cond, value, new TermQueryBuilder(cond.name(), String.valueOf(value)));
         }
@@ -111,17 +111,18 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         builder.condition(gt, 1, new MatchNoneQueryBuilder());
 
         assertThat(expectThrows(ParsingException.class, () -> parseQuery(builder)).getMessage(),
-                containsString("No text provided"));
-        builder.text("test text");
-
-        assertThat(expectThrows(ParsingException.class, () -> parseQuery(builder)).getMessage(),
                 containsString("No fallback query defined"));
         builder.fallback(new MatchNoneQueryBuilder());
+
+        assertThat(expectThrows(ParsingException.class, () -> parseQuery(builder)).getMessage(),
+                containsString("No text provided"));
+        builder.text("test text");
 
         assertThat(expectThrows(ParsingException.class, () -> parseQuery(builder)).getMessage(),
                 containsString("Missing field or analyzer definition"));
 
         builder.field("test");
+
         parseQuery(builder);
     }
 
@@ -199,9 +200,8 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         builder.analyzer(randomAnalyzer());
         QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
-        int nbCond = randomInt(10);
         for(int i = randomIntBetween(1,10); i > 0; i--) {
-            TokenCountRouterQueryBuilder.ConditionDefinition cond = randomFrom(TokenCountRouterQueryBuilder.ConditionDefinition.values());
+            AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
             builder.condition(cond, value, new WrapperQueryBuilder(toRewrite.toString()));
         }

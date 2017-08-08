@@ -7,13 +7,13 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Test;
 import org.wikimedia.search.extra.QueryBuilderTestUtils;
-import org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.Condition;
+import org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.Condition;
 
 import java.io.IOException;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.tokencount.TokenCountRouterQueryBuilder.ConditionDefinition.gte;
+import static org.wikimedia.search.extra.tokencount.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 public class TokenCountRouterParserTest extends LuceneTestCase {
     @Test
