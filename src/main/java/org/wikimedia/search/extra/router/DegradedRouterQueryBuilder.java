@@ -49,7 +49,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         declareRouterFields(PARSER, (p, pc) -> parseCondition(COND_PARSER, p, pc));
     }
 
-    // This intentional is not considered in doEquals, as
+    // This intentionally is not considered in doEquals, as
     // it's not part of the definition of the qb but a helper service.
     private OsService osService;
 
