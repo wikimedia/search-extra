@@ -39,7 +39,7 @@ public class DegradedRouterQueryBuilderParserTest extends LuceneTestCase {
         QueryBuilder builder = optional.get();
         assertThat(builder, instanceOf(DegradedRouterQueryBuilder.class));
         DegradedRouterQueryBuilder qb = (DegradedRouterQueryBuilder) builder;
-        assertNotNull(qb.osService());
+        assertNotNull(qb.systemLoad());
         assertEquals(1, qb.conditionStream().count());
         DegradedRouterQueryBuilder.DegradedCondition cond = qb.conditionStream().findFirst().get();
         assertEquals(DegradedConditionType.cpu, cond.type());
@@ -49,7 +49,7 @@ public class DegradedRouterQueryBuilderParserTest extends LuceneTestCase {
         assertThat(qb.fallback(),instanceOf(MatchNoneQueryBuilder.class));
 
         DegradedRouterQueryBuilder expected = new DegradedRouterQueryBuilder();
-        expected.condition(ConditionDefinition.lt, DegradedConditionType.cpu, 70,
+        expected.condition(ConditionDefinition.lt, DegradedConditionType.cpu, null, null, 70,
                 new MatchPhraseQueryBuilder("text", "input query"));
         expected.fallback(new MatchNoneQueryBuilder());
         assertEquals(expected, qb);

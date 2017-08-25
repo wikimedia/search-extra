@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -62,8 +63,16 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
         // Should we do anything for final shutdown? Clear all the data?
     }
 
+    private Optional<RollingHistogram> getBucket(String name) {
+        return Optional.ofNullable(statBuckets.get(name));
+    }
+
     private RollingHistogram getOrAddBucket(String name) {
         return statBuckets.computeIfAbsent(name, (n) -> new RollingHistogram());
+    }
+
+    public long getMillisAtPercentile(String bucket, double percentile) {
+        return getBucket(bucket).map(hist -> Math.round(hist.getMillisAtPercentile(percentile))).orElse(0L);
     }
 
     public List<LatencyStat> getLatencyStats(Set<Double> percentiles) {
@@ -108,10 +117,6 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
             recorder = new Recorder(LOWEST_DISCERNABLE_VALUE.nanos(), HIGHEST_TRACKABLE_VALUE.nanos(), SIGNIFICANT_DIGITS);
         }
 
-        synchronized boolean isEmpty() {
-            return current.getTotalCount() == 0;
-        }
-
         // Recorder is explicitly thread safe and requires no synchronization
         void recordValue(long tookInNanos) {
             recorder.recordValue(tookInNanos);
@@ -131,9 +136,18 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
             current.add(hist);
         }
 
+        synchronized double getMillisAtPercentile(double percentile) {
+            return current.getValueAtPercentile(percentile) / TimeValue.NSEC_PER_MSEC;
+        }
+
         synchronized TimeValue getTimeValueAtPercentile(double percentile) {
             double nanos = current.getValueAtPercentile(percentile);
             return TimeValue.timeValueNanos(Math.round(nanos));
         }
+
+        synchronized boolean isEmpty() {
+            return current.getTotalCount() == 0;
+        }
+
     }
 }

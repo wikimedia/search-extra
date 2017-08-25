@@ -37,6 +37,7 @@ public interface SearchLatencyProbe {
         }
     }
 
+    long getMillisAtPercentile(String bucket, double percentile);
     List<LatencyStat> getLatencyStats(Set<Double> latencies);
 }
 

@@ -7,15 +7,14 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.lucene.search.MatchNoDocsQuery;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.monitor.os.OsService;
-import org.elasticsearch.monitor.os.OsStats;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.runner.RunWith;
 import org.wikimedia.search.extra.ExtraPlugin;
+import org.wikimedia.search.extra.latency.SearchLatencyProbe;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedConditionType;
 
@@ -25,10 +24,9 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
+import static org.mockito.Mockito.mock;
 
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder>{
@@ -44,14 +42,10 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
     @Override
     protected DegradedRouterQueryBuilder doCreateTestQueryBuilder() {
         DegradedRouterQueryBuilder builder = newBuilder();
+        builder.systemLoad(new MockSystemLoad());
         builder.fallback(new MatchNoneQueryBuilder());
-
         for (int i = randomIntBetween(1, 10); i > 0; i--) {
-            DegradedConditionType type = randomFrom(DegradedConditionType.values());
-            ConditionDefinition cond = randomFrom(ConditionDefinition.values());
-            int value = randomInt(10);
-            builder.condition(cond, type, value, new TermQueryBuilder(
-                    type.name() + ":" + cond.name(), String.valueOf(value)));
+            addCondition(builder);
         }
 
         return builder;
@@ -59,10 +53,10 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
 
     @Override
     protected void doAssertLuceneQuery(DegradedRouterQueryBuilder builder, Query query, SearchContext context) throws IOException {
-        OsStats.Cpu cpu = builder.osService().stats().getCpu();
+        SystemLoad stats = builder.systemLoad();
 
         Optional<DegradedRouterQueryBuilder.DegradedCondition> cond = builder.conditionStream()
-                .filter(x -> x.test(cpu))
+                .filter(x -> x.test(stats))
                 .findFirst();
 
         query = rewrite(query);
@@ -81,7 +75,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         final DegradedRouterQueryBuilder builder = new DegradedRouterQueryBuilder();
         assertThat(expectThrows(ParsingException.class, () -> parseQuery(builder)).getMessage(),
                 containsString("No conditions defined"));
-        builder.condition(gt, DegradedConditionType.cpu, 1, new MatchNoneQueryBuilder());
+        builder.condition(gt, DegradedConditionType.cpu, null, null, 1, new MatchNoneQueryBuilder());
 
         assertThat(expectThrows(ParsingException.class, () -> parseQuery(builder)).getMessage(),
                 containsString("No fallback query defined"));
@@ -96,10 +90,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
         for(int i = randomIntBetween(1,10); i > 0; i--) {
-            ConditionDefinition cond = randomFrom(ConditionDefinition.values());
-            DegradedConditionType type = randomFrom(DegradedConditionType.values());
-            int value = randomInt(10);
-            builder.condition(cond, type, value, new WrapperQueryBuilder(toRewrite.toString()));
+            addCondition(builder, new WrapperQueryBuilder(toRewrite.toString()));
         }
         QueryBuilder rewrittenBuilder = QueryBuilder.rewriteQuery(builder, createShardContext());
         assertEquals(rewrittenBuilder, toRewrite);
@@ -107,7 +98,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
 
     private DegradedRouterQueryBuilder newBuilder() {
         DegradedRouterQueryBuilder builder = new DegradedRouterQueryBuilder();
-        builder.osService(mockOsService());
+        builder.systemLoad(new MockSystemLoad());
         return builder;
     }
 
@@ -124,30 +115,51 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         return new MatchAllDocsQuery(); // null == *:*
     }
 
+    private class MockSystemLoad extends SystemLoad {
+        private long latency;
+        private long cpuPercent;
+        private long loadAverage;
 
-    private OsService mockOsService() {
-        double loadAvg = randomDoubleBetween(0D, 50D, false);
-        double[] loadAvgs = {loadAvg, loadAvg, loadAvg};
-        OsStats stats = new OsStats(0,
-                new OsStats.Cpu((short) randomIntBetween(0, 100), loadAvgs),
-                new OsStats.Mem(0, 0),
-                new OsStats.Swap(0L, 0L),
-                new OsStats.Cgroup("", 0L, "", 0L, 0L,
-                        new OsStats.Cgroup.CpuStat(0L, 0L, 0L)));
-        return new MockOsService(stats);
-    }
-
-    private class MockOsService extends OsService {
-        OsStats stats;
-
-        MockOsService(OsStats stats) {
-            super(Settings.EMPTY);
-            this.stats = stats;
+        MockSystemLoad() {
+            super(mock(SearchLatencyProbe.class), mock(OsService.class));
+            latency = randomIntBetween(0, 5000);
+            cpuPercent = randomIntBetween(0, 100);
+            loadAverage = randomIntBetween(0, 100);
         }
 
         @Override
-        public synchronized OsStats stats() {
-            return stats;
+        long getLatency(String statBucket, double percentile) {
+            return latency;
         }
+
+        @Override
+        long getCpuPercent() {
+            return cpuPercent;
+        }
+
+        @Override
+        long get1MinuteLoadAverage() {
+            return loadAverage;
+        }
+    }
+
+    private void addCondition(DegradedRouterQueryBuilder builder) {
+        addCondition(builder, null);
+    }
+
+    private void addCondition(DegradedRouterQueryBuilder builder, QueryBuilder query) {
+        DegradedConditionType type = randomFrom(DegradedConditionType.values());
+        ConditionDefinition cond = randomFrom(ConditionDefinition.values());
+        int value = randomInt(10);
+        String bucket = null;
+        Double percentile = null;
+        if (type == DegradedConditionType.latency) {
+            bucket = "testbucket";
+            percentile = randomDoubleBetween(0D, 100D, false);
+        }
+        if (query == null) {
+            query = new TermQueryBuilder(type.name() + ":" + cond.name(), String.valueOf(value));
+        }
+        builder.condition(cond, type, bucket, percentile, value, query);
     }
 }

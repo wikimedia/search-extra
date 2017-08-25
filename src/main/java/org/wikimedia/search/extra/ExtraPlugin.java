@@ -35,6 +35,7 @@ import org.wikimedia.search.extra.latency.TransportLatencyStatsAction;
 import org.wikimedia.search.extra.levenshtein.LevenshteinDistanceScoreBuilder;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder;
+import org.wikimedia.search.extra.router.SystemLoad;
 import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
@@ -61,13 +62,13 @@ import java.util.function.Supplier;
 public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin, ScriptPlugin, ActionPlugin {
 
     private final SearchLatencyListener latencyListener;
-    private final OsService osService;
     private final MutableSupplier<ThreadPool> threadPoolSupplier;
+    private final SystemLoad loadStats;
 
     public ExtraPlugin(Settings settings) {
         threadPoolSupplier = new MutableSupplier<>();
         latencyListener = new SearchLatencyListener(settings, threadPoolSupplier);
-        osService = new OsService(settings);
+        loadStats = new SystemLoad(latencyListener, new OsService(settings));
     }
 
     @Override
@@ -88,7 +89,7 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
                 new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
                 new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
                 new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent),
-                new QuerySpec<>(DegradedRouterQueryBuilder.NAME, (in) -> new DegradedRouterQueryBuilder(in, osService), (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, osService))
+                new QuerySpec<>(DegradedRouterQueryBuilder.NAME, (in) -> new DegradedRouterQueryBuilder(in, loadStats), (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats))
         );
     }
 

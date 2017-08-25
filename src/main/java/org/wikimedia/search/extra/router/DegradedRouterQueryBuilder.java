@@ -14,8 +14,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
-import org.elasticsearch.monitor.os.OsService;
-import org.elasticsearch.monitor.os.OsStats;
 
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCondition;
@@ -35,13 +33,17 @@ import java.util.Optional;
 public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<DegradedCondition, DegradedRouterQueryBuilder> {
     public static final ParseField NAME = new ParseField("degraded_router");
     private static final ParseField TYPE = new ParseField("type");
+    private static final ParseField BUCKET = new ParseField("bucket");
+    private static final ParseField PERCENTILE = new ParseField("percentile");
 
     private final static ObjectParser<DegradedRouterQueryBuilder, QueryParseContext> PARSER;
     private final static ObjectParser<DegradedConditionParserState, QueryParseContext> COND_PARSER;
 
     static {
         COND_PARSER = new ObjectParser<>("condition", DegradedConditionParserState::new);
-        COND_PARSER.declareString((cps, value) -> cps.setType(DegradedConditionType.valueOf(value)), TYPE);
+        COND_PARSER.declareString((cps, value) -> cps.type(DegradedConditionType.valueOf(value)), TYPE);
+        COND_PARSER.declareString(DegradedConditionParserState::bucket, BUCKET);
+        COND_PARSER.declareDouble(DegradedConditionParserState::percentile, PERCENTILE);
         declareConditionFields(COND_PARSER);
 
         PARSER = new ObjectParser<>(NAME.getPreferredName(), DegradedRouterQueryBuilder::new);
@@ -49,17 +51,17 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         declareRouterFields(PARSER, (p, pc) -> parseCondition(COND_PARSER, p, pc));
     }
 
-    // This intentionally is not considered in doEquals, as
+    // This intentionally is not considered in doEquals or doHashCode, as
     // it's not part of the definition of the qb but a helper service.
-    private OsService osService;
+    private SystemLoad systemLoad;
 
     DegradedRouterQueryBuilder() {
         super();
     }
 
-    public DegradedRouterQueryBuilder(StreamInput in, OsService osService) throws IOException {
+    public DegradedRouterQueryBuilder(StreamInput in, SystemLoad systemLoad) throws IOException {
         super(in, DegradedCondition::new);
-        this.osService = osService;
+        this.systemLoad = systemLoad;
     }
 
     @Override
@@ -67,9 +69,11 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         return NAME.getPreferredName();
     }
 
-    public static Optional<DegradedRouterQueryBuilder> fromXContent(QueryParseContext parseContext, OsService osService) throws IOException {
+    public static Optional<DegradedRouterQueryBuilder> fromXContent(
+            QueryParseContext parseContext, SystemLoad systemLoad
+    ) throws IOException {
         final Optional<DegradedRouterQueryBuilder> builder = AbstractRouterQueryBuilder.fromXContent(PARSER, parseContext);
-        builder.ifPresent((b) -> b.osService = osService);
+        builder.ifPresent((b) -> b.systemLoad = systemLoad);
         return builder;
     }
 
@@ -78,57 +82,84 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         // The nowInMillis call tells certain implementations of QueryRewriteContext
         // that the results of this rewrite are not cacheable.
         context.nowInMillis();
-        OsStats.Cpu cpu = osService.stats().getCpu();
-        return super.doRewrite(condition -> condition.test(cpu));
+        return super.doRewrite(condition -> condition.test(systemLoad));
     }
 
     @EqualsAndHashCode(callSuper = true)
     @Getter
     static class DegradedCondition extends Condition {
+        private final String bucket;
+        private final Double percentile;
         private final DegradedConditionType type;
 
         DegradedCondition(StreamInput in) throws IOException {
             super(in);
+            bucket = in.readOptionalString();
+            percentile = in.readOptionalDouble();
             type = DegradedConditionType.readFrom(in);
         }
 
-        DegradedCondition(ConditionDefinition definition, DegradedConditionType type, int value, QueryBuilder query) {
+        DegradedCondition(ConditionDefinition definition, DegradedConditionType type, String bucket, Double percentile, int value, QueryBuilder query) {
             super(definition, value, query);
+            this.bucket = bucket;
+            this.percentile = percentile;
             this.type = Objects.requireNonNull(type);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
+            out.writeOptionalString(bucket);
+            out.writeOptionalDouble(percentile);
             type.writeTo(out);
         }
 
-        public boolean test(OsStats.Cpu cpu) {
-            return test(type.extract(cpu));
+        public boolean test(SystemLoad stats) {
+            return test(type.extract(bucket, percentile, stats));
         }
 
         void addXContent(XContentBuilder builder, Params params) throws IOException {
+            if (bucket != null) {
+                builder.field(BUCKET.getPreferredName(), bucket);
+            }
+            if (percentile != null) {
+                    builder.field(PERCENTILE.getPreferredName(), percentile);
+            }
             builder.field(TYPE.getPreferredName(), type);
         }
     }
 
     @FunctionalInterface
-    private interface CpuStatExtractor {
-        int extract(OsStats.Cpu cpu);
+    private interface LoadStatSupplier {
+        // It is certainly messy to take in all these extra pieces that only one condition type
+        // needs, but a bigger refactor was decided to be more complex than living with a little
+        // mess.
+        long extract(String bucket, Double percentile, SystemLoad stats);
     }
 
-    enum DegradedConditionType implements CpuStatExtractor, Writeable {
-        cpu(OsStats.Cpu::getPercent),
-        load((cpu) -> (int) Math.round(cpu.getLoadAverage()[0]));
+    enum DegradedConditionType implements LoadStatSupplier, Writeable {
+        cpu((bucket, percentile, stats) -> stats.getCpuPercent()),
+        load((bucket, percentile, stats) -> stats.get1MinuteLoadAverage()),
+        latency((bucket, percentile, stats) -> stats.getLatency(bucket, percentile)) {
+            @Override
+            public void checkValid(String bucket, Double percentile) throws IllegalArgumentException {
+                if (bucket == null) {
+                    throw new IllegalArgumentException("Missing field [bucket] in condition");
+                }
+                if (percentile == null) {
+                    throw new IllegalArgumentException("Missing field [percentile] in condition");
+                }
+            }
+        };
 
-        private final CpuStatExtractor extractor;
+        private final LoadStatSupplier extractor;
 
-        DegradedConditionType(CpuStatExtractor extractor) {
+        DegradedConditionType(LoadStatSupplier extractor) {
             this.extractor = extractor;
         }
 
-        public int extract(OsStats.Cpu cpu) {
-            return extractor.extract(cpu);
+        public long extract(String bucket, Double percentile, SystemLoad stats) {
+            return extractor.extract(bucket, percentile, stats);
         }
 
         @Override
@@ -143,30 +174,37 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
             }
             return values()[ord];
         }
-    }
 
-    private static class DegradedConditionParserState extends AbstractConditionParserState<DegradedCondition> {
-        private DegradedConditionType type;
-
-        DegradedCondition condition() {
-            return new DegradedCondition(definition, type, value, query);
+        void checkValid(String bucket, Double percentile) throws IllegalArgumentException {
+            if (bucket != null) {
+                throw new IllegalArgumentException("Extra field [bucket] in condition");
+            }
+            if (percentile != null) {
+                throw new IllegalArgumentException("Extra field [percentile] in condition");
+            }
         }
 
-        void setType(DegradedConditionType type) {
-            this.type = type;
+    }
+
+    @Setter
+    private static class DegradedConditionParserState extends AbstractConditionParserState<DegradedCondition> {
+        private DegradedConditionType type;
+        private String bucket;
+        private Double percentile;
+
+        DegradedCondition condition() {
+            return new DegradedCondition(definition, type, bucket, percentile, value, query);
         }
 
         @Override
         void checkValid() throws IllegalArgumentException {
             super.checkValid();
-            if (type == null) {
-                throw new IllegalArgumentException("Missing field [type] in condition");
-            }
+            type.checkValid(bucket, percentile);
         }
     }
 
     @VisibleForTesting
-    void condition(ConditionDefinition def, DegradedConditionType type, int value, QueryBuilder query) {
-        condition(new DegradedCondition(def, type, value, query));
+    void condition(ConditionDefinition def, DegradedConditionType type, String bucket, Double percentile, int value, QueryBuilder query) {
+        condition(new DegradedCondition(def, type, bucket, percentile, value, query));
     }
 }

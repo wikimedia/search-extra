@@ -173,7 +173,7 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
             out.writeNamedWriteable(query);
         }
 
-        public boolean test(int lhs) {
+        public boolean test(long lhs) {
             return definition.test(lhs, value);
         }
 
@@ -251,11 +251,11 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
     }
 
     @FunctionalInterface
-    interface BiIntPredicate {
-        boolean test(int a, int b);
+    interface BiLongPredicate {
+        boolean test(long a, long b);
     }
 
-    public enum ConditionDefinition implements BiIntPredicate, Writeable {
+    public enum ConditionDefinition implements BiLongPredicate, Writeable {
         eq ((a,b) -> a == b),
         neq ((a,b) -> a != b),
         lte ((a,b) -> a <= b),
@@ -264,15 +264,15 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
         gt ((a,b) -> a > b);
 
         final ParseField parseField;
-        final BiIntPredicate predicate;
+        final BiLongPredicate predicate;
 
-        ConditionDefinition(BiIntPredicate predicate) {
+        ConditionDefinition(BiLongPredicate predicate) {
             this.predicate = predicate;
             this.parseField = new ParseField(name());
         }
 
         @Override
-        public boolean test(int a, int b) {
+        public boolean test(long a, long b) {
             return predicate.test(a, b);
         }
 

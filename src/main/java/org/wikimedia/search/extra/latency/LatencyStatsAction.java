@@ -36,7 +36,7 @@ import static java.util.stream.Collectors.toList;
 public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNodesRequest,
         LatencyStatsAction.LatencyStatsNodesResponse, LatencyStatsAction.LatencyStatsRequestBuilder> {
 
-    public static final String NAME = "extra:latency/stats";
+    static final String NAME = "extra:latency/stats";
     public static final LatencyStatsAction INSTANCE = new LatencyStatsAction();
 
     private LatencyStatsAction() {
@@ -176,7 +176,8 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
             // are the average percentile across nodes. Imagine, for example, averaging
             // the minimum (0) percentile or the maximum (100) percentile. After averaging
             // they are not the the minimum or maximum latency across the cluster, they
-            // are instead the average per-node minimum or maximum.
+            // are instead the average per-node minimum or maximum. We could get real
+            // percentiles by shipping around the full histograms, but that seems unnecessary.
             this.latencies = details.flatMap(stat -> stat.latencies.stream())
                     // Group things up so we have Map<Bucket, Map<Percentile, AvgNodeLatency>>
                     .collect(groupingBy(LatencyStat::getBucket,
