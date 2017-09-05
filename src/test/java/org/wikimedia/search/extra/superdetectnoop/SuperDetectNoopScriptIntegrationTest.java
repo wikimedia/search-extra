@@ -10,6 +10,7 @@ import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -531,9 +532,14 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
 
     private UpdateRequestBuilder toUpdateRequest(XContentBuilder b) {
         b.close();
-        Map<String, Object> m = XContentHelper.convertToMap(b.bytes(), true).v2();
-        return client().prepareUpdate("test", "test", "1").setScript(new Script(ScriptType.INLINE, "native", "super_detect_noop", m))
+        Map<String, Object> m = XContentHelper.convertToMap(b.bytes(), true, XContentType.JSON).v2();
+        Script script;
+        if (random().nextInt(3) > 0) {
+            script = new Script(ScriptType.INLINE, "super_detect_noop", "", m);
+        } else {
+            script = new Script(ScriptType.INLINE, "native", "super_detect_noop", m);
+        }
+        return client().prepareUpdate("test", "test", "1").setScript(script)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-
     }
 }

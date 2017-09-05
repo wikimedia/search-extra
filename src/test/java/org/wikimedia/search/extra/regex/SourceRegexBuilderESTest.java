@@ -12,7 +12,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.wikimedia.search.extra.ExtraPlugin;
+import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
 import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.util.FieldValues;
 
@@ -27,7 +27,7 @@ import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condi
 
 public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraPlugin.class);
+        return Collections.singleton(MockPluginWithoutNativeScript.class);
     }
     private static final String MY_FIELD = "regex_field";
     private static final String MY_FIELD_NGRAM = "regex_field_ngram";

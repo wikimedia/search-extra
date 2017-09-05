@@ -3,17 +3,20 @@ package org.wikimedia.search.extra.router;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParsingException;
-import org.elasticsearch.common.lucene.search.MatchNoDocsQuery;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.MatchNoneQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.monitor.os.OsService;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.runner.RunWith;
-import org.wikimedia.search.extra.ExtraPlugin;
+import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
 import org.wikimedia.search.extra.latency.SearchLatencyProbe;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedConditionType;
@@ -25,13 +28,13 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
 import static org.mockito.Mockito.mock;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
 
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder>{
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraPlugin.class);
+        return Collections.singleton(MockPluginWithoutNativeScript.class);
     }
 
     @Override

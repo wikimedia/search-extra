@@ -1,9 +1,14 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
 import org.elasticsearch.script.AbstractExecutableScript;
+import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
 import org.elasticsearch.script.NativeScriptFactory;
+import org.elasticsearch.script.ScriptEngineService;
+import org.elasticsearch.script.SearchScript;
+import org.elasticsearch.search.lookup.SearchLookup;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -17,22 +22,75 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * detectors! So much power!
  */
 public class SuperDetectNoopScript extends AbstractExecutableScript {
-    public static class Factory implements NativeScriptFactory {
-        private final Set<ChangeHandler.Recognizer> changeHandlerRecognizers;
 
-        public Factory(Set<ChangeHandler.Recognizer> recognizers) {
-            // Note that recognizers are tried in a random order....
-            this.changeHandlerRecognizers = Collections.unmodifiableSet(recognizers);
+    /**
+     * Use SuperNoopScriptEngineService instead.
+     *
+     * Native scripts have been deprecated from core
+     * We still keep it in the meantime to allow clients to switch
+     * to inline script of type super_detect_noop
+     */
+    @Deprecated
+    @SuppressWarnings("deprecation")
+    public static class SuperNoopNativeScriptFactory implements NativeScriptFactory {
+        private final SuperNoopScriptEngineService service;
+        public SuperNoopNativeScriptFactory(SuperNoopScriptEngineService service) {
+            this.service = service;
         }
 
         @Override
-        public ExecutableScript newScript(Map<String, Object> params) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> source = (Map<String, Object>) params.get("source");
-            return new SuperDetectNoopScript(source, handlers(params));
+        public ExecutableScript newScript(Map<String, Object> map) {
+            return service.newScript(map);
         }
 
-        private Map<String, ChangeHandler<Object>> handlers(Map<String, Object> params) {
+        @Override
+        public boolean needsScores() {
+            return false;
+        }
+
+        @Override
+        public String getName() {
+            return "super_detect_noop";
+        }
+    }
+
+    public static class SuperNoopScriptEngineService implements ScriptEngineService {
+        private final Set<ChangeHandler.Recognizer> changeHandlerRecognizers;
+
+        public SuperNoopScriptEngineService(Set<ChangeHandler.Recognizer> changeHandlerRecognizers) {
+            this.changeHandlerRecognizers = changeHandlerRecognizers;
+        }
+
+        @Override
+        public String getType() {
+            return "super_detect_noop";
+        }
+
+        @Override
+        public Object compile(String scriptName, String scriptSource, Map<String, String> map) {
+            return "super_detect_noop (compiled script is useless)";
+        }
+
+        @Override
+        public ExecutableScript executable(CompiledScript compiledScript, Map<String, Object> map) {
+            return newScript(map);
+        }
+
+        @Override
+        public SearchScript search(CompiledScript compiledScript, SearchLookup searchLookup, Map<String, Object> map) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean isInlineScriptEnabled() {
+            return true;
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+
+        protected Map<String, ChangeHandler<Object>> handlers(Map<String, Object> params) {
             @SuppressWarnings("unchecked")
             Map<String, String> detectorConfigs = (Map<String, String>) params.get("handlers");
             if (detectorConfigs == null) {
@@ -45,7 +103,7 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
             return Collections.unmodifiableMap(handlers);
         }
 
-        private ChangeHandler<Object> handler(String config) {
+        protected ChangeHandler<Object> handler(String config) {
             for (ChangeHandler.Recognizer factory : changeHandlerRecognizers) {
                 ChangeHandler<Object> detector = factory.build(config);
                 if (detector != null) {
@@ -55,14 +113,10 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
             throw new IllegalArgumentException("Don't recognize this type of change handler:  " + config);
         }
 
-        @Override
-        public boolean needsScores() {
-            return false;
-        }
-
-        @Override
-        public String getName() {
-            return "super_detect_noop";
+        public ExecutableScript newScript(Map<String, Object> params) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> source = (Map<String, Object>) params.get("source");
+            return new SuperDetectNoopScript(source, handlers(params));
         }
     }
 

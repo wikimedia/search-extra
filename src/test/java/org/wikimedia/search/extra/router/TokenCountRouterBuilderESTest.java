@@ -4,11 +4,11 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.compress.CompressedXContent;
-import org.elasticsearch.common.lucene.search.MatchNoDocsQuery;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.wikimedia.search.extra.ExtraPlugin;
+import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condi
 
 public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCountRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraPlugin.class);
+        return Collections.singleton(MockPluginWithoutNativeScript.class);
     }
     private static final String MY_FIELD = "tok_count_field";
 

@@ -54,11 +54,6 @@ public class TransportLatencyStatsAction extends TransportNodesAction<LatencySta
         return new LatencyStatsNodeResponse(clusterService.localNode()).initFromProbe(latencyProbe);
     }
 
-    @Override
-    protected boolean accumulateExceptions() {
-        return false;
-    }
-
     static class LatencyStatsNodeRequest extends BaseNodeRequest {
         LatencyStatsNodeRequest() {
 

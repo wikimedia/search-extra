@@ -23,6 +23,7 @@ import org.elasticsearch.plugins.SearchPlugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.NativeScriptFactory;
+import org.elasticsearch.script.ScriptEngineService;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -45,15 +46,18 @@ import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
 import org.wikimedia.search.extra.util.Suppliers.MutableSupplier;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
 
 
 /**
@@ -64,11 +68,20 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
     private final SearchLatencyListener latencyListener;
     private final MutableSupplier<ThreadPool> threadPoolSupplier;
     private final SystemLoad loadStats;
+    private final SuperDetectNoopScript.SuperNoopScriptEngineService superDetectNoopService;
 
     public ExtraPlugin(Settings settings) {
         threadPoolSupplier = new MutableSupplier<>();
         latencyListener = new SearchLatencyListener(settings, threadPoolSupplier);
         loadStats = new SystemLoad(latencyListener, new OsService(settings));
+        superDetectNoopService = new SuperDetectNoopScript.SuperNoopScriptEngineService(
+                unmodifiableSet(new HashSet<>(asList(
+                    new ChangeHandler.Equal.Recognizer(),
+                    new WithinPercentageHandler.Recognizer(),
+                    new WithinAbsoluteHandler.Recognizer(),
+                    new SetHandler.Recognizer(),
+                    new VersionedDocumentHandler.Recognizer())
+        )));
     }
 
     @Override
@@ -76,7 +89,7 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
                                                NamedXContentRegistry xContentRegistry) {
         threadPoolSupplier.set(threadPool);
-        return Collections.singletonList(latencyListener);
+        return singletonList(latencyListener);
     }
 
     /**
@@ -85,7 +98,7 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
     @Override
     @SuppressWarnings("deprecation")
     public List<QuerySpec<?>> getQueries() {
-        return Arrays.asList(
+        return asList(
                 new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
                 new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
                 new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent),
@@ -101,21 +114,28 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
         return Collections.unmodifiableMap(map);
     }
 
+    /**
+     * Use SuperNoopScriptEngineService from {@link #getScriptEngineService(Settings)} instead.
+     *
+     * Native scripts have been deprecated from core
+     * We still keep it in the meantime to allow clients to switch
+     * to inline script of type super_detect_noop
+     */
     @Override
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public List<NativeScriptFactory> getNativeScripts() {
-        Set<ChangeHandler.Recognizer> recognizers = new HashSet<>(Arrays.asList(
-                new ChangeHandler.Equal.Recognizer(),
-                new WithinPercentageHandler.Recognizer(),
-                new WithinAbsoluteHandler.Recognizer(),
-                new SetHandler.Recognizer(),
-                new VersionedDocumentHandler.Recognizer()
-        ));
-        return Collections.singletonList(new SuperDetectNoopScript.Factory(recognizers));
+        return singletonList(new SuperDetectNoopScript.SuperNoopNativeScriptFactory(superDetectNoopService));
+    }
+
+    @Override
+    public ScriptEngineService getScriptEngineService(Settings settings) {
+        return superDetectNoopService;
     }
 
     @Override
     public List<ScoreFunctionSpec<?>> getScoreFunctions() {
-        return Collections.singletonList(
+        return singletonList(
             new ScoreFunctionSpec<>(
                     LevenshteinDistanceScoreBuilder.NAME.getPreferredName(),
                     LevenshteinDistanceScoreBuilder::new,
@@ -131,7 +151,7 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
 
     @Override
     public List<ActionHandler<? extends ActionRequest, ? extends ActionResponse>> getActions() {
-        return Collections.unmodifiableList(Collections.singletonList(
+        return unmodifiableList(singletonList(
                 new ActionHandler<>(LatencyStatsAction.INSTANCE, TransportLatencyStatsAction.class)
         ));
     }
@@ -141,6 +161,6 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
                                              ClusterSettings clusterSettings, IndexScopedSettings indexScopedSettings,
                                              SettingsFilter settingsFilter, IndexNameExpressionResolver indexNameExpressionResolver,
                                              Supplier<DiscoveryNodes> nodesInCluster) {
-        return Collections.singletonList(new RestGetLatencyStats(settings, restController));
+        return singletonList(new RestGetLatencyStats(settings, restController));
     }
 }
