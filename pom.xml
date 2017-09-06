@@ -10,7 +10,7 @@
 
   <groupId>org.wikimedia.search</groupId>
   <artifactId>extra</artifactId>
-  <version>5.5.2</version>
+  <version>5.5.3-SNAPSHOT</version>
   <description>Extra queries and filters for Elasticsearch.</description>
 
   <licenses>
@@ -34,7 +34,7 @@
     <url>https://gerrit.wikimedia.org/r/#/admin/projects/search/extra</url>
     <connection>scm:git:https://gerrit.wikimedia.org/r/search/extra</connection>
     <developerConnection>scm:git:https://gerrit.wikimedia.org/r/search/extra</developerConnection>
-    <tag>extra-5.5.2</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
