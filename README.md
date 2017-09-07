@@ -56,3 +56,19 @@ Install it like so for Elasticsearch x.y.z:
 ```bash
 ./bin/elasticsearch-plugin install org.wikimedia.search:extra:x.y.z
 ```
+
+Build
+-----
+[Spotbugs](https://spotbugs.github.io/) is run during the `verify` phase of the
+build to find common issues. The build will break if any issue is found. The
+issues will be reported on the console.
+
+To run just the check, use `mvn spotbugs:check` on a project that was already
+compiled (`mvn compile`). `mvn spotbugs:gui` will provide a graphical UI that
+might be easier to read.
+
+Like all tools, spotbugs is much dumber than you. If you find a false positive,
+you can ignore it with the `@SuppressFBWarnings` annotation. You can provide a
+justification to make document why this rule should be ignored in this specific
+case. Some rules don't make sense for this project and they can be ignored via
+[`src/dev-tools/spotbugs-excludes.xml`](https://spotbugs.readthedocs.io/en/latest/filter.html).

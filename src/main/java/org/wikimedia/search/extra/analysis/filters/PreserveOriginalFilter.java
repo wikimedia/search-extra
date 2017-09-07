@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.analysis.filters;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
@@ -16,6 +17,12 @@ import java.io.IOException;
  * position. The purpose is very similar to {@link KeywordRepeatFilter}+{@link RemoveDuplicatesTokenFilter}
  * but this approach does not require that the filters support the keyword attribute.
  */
+// TODO: check if the behaviour of equals() is actually what is expected. Read
+// https://sourceforge.net/p/findbugs/bugs/1379/ before blindly adding an
+// equals() method to PreserveOriginalFilter.
+@SuppressFBWarnings(
+        value = "EQ_DOESNT_OVERRIDE_EQUALS",
+        justification = "equals() as defined in org.apache.lucene.util.AttributeSource seems strong enough.")
 public class PreserveOriginalFilter extends TokenFilter {
     private final CharTermAttribute cattr;
     private final PositionIncrementAttribute posIncr;

@@ -39,11 +39,11 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
 public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQueryBuilder> {
     public static final ParseField NAME = new ParseField("source_regex", "sourceRegex", "source-regex");
 
-    public static ParseField FIELD = new ParseField("field");
-    public static ParseField REGEX = new ParseField("regex");
-    public static ParseField LOAD_FROM_SOURCE = new ParseField("load_from_source");
-    public static ParseField NGRAM_FIELD = new ParseField("ngram_field");
-    public static ParseField GRAM_SIZE = new ParseField("gram_size");
+    public static final ParseField FIELD = new ParseField("field");
+    public static final ParseField REGEX = new ParseField("regex");
+    public static final ParseField LOAD_FROM_SOURCE = new ParseField("load_from_source");
+    public static final ParseField NGRAM_FIELD = new ParseField("ngram_field");
+    public static final ParseField GRAM_SIZE = new ParseField("gram_size");
 
     public static final boolean DEFAULT_LOAD_FROM_SOURCE = true;
     public static final int DEFAULT_GRAM_SIZE = 3;

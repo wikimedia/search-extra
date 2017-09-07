@@ -50,6 +50,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
+    <spotbugs.version>3.1.0-RC5</spotbugs.version>
   </properties>
 
   <build>
@@ -63,6 +64,31 @@
       </resource>
     </resources>
     <plugins>
+      <plugin>
+        <groupId>com.github.hazendaz.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>3.0.6</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs</artifactId>
+            <version>${spotbugs.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <effort>high</effort>
+          <threshold>low</threshold>
+        </configuration>
+        <executions>
+          <execution>
+            <id>findbugs-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>com.carrotsearch.randomizedtesting</groupId>
         <artifactId>junit4-maven-plugin</artifactId>
@@ -353,6 +379,24 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <version>${spotbugs.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.jcip</groupId>
+      <artifactId>jcip-annotations</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>3.0.2</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>

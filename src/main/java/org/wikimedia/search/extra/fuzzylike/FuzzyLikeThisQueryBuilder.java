@@ -19,6 +19,7 @@
 
 package org.wikimedia.search.extra.fuzzylike;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -57,6 +58,7 @@ import java.util.stream.Stream;
 @Deprecated
 @Accessors(fluent = true, chain = true)
 @Getter @Setter
+@SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "We don't care about exposing representation in a builder")
 public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThisQueryBuilder> {
     public static final ParseField NAME = new ParseField("fuzzy_like_this", "flt", "fuzzyLikeThis");
 

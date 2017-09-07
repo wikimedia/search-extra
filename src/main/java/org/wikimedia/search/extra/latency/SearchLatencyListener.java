@@ -140,7 +140,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
         }
 
         synchronized double getMillisAtPercentile(double percentile) {
-            return current.getValueAtPercentile(percentile) / TimeValue.NSEC_PER_MSEC;
+            return current.getValueAtPercentile(percentile) / ((double)TimeValue.NSEC_PER_MSEC);
         }
 
         synchronized TimeValue getTimeValueAtPercentile(double percentile) {
