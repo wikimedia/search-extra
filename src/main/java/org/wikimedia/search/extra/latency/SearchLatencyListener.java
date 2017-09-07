@@ -85,6 +85,9 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
     }
 
     public void onQueryPhase(SearchContext searchContext, long tookInNanos) {
+        if (searchContext.groupStats() == null) {
+            return;
+        }
         if (tookInNanos > HIGHEST_TRACKABLE_VALUE.nanos()) {
             // While this is a bit of a lie, it's probably better than not adding anything.
             tookInNanos = HIGHEST_TRACKABLE_VALUE.nanos();

@@ -10,7 +10,7 @@
 
   <groupId>org.wikimedia.search</groupId>
   <artifactId>extra</artifactId>
-  <version>5.5.3-SNAPSHOT</version>
+  <version>5.5.2.1-SNAPSHOT</version>
   <description>Extra queries and filters for Elasticsearch.</description>
 
   <licenses>
