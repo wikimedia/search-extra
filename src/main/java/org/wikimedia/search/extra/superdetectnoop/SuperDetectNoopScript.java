@@ -8,6 +8,7 @@ import org.elasticsearch.script.ScriptEngineService;
 import org.elasticsearch.script.SearchScript;
 import org.elasticsearch.search.lookup.SearchLookup;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -122,7 +123,7 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
 
     private final Map<String, Object> source;
     private final Map<String, ChangeHandler<Object>> pathToHandler;
-    private Map<String, Object> ctx;
+    @Nullable private Map<String, Object> ctx;
 
     public SuperDetectNoopScript(Map<String, Object> source, Map<String, ChangeHandler<Object>> pathToDetector) {
         this.source = checkNotNull(source, "source must be specified");

@@ -17,6 +17,7 @@ import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -213,7 +214,8 @@ public class NGramAutomaton {
         }
     }
 
-    private String analyze(String ngram) {
+    @Nullable
+    private String analyze(@Nullable String ngram) {
         if (ngram == null) {
             return ngram;
         }
@@ -289,7 +291,7 @@ public class NGramAutomaton {
          * Lazily initialized expression matching all strings incoming to this
          * state.
          */
-        private Expression<String> expression;
+        @Nullable private Expression<String> expression;
         /**
          * Is this state in the path being turned into an expression.
          */
@@ -336,9 +338,9 @@ public class NGramAutomaton {
     private static class NGramTransition implements ExpressionSource<String> {
         private final NGramState from;
         private final NGramState to;
-        private final String ngram;
+        @Nullable private final String ngram;
 
-        private NGramTransition(NGramState from, NGramState to, String ngram) {
+        private NGramTransition(NGramState from, NGramState to, @Nullable String ngram) {
             this.from = from;
             this.to = to;
             this.ngram = ngram;

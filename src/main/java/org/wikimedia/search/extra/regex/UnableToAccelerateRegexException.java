@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Locale;
 public class UnableToAccelerateRegexException extends RuntimeException {
     private static final long serialVersionUID = 2685216158813374775L;
 
-    public UnableToAccelerateRegexException(String regex, int gramSize, String ngramField) {
+    public UnableToAccelerateRegexException(String regex, int gramSize, @Nullable String ngramField) {
         super(String.format(Locale.ROOT, "Unable to accelerate \"%s\" with %s sized grams stored in %s", regex, gramSize, ngramField));
     }
 }

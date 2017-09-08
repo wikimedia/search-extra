@@ -11,6 +11,7 @@ import org.elasticsearch.index.shard.SearchOperationListener;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.threadpool.ThreadPool;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -36,7 +37,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
 
     private final ConcurrentMap<String, RollingHistogram> statBuckets;
     private final Supplier<ThreadPool> threadPoolSupplier;
-    private ThreadPool.Cancellable cancelRotation;
+    @Nullable private ThreadPool.Cancellable cancelRotation;
 
     public SearchLatencyListener(Settings settings, Supplier<ThreadPool> threadPoolSupplier) {
         super(settings);

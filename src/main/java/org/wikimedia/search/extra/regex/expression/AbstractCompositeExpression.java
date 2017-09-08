@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,7 +22,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
     private static final int MAX_COMPONENTS_SIZE_FOR_TO_STRING = 10;
     private final ImmutableSet<Expression<T>> components;
     private boolean simplified;
-    private String toString = null;
+    @Nullable private String toString;
     private int numClauses = -1;
 
     public AbstractCompositeExpression(ImmutableSet<Expression<T>> components) {
@@ -58,6 +59,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
      * Does this component force the expression to a certain value? For example
      * the FALSE in (FALSE and foo) forces the whole expression to FALSE.
      */
+    @Nullable
     protected abstract Expression<T> componentForcesOutcome(Expression<T> expression);
 
     protected abstract String toStringJoiner();
@@ -128,6 +130,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
         }
     }
 
+    @Nullable
     private Expression<T> extractCommon(Iterable<Expression<T>> newComponents) {
         // Are all composite subexpressions of the same type?
         boolean allCompositesOfSameType = true;

@@ -23,13 +23,15 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import org.wikimedia.search.extra.latency.SearchLatencyProbe.LatencyStat;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.averagingDouble;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -67,6 +69,7 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
     public static class LatencyStatsNodesResponse extends BaseNodesResponse<LatencyStatsNodeResponse>
             implements ToXContent {
 
+        @Nullable
         @VisibleForTesting
         @Getter(AccessLevel.PACKAGE)
         private StatDetails allNodes;
@@ -119,14 +122,12 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
     }
 
     public static class LatencyStatsNodeResponse extends BaseNodeResponse {
-        StatDetails statDetails;
+        StatDetails statDetails = new StatDetails();
 
         LatencyStatsNodeResponse() {
-            empty();
         }
         LatencyStatsNodeResponse(DiscoveryNode node) {
             super(node);
-            empty();
         }
         @SuppressFBWarnings(
                 value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
@@ -147,10 +148,6 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
             statDetails.readFrom(in);
         }
 
-        final void empty() {
-            statDetails = new StatDetails();
-        }
-
         LatencyStatsNodeResponse initFromProbe(SearchLatencyProbe latencyProbe) {
             statDetails = new StatDetails(latencyProbe);
             return this;
@@ -164,7 +161,7 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
         private List<LatencyStat> latencies;
 
         StatDetails() {
-            latencies = Collections.emptyList();
+            latencies = emptyList();
         }
 
         StatDetails(SearchLatencyProbe probe) {
@@ -172,7 +169,7 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
         }
 
         StatDetails(List<LatencyStat> latencies) {
-            this.latencies = latencies;
+            this.latencies = requireNonNull(latencies);
         }
 
         StatDetails(Stream<StatDetails> details) {
@@ -200,11 +197,11 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
                 value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
                 justification = "readFrom has a well understood contract")
         StatDetails(StreamInput in) throws IOException {
-            readFrom(in);
+            latencies = requireNonNull(in.readList(LatencyStat::new));
         }
 
         void readFrom(StreamInput in) throws IOException {
-            latencies = in.readList(LatencyStat::new);
+            latencies = requireNonNull(in.readList(LatencyStat::new));
         }
 
         @Override

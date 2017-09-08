@@ -22,6 +22,7 @@ import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 
@@ -127,7 +128,7 @@ class UnacceleratedSourceRegexQuery extends Query {
      * FIXME: find proper solutions to handle timeouts
      */
     protected static class TimeoutChecker {
-        private LeafCollector collector;
+        @Nullable private LeafCollector collector;
         private final Collector topCollector;
 
         public TimeoutChecker(long timeout, Counter counter) {

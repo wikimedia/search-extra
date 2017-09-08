@@ -15,6 +15,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -30,7 +31,7 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder<Levens
 
     private final String field;
     private final String text;
-    @Setter private String missing;
+    @Nullable @Setter private String missing;
     
     public LevenshteinDistanceScoreBuilder(String field, String text) {
         this.field = field;

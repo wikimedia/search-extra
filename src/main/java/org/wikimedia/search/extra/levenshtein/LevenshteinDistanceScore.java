@@ -12,6 +12,7 @@ import org.elasticsearch.search.lookup.FieldLookup;
 import org.elasticsearch.search.lookup.LeafSearchLookup;
 import org.elasticsearch.search.lookup.SearchLookup;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -28,10 +29,10 @@ public class LevenshteinDistanceScore extends ScoreFunction {
     private final MappedFieldType fieldType;
     private final String value;
     private final SearchLookup lookup;
-    private final String missing;
+    @Nullable private final String missing;
     private final LevensteinDistance levenshtein = new LevensteinDistance();
 
-    public LevenshteinDistanceScore(SearchLookup lookup, MappedFieldType fieldType, String value, String missing) {
+    public LevenshteinDistanceScore(SearchLookup lookup, MappedFieldType fieldType, String value, @Nullable String missing) {
         super(CombineFunction.REPLACE);
         this.fieldType = fieldType;
         this.value = value;

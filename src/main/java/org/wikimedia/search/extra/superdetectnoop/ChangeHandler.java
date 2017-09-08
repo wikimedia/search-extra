@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -11,7 +12,7 @@ public interface ChangeHandler<T> {
     /**
      * Handle a proposed change.
      */
-    Result handle(T oldValue, T newValue);
+    Result handle(@Nullable T oldValue, @Nullable T newValue);
 
     /**
      * Builds CloseEnoughDetectors from the string description sent in the
@@ -19,6 +20,7 @@ public interface ChangeHandler<T> {
      * doesn't recognize that parameter.
      */
     interface Recognizer {
+        @Nullable
         ChangeHandler<Object> build(String description);
     }
 
@@ -37,6 +39,7 @@ public interface ChangeHandler<T> {
          * value? If the two values were close enough this is undefined. If this
          * returns null then the value should be removed from the source.
          */
+        @Nullable
         Object newValue();
 
         /**
@@ -200,16 +203,16 @@ public interface ChangeHandler<T> {
      * value that its worth actually performing the update.
      */
     class Changed implements Result {
-        public static Result forBoolean(boolean closeEnough, Object newValue) {
+        public static Result forBoolean(boolean closeEnough, @Nullable Object newValue) {
             if (closeEnough) {
                 return CloseEnough.INSTANCE;
             }
             return new Changed(newValue);
         }
 
-        private final Object newValue;
+        @Nullable private final Object newValue;
 
-        public Changed(Object newValue) {
+        public Changed(@Nullable Object newValue) {
             this.newValue = newValue;
         }
 

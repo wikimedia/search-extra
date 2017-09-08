@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.util;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class Suppliers {
@@ -7,9 +8,10 @@ public class Suppliers {
     }
 
     public static class MutableSupplier<T> implements Supplier<T> {
-       T obj;
+       @Nullable T obj;
 
        @Override
+       @Nullable
        public T get() {
            return obj;
        }

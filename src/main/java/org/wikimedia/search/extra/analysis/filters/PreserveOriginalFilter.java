@@ -10,6 +10,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttributeImpl;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 /**
@@ -27,7 +28,7 @@ public class PreserveOriginalFilter extends TokenFilter {
     private final CharTermAttribute cattr;
     private final PositionIncrementAttribute posIncr;
     private final OriginalTermAttribute original;
-    private State preserve;
+    @Nullable private State preserve;
 
     /**
      * Builds a new PreserveOriginalFilter, the input TokenStream must be filtered by

@@ -43,6 +43,7 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.PriorityQueue;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,7 +95,7 @@ public class FuzzyLikeThisQuery extends Query
     @EqualsAndHashCode
     private static class FieldVals
     {
-      final String queryString;
+      @Nullable final String queryString;
       final String fieldName;
       final float minSimilarity;
       final int prefixLength;

@@ -5,4 +5,7 @@
  * conditions.  See {@link org.wikimedia.search.extra.regex.expression.Expression}
  * for more.
  */
+@javax.annotation.ParametersAreNonnullByDefault
+@org.wikimedia.search.extra.util.FieldsAreNonNullByDefault
+@org.wikimedia.search.extra.util.ReturnTypesAreNonNullByDefault
 package org.wikimedia.search.extra.regex.expression;

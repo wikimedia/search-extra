@@ -24,6 +24,7 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
     @Getter(AccessLevel.PRIVATE)
     private List<C> conditions;
 
-    private QueryBuilder fallback;
+    @Nullable private QueryBuilder fallback;
 
     AbstractRouterQueryBuilder() {
         this.conditions = new ArrayList<>();
@@ -221,9 +222,9 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
     }
 
     abstract static class AbstractConditionParserState<C extends Condition> {
-        protected ConditionDefinition definition;
+        @Nullable protected ConditionDefinition definition;
         protected int value;
-        protected QueryBuilder query;
+        @Nullable protected QueryBuilder query;
 
         void addPredicate(ConditionDefinition def, int value) {
             if (this.definition != null) {

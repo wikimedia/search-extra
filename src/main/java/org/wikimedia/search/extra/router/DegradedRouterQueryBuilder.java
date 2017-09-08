@@ -18,6 +18,7 @@ import org.elasticsearch.index.query.QueryRewriteContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCondition;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,7 +54,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
 
     // This intentionally is not considered in doEquals or doHashCode, as
     // it's not part of the definition of the qb but a helper service.
-    private SystemLoad systemLoad;
+    @Nullable private SystemLoad systemLoad;
 
     DegradedRouterQueryBuilder() {
         super();
@@ -188,9 +189,9 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
 
     @Setter
     private static class DegradedConditionParserState extends AbstractConditionParserState<DegradedCondition> {
-        private DegradedConditionType type;
-        private String bucket;
-        private Double percentile;
+        @Nullable private DegradedConditionType type;
+        @Nullable private String bucket;
+        @Nullable private Double percentile;
 
         DegradedCondition condition() {
             return new DegradedCondition(definition, type, bucket, percentile, value, query);

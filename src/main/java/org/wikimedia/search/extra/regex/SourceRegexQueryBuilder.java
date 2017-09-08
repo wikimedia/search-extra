@@ -24,6 +24,7 @@ import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.util.FieldValues;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
@@ -88,7 +89,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
      * Field containing ngrams used to prefilter checked documents.
      * If not set then no ngram acceleration is performed.
      */
-    private String ngramField;
+    @Nullable private String ngramField;
 
     /**
      * Size of the gram. Defaults to 3 because everyone loves

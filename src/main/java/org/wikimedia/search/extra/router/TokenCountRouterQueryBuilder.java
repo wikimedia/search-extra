@@ -20,6 +20,7 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
@@ -55,10 +56,10 @@ public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Con
     }
 
 
-    private String analyzer;
-    private String field;
+    @Nullable private String analyzer;
+    @Nullable private String field;
     private boolean discountOverlaps = DEFAULT_DISCOUNT_OVERLAPS;
-    private String text;
+    @Nullable private String text;
 
     public TokenCountRouterQueryBuilder() {
         super();

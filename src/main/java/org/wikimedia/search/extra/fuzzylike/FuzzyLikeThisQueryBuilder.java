@@ -40,6 +40,7 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,16 +84,16 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
             TextFieldMapper.CONTENT_TYPE
     ));
 
-    private final String[] fields;
+    @Nullable private final String[] fields;
     private final String likeText;
     private Fuzziness fuzziness = DEFAULT_FUZZINESS;
     private int prefixLength = DEFAULT_PREFIX_LENGTH;
     private int maxQueryTerms = DEFAULT_MAX_QUERY_TERMS;
     private boolean ignoreTF = DEFAULT_IGNORETF;
-    private String analyzer;
+    @Nullable private String analyzer;
     private boolean failOnUnsupportedField = DEFAULT_FAIL_ON_UNSUPPORTED_FIELD;
 
-    public FuzzyLikeThisQueryBuilder(String[] fields, String likeText) {
+    public FuzzyLikeThisQueryBuilder(@Nullable String[] fields, String likeText) {
         this.fields = fields;
         this.likeText = Objects.requireNonNull(likeText);
     }

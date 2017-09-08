@@ -19,6 +19,7 @@ import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
@@ -28,16 +29,16 @@ import java.util.Objects;
 @Getter(AccessLevel.PACKAGE)
 public class SourceRegexQuery extends Query {
     private final String fieldPath;
-    private final String ngramFieldPath;
+    @Nullable private final String ngramFieldPath;
     private final String regex;
     private final FieldValues.Loader loader;
     private final Settings settings;
     private final int gramSize;
     private final Rechecker rechecker;
-    private final Analyzer ngramAnalyzer;
+    @Nullable private final Analyzer ngramAnalyzer;
 
-    public SourceRegexQuery(String fieldPath, String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
-            int gramSize, Analyzer ngramAnalyzer) {
+    public SourceRegexQuery(String fieldPath, @Nullable String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
+            int gramSize, @Nullable Analyzer ngramAnalyzer) {
         this.fieldPath = fieldPath;
         this.ngramFieldPath = ngramFieldPath;
         this.regex = Objects.requireNonNull(regex);
@@ -153,7 +154,7 @@ public class SourceRegexQuery extends Query {
         private final String regex;
         private final Settings settings;
 
-        private ContainsCharacterRunAutomaton charRun;
+        @Nullable private ContainsCharacterRunAutomaton charRun;
 
         NonBacktrackingOnTheFlyCaseConvertingRechecker(String regex, Settings settings) {
             this.regex = regex;
@@ -202,7 +203,7 @@ public class SourceRegexQuery extends Query {
         private final String regex;
         private final Settings settings;
 
-        private ContainsCharacterRunAutomaton charRun;
+        @Nullable private ContainsCharacterRunAutomaton charRun;
 
         NonBacktrackingRechecker(String regex, Settings settings) {
             this.regex = regex;
@@ -250,7 +251,7 @@ public class SourceRegexQuery extends Query {
         private final String regex;
         private final Settings settings;
 
-        private CharacterRunAutomaton charRun;
+        @Nullable private CharacterRunAutomaton charRun;
 
         SlowRechecker(String regex, Settings settings) {
             this.regex = regex;
