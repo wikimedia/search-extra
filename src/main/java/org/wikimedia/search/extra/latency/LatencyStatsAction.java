@@ -2,6 +2,7 @@ package org.wikimedia.search.extra.latency;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.elasticsearch.action.Action;
@@ -127,6 +128,9 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
             super(node);
             empty();
         }
+        @SuppressFBWarnings(
+                value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
+                justification = "readFrom has a well understood contract")
         LatencyStatsNodeResponse(StreamInput in) throws IOException {
             readFrom(in);
         }
@@ -143,7 +147,7 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
             statDetails.readFrom(in);
         }
 
-        void empty() {
+        final void empty() {
             statDetails = new StatDetails();
         }
 
@@ -192,6 +196,9 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
                     .collect(toList());
         }
 
+        @SuppressFBWarnings(
+                value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
+                justification = "readFrom has a well understood contract")
         StatDetails(StreamInput in) throws IOException {
             readFrom(in);
         }
@@ -206,6 +213,7 @@ public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNo
         }
 
         @Override
+        @SuppressFBWarnings("PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
         public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             Map<String, List<LatencyStat>> byBucket = latencies.stream()
                     .collect(groupingBy(LatencyStat::getBucket));

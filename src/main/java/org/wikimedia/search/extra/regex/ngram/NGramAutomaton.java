@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.regex.ngram;
 
 import com.google.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -27,6 +28,9 @@ import java.util.Map;
  * A finite automaton who's transitions are ngrams that must be in the string or
  * ngrams we can't check for. Not thread safe one bit.
  */
+@SuppressFBWarnings(value = "DLC_DUBIOUS_LIST_COLLECTION", justification = "Need more time to investigate")
+// TODO: It might be possible to convert acceptStates to a Set, which would be
+// more efficient and better represent the intent if this is actually the case.
 public class NGramAutomaton {
     private final Automaton source;
     private final int gramSize;
@@ -82,10 +86,10 @@ public class NGramAutomaton {
                 b.append(" [shape=circle,label=\"").append(state).append("\"];\n");
             }
             if (state.initial) {
-                b.append("  initial -> ").append(state.dotName()).append("\n");
+                b.append("  initial -> ").append(state.dotName()).append('\n');
             }
             for (NGramTransition transition : state.outgoingTransitions) {
-                b.append("  ").append(transition).append("\n");
+                b.append("  ").append(transition).append('\n');
             }
         }
         return b.append("}\n").toString();
@@ -222,7 +226,7 @@ public class NGramAutomaton {
                     throw new IllegalArgumentException("Analyzer provided generate more than one tokens, " +
                             "if using 3grams make sure to use a 3grams analyzer, " +
                             "for input [" + ngram + "] first is [" + ngram + "] " +
-                            "but [" + cattr.toString() + "] was generated.");
+                            "but [" + cattr + "] was generated.");
                 }
             }
         } catch (IOException ioe) {
@@ -356,7 +360,7 @@ public class NGramAutomaton {
             StringBuilder b = new StringBuilder();
             b.append(from.dotName()).append(" -> ").append(to.dotName());
             if (ngram != null) {
-                b.append(" [label=\"").append(ngram.replace(" ", "_")).append("\"]");
+                b.append(" [label=\"").append(ngram.replace(' ', '_')).append("\"]");
             }
             return b.toString();
         }

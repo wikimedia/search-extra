@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -36,6 +37,7 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
 @Accessors(chain = true, fluent = true)
 @Getter
 @Setter
+@SuppressFBWarnings("CLI_CONSTANT_LIST_INDEX")
 public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQueryBuilder> {
     public static final ParseField NAME = new ParseField("source_regex", "sourceRegex", "source-regex");
 
@@ -48,27 +50,29 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
     public static final boolean DEFAULT_LOAD_FROM_SOURCE = true;
     public static final int DEFAULT_GRAM_SIZE = 3;
 
-    private static final ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> PARSER;
+    private static final ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> PARSER = constructParser();
 
-    static {
-        PARSER = new ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext>(NAME.getPreferredName(),
+    private static ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> constructParser() {
+        ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> parser =
+                new ConstructingObjectParser<>(NAME.getPreferredName(),
                 (o) -> new SourceRegexQueryBuilder((String) o[0], (String) o[1]));
-        PARSER.declareString(constructorArg(), FIELD);
-        PARSER.declareString(constructorArg(), REGEX);
-        PARSER.declareBoolean(SourceRegexQueryBuilder::loadFromSource, LOAD_FROM_SOURCE);
-        PARSER.declareString(SourceRegexQueryBuilder::ngramField, NGRAM_FIELD);
-        PARSER.declareInt(SourceRegexQueryBuilder::gramSize, GRAM_SIZE);
-        PARSER.declareInt((x,i) -> x.settings().maxExpand(i), Settings.MAX_EXPAND);
-        PARSER.declareInt((x,i) -> x.settings().maxStatesTraced(i), Settings.MAX_STATES_TRACED);
-        PARSER.declareInt((x,i) -> x.settings().maxDeterminizedStates(i), Settings.MAX_DETERMINIZED_STATES);
-        PARSER.declareInt((x,i) -> x.settings().maxNgramsExtracted(i), Settings.MAX_NGRAMS_EXTRACTED);
-        PARSER.declareInt((x,i) -> x.settings().maxInspect(i), Settings.MAX_INSPECT);
-        PARSER.declareBoolean((x,b) -> x.settings().caseSensitive(b), Settings.CASE_SENSITIVE);
-        PARSER.declareString((x,s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
-        PARSER.declareBoolean((x,b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
-        PARSER.declareInt((x,i) -> x.settings().maxNgramClauses(i), Settings.MAX_NGRAM_CLAUSES);
-        PARSER.declareString((x,s) -> x.settings().timeout(s), Settings.TIMEOUT);
-        declareStandardFields(PARSER);
+        parser.declareString(constructorArg(), FIELD);
+        parser.declareString(constructorArg(), REGEX);
+        parser.declareBoolean(SourceRegexQueryBuilder::loadFromSource, LOAD_FROM_SOURCE);
+        parser.declareString(SourceRegexQueryBuilder::ngramField, NGRAM_FIELD);
+        parser.declareInt(SourceRegexQueryBuilder::gramSize, GRAM_SIZE);
+        parser.declareInt((x,i) -> x.settings().maxExpand(i), Settings.MAX_EXPAND);
+        parser.declareInt((x,i) -> x.settings().maxStatesTraced(i), Settings.MAX_STATES_TRACED);
+        parser.declareInt((x,i) -> x.settings().maxDeterminizedStates(i), Settings.MAX_DETERMINIZED_STATES);
+        parser.declareInt((x,i) -> x.settings().maxNgramsExtracted(i), Settings.MAX_NGRAMS_EXTRACTED);
+        parser.declareInt((x,i) -> x.settings().maxInspect(i), Settings.MAX_INSPECT);
+        parser.declareBoolean((x,b) -> x.settings().caseSensitive(b), Settings.CASE_SENSITIVE);
+        parser.declareString((x,s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
+        parser.declareBoolean((x,b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
+        parser.declareInt((x,i) -> x.settings().maxNgramClauses(i), Settings.MAX_NGRAM_CLAUSES);
+        parser.declareString((x,s) -> x.settings().timeout(s), Settings.TIMEOUT);
+        declareStandardFields(parser);
+        return parser;
     }
 
     private final String field;

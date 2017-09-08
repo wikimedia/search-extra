@@ -142,7 +142,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         load((bucket, percentile, stats) -> stats.get1MinuteLoadAverage()),
         latency((bucket, percentile, stats) -> stats.getLatency(bucket, percentile)) {
             @Override
-            public void checkValid(String bucket, Double percentile) throws IllegalArgumentException {
+            public void checkValid(String bucket, Double percentile) {
                 if (bucket == null) {
                     throw new IllegalArgumentException("Missing field [bucket] in condition");
                 }
@@ -175,7 +175,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
             return values()[ord];
         }
 
-        void checkValid(String bucket, Double percentile) throws IllegalArgumentException {
+        void checkValid(String bucket, Double percentile) {
             if (bucket != null) {
                 throw new IllegalArgumentException("Extra field [bucket] in condition");
             }
@@ -197,7 +197,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         }
 
         @Override
-        void checkValid() throws IllegalArgumentException {
+        void checkValid() {
             super.checkValid();
             type.checkValid(bucket, percentile);
         }

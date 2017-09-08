@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<FindBugsFilter>
+    <!-- the following bugs are always ignored -->
+    <Match>
+        <!--
+            Manually sizing collections is error prone and in most cases tend
+            to be a micro optimization.
+        -->
+        <Bug pattern="PSC_PRESIZE_COLLECTIONS"/>
+    </Match>
+
+    <Match>
+        <!-- Softening exception is an acceptable pattern in this project. -->
+        <Or>
+            <Bug pattern="EXS_EXCEPTION_SOFTENING_HAS_CHECKED"/>
+            <Bug pattern="EXS_EXCEPTION_SOFTENING_NO_CONSTRAINTS"/>
+        </Or>
+    </Match>
+
+    <Match>
+        <!--
+            Inverting comparison order when String literals are involved leads
+            to unnatural code. Proper null checking should always be done
+            anyway.
+        -->
+        <Bug pattern="LSC_LITERAL_STRING_COMPARISON"/>
+    </Match>
+
+    <!-- specific exceptions -->
+    <Match classregex="org\.wikimedia\.search\.extra\.regex\.SourceRegexQueryBuilder.*">
+        <!-- In this case, an array is accessed with known locations in array -->
+        <Bug pattern="CLI_CONSTANT_LIST_INDEX"/>
+    </Match>
+
+</FindBugsFilter>

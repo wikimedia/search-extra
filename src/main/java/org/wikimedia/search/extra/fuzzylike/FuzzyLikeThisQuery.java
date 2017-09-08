@@ -17,6 +17,7 @@ package org.wikimedia.search.extra.fuzzylike;
  * limitations under the License.
  */
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -186,7 +187,10 @@ public class FuzzyLikeThisQuery extends Query
     }
   }
 
-  @Override
+    @Override
+    @SuppressFBWarnings(
+          value = "PCAIL_POSSIBLE_CONSTANT_ALLOCATION_IN_LOOP",
+          justification = "builder should not be reused")
     public Query rewrite(IndexReader reader) throws IOException
     {
         //load up the list of possible terms

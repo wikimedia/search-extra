@@ -81,7 +81,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
             }
 
             @Override
-            public Explanation explainScore(int docId, Explanation subQueryScore) throws IOException {
+            public Explanation explainScore(int docId, Explanation subQueryScore) {
                 double score = score(docId, subQueryScore.getValue());
                 String explanation = "LevenshteinDistanceScore";
                 explanation += " with parameters:\n text:" + value;

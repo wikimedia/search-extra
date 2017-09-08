@@ -152,7 +152,7 @@ class UnacceleratedSourceRegexQuery extends Query {
 
         private static final Collector NULL_COLLECTOR = new SimpleCollector() {
             @Override
-            public void collect(int doc) throws IOException {}
+            public void collect(int doc) {}
             @Override
             public boolean needsScores() {
                 return true;

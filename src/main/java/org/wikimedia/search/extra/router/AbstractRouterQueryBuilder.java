@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.router;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -90,14 +91,17 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
     }
 
     @Override
+    @SuppressFBWarnings("ACEM_ABSTRACT_CLASS_EMPTY_METHODS")
     protected Query doToQuery(QueryShardContext queryShardContext) throws IOException {
         throw new UnsupportedOperationException("This query must be rewritten.");
     }
 
+    @SuppressFBWarnings("ACEM_ABSTRACT_CLASS_EMPTY_METHODS")
     protected void addXContent(XContentBuilder builder, Params params) throws IOException {
     }
 
     @Override
+    @SuppressFBWarnings("PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
     protected void doXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(getWriteableName());
         if (fallback() != null) {
@@ -116,6 +120,7 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
         builder.endObject();
     }
 
+    @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER", justification = "No need to be generic in this case")
     static <C extends Condition, CPS extends AbstractConditionParserState<C>> C parseCondition(
             ObjectParser<CPS, QueryParseContext> condParser, XContentParser parser, QueryParseContext parseContext
     ) throws IOException {
@@ -125,6 +130,7 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
     }
 
 
+    @SuppressFBWarnings(value = "LEST_LOST_EXCEPTION_STACK_TRACE", justification = "The new exception contains all needed context")
     static <QB extends AbstractRouterQueryBuilder<?, QB>> Optional<QB> fromXContent(
             ObjectParser<QB, QueryParseContext> objectParser, QueryParseContext parseContext) throws IOException {
         XContentParser parser = parseContext.parser();
@@ -234,7 +240,7 @@ abstract public class AbstractRouterQueryBuilder<C extends Condition, QB extends
 
         abstract C condition();
 
-        void checkValid() throws IllegalArgumentException {
+        void checkValid() {
             if (query == null) {
                 throw new IllegalArgumentException("Missing field [query] in condition");
             }

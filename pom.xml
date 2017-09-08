@@ -78,6 +78,14 @@
         <configuration>
           <effort>high</effort>
           <threshold>low</threshold>
+          <excludeFilterFile>${project.basedir}/src/dev-tools/spotbugs-excludes.xml</excludeFilterFile>
+          <plugins>
+            <plugin>
+              <groupId>com.mebigfatguy.fb-contrib</groupId>
+              <artifactId>fb-contrib</artifactId>
+              <version>7.0.4.sb</version>
+            </plugin>
+          </plugins>
         </configuration>
         <executions>
           <execution>

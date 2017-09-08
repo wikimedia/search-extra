@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.latency;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
@@ -45,7 +46,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
 
     @Override
     protected void doStart() {
-        if (cancelRotation != null) {
+        if (cancelRotation == null) {
             cancelRotation = threadPoolSupplier.get().scheduleWithFixedDelay(this::rotate, ROTATION_DELAY, ThreadPool.Names.GENERIC);
         }
     }
@@ -84,6 +85,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
                 .collect(toList());
     }
 
+    @SuppressFBWarnings("PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
     public void onQueryPhase(SearchContext searchContext, long tookInNanos) {
         if (searchContext.groupStats() == null) {
             return;

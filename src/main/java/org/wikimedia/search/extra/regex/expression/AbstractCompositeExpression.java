@@ -2,6 +2,7 @@ package org.wikimedia.search.extra.regex.expression;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
@@ -244,6 +245,10 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
     }
 
     @Override
+    @SuppressFBWarnings(
+            value = "STT_TOSTRING_STORED_IN_FIELD",
+            justification = "Here we do want to cache the value of " +
+                    "toString() as its computation can be expensive.")
     public String toString() {
         if (toString != null) {
             return toString;
@@ -261,7 +266,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
             } else {
                 b.append(toStringJoiner());
             }
-            b.append(component.toString());
+            b.append(component);
         }
         b.append(')');
         if (b.length() > MAX_COMPONENT_STRING_LENGTH) {
