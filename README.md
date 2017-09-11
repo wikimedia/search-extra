@@ -45,6 +45,14 @@ Installation
 | 0.0.1 -> 0.0.2                   | 1.3.2 -> 1.3.3  |
 
 Install it like so for Elasticsearch x.y.z:
+
+\<= 2.4.1
 ```bash
 ./bin/plugin --install org.wikimedia.search/extra/x.y.z
+```
+
+\>= 5.1.2
+
+```bash
+./bin/elasticsearch-plugin install org.wikimedia.search:extra:x.y.z
 ```
