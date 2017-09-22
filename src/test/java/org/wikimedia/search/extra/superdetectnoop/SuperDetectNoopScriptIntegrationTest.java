@@ -365,7 +365,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
                         .array("fr", "main", "poignet")
                         .endObject()
                         .endObject();
-            } catch(IOException ioe) {
+            } catch (IOException ioe) {
                 throw new AssertionError(ioe);
             }
         };

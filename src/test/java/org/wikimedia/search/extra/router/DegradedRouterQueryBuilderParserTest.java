@@ -19,7 +19,7 @@ public class DegradedRouterQueryBuilderParserTest extends LuceneTestCase {
     public void testParseExample() throws IOException {
         String json = "{\"degraded_router\": {\n" +
                 "   \"conditions\" : [\n" +
-                "       {\n"+
+                "       {\n" +
                 "           \"lt\": 70,\n" +
                 "           \"type\": \"cpu\"," +
                 "           \"query\": {\n" +

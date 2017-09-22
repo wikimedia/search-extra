@@ -34,7 +34,7 @@ import java.util.List;
 
 public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     private final int shingleMaxSize = random().nextInt(3) + 3;
-    private final int shingleMinSize = random().nextInt(shingleMaxSize-2) + 2;
+    private final int shingleMinSize = random().nextInt(shingleMaxSize - 2) + 2;
     @Test
     public void simpleTest() throws IOException {
         String input = "Hello the World";
@@ -100,7 +100,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     }
 
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testBadSetup() throws IOException {
         try (Analyzer a = new Analyzer() {
              @Override
@@ -177,12 +177,12 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
                     private final PositionIncrementAttribute pattr = getAttribute(PositionIncrementAttribute.class);
                     @Override
                     public final boolean incrementToken() throws IOException {
-                        if(state != null) {
+                        if (state != null) {
                             restoreState(state);
                             pattr.setPositionIncrement(0);
                             state = null;
                             return true;
-                        } else if(input.incrementToken()) {
+                        } else if (input.incrementToken()) {
                             state = captureState();
                             int posInc = pattr.getPositionIncrement();
                             assert input.incrementToken();
@@ -269,7 +269,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             CharTermAttribute cattr = expected.getAttribute(CharTermAttribute.class);
             PositionIncrementAttribute pInc = expected.getAttribute(PositionIncrementAttribute.class);
             OffsetAttribute oattr = expected.getAttribute(OffsetAttribute.class);
-            while(expected.incrementToken()) {
+            while (expected.incrementToken()) {
                 output.add(cattr.toString());
                 posInc.add(pInc.getPositionIncrement());
                 startOffsets.add(oattr.startOffset());

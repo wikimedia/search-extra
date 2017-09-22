@@ -66,20 +66,20 @@ public class TimeoutCheckerTest extends LuceneTestCase {
         TimeLimitingCollector.TimeExceededException thrown = null;
         try {
             checker.check(1);
-        } catch(TimeLimitingCollector.TimeExceededException ex) {
+        } catch (TimeLimitingCollector.TimeExceededException ex) {
             thrown = ex;
         }
         Assert.assertNotNull(thrown);
         Assert.assertEquals(10l, thrown.getTimeAllowed());
         Assert.assertEquals(11l, thrown.getTimeElapsed());
-        Assert.assertEquals(1+current.docBase, thrown.getLastDocCollected());
+        Assert.assertEquals(1 + current.docBase, thrown.getLastDocCollected());
 
         // Verify that the exception is thrown when changing segments as well
         current = segments.next();
         thrown = null;
         try {
             checker.nextSegment(current);
-        } catch(TimeLimitingCollector.TimeExceededException ex) {
+        } catch     (TimeLimitingCollector.TimeExceededException ex) {
             thrown = ex;
         }
         Assert.assertNotNull(thrown);
@@ -114,12 +114,12 @@ public class TimeoutCheckerTest extends LuceneTestCase {
         TimeLimitingCollector.TimeExceededException thrown = null;
         try {
             checker.check(1);
-        } catch(TimeLimitingCollector.TimeExceededException ex) {
+        } catch (TimeLimitingCollector.TimeExceededException ex) {
             thrown = ex;
         }
         Assert.assertNotNull(thrown);
         Assert.assertEquals(500l, thrown.getTimeAllowed());
         Assert.assertTrue(thrown.getTimeElapsed() > 500);
-        Assert.assertEquals(1+current.docBase, thrown.getLastDocCollected());
+        Assert.assertEquals(1 + current.docBase, thrown.getLastDocCollected());
     }
 }

@@ -36,8 +36,8 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
     protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
         mapperService.merge("trigram_field",
                 new CompressedXContent("{\"properties\":{" +
-                        "\""+MY_FIELD+"\":{\"type\":\"text\" }," +
-                        "\""+MY_FIELD_NGRAM+"\":{\"type\":\"text\" }" +
+                        "\"" + MY_FIELD + "\":{\"type\":\"text\" }," +
+                        "\"" + MY_FIELD_NGRAM + "\":{\"type\":\"text\" }" +
                         "}}" ),
                 MapperService.MergeReason.MAPPING_UPDATE, false);
     }

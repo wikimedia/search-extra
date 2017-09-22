@@ -1,13 +1,9 @@
 package org.wikimedia.search.extra.latency;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.index.query.ConstantScoreQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
-
-import java.util.stream.Stream;
 
 public class GetLatencyStatsIntegrationTest extends AbstractPluginIntegrationTest {
     @Test

@@ -44,7 +44,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
     @Override
     protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
         mapperService.merge("token_count_router_type",
-                new CompressedXContent("{\"properties\":{\""+MY_FIELD+"\":{\"type\":\"text\" }}}" ),
+                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }}}" ),
                 MapperService.MergeReason.MAPPING_UPDATE, false);
     }
 
@@ -52,7 +52,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
     protected TokenCountRouterQueryBuilder doCreateTestQueryBuilder() {
         TokenCountRouterQueryBuilder builder = new TokenCountRouterQueryBuilder();
         builder.text(randomRealisticUnicodeOfCodepointLengthBetween(0, 100));
-        if(randomBoolean()) {
+        if (randomBoolean()) {
             // Use our own field because randomized testing may create an empty mapping
             builder.field(MY_FIELD);
             builder.fallback(new MatchNoneQueryBuilder());
@@ -61,13 +61,13 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
             builder.fallback(new MatchAllQueryBuilder());
         }
 
-        for(int i = randomIntBetween(1,10); i > 0; i--) {
+        for (int i = randomIntBetween(1,10); i > 0; i--) {
             AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
             builder.condition(cond, value, new TermQueryBuilder(cond.name(), String.valueOf(value)));
         }
 
-        if(randomBoolean()) {
+        if (randomBoolean()) {
             builder.discountOverlaps(randomBoolean());
         }
         return builder;
@@ -76,7 +76,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
     @Override
     protected void doAssertLuceneQuery(TokenCountRouterQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
         Analyzer analyzer;
-        if(queryBuilder.field() != null) {
+        if (queryBuilder.field() != null) {
             analyzer = context.getQueryShardContext().getSearchAnalyzer(context.smartNameFieldType(queryBuilder.field()));
         } else {
             assertNotNull("field or analyzer must be set", queryBuilder.analyzer());
@@ -91,12 +91,12 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
 
         query = rewrite(query);
 
-        if(qb.isPresent()) {
+        if (qb.isPresent()) {
             assertThat(query, instanceOf(TermQuery.class));
             TermQuery tq = (TermQuery) query;
             assertEquals(new Term(qb.get().definition().name(), String.valueOf(qb.get().value())), tq.getTerm());
         } else {
-            if(queryBuilder.field() != null) {
+            if (queryBuilder.field() != null) {
                 assertThat(query, instanceOf(MatchNoDocsQuery.class));
             } else {
                 assertThat(query, instanceOf(MatchAllDocsQuery.class));
@@ -131,7 +131,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
             "   \"field\": \"text\",\n" +
             "   \"text\": \"input query\",\n" +
             "   \"conditions\" : [\n" +
-            "       {\n"+
+            "       {\n" +
             "           \"gte\": 2,\n" +
             "           \"query\": {\n" +
             "               \"match_phrase\": {\n" +
@@ -200,7 +200,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         builder.analyzer(randomAnalyzer());
         QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
-        for(int i = randomIntBetween(1,10); i > 0; i--) {
+        for (int i = randomIntBetween(1,10); i > 0; i--) {
             AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
             builder.condition(cond, value, new WrapperQueryBuilder(toRewrite.toString()));

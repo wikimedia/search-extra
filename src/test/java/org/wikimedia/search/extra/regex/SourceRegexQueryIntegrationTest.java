@@ -186,7 +186,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         st += System.currentTimeMillis();
         //System.out.println(st);
         // Test the accuracy of the timeout
-        Assert.assertTrue((double)(timeout+testOverhead)*1.5 > st);
+        Assert.assertTrue((double)(timeout + testOverhead)*1.5 > st);
         //Assert.assertTrue(resp.getHits().getTotalHits() > 0); // partial results are very hard to simulate...
         Assert.assertTrue(resp.isTimedOut());
     }
@@ -195,7 +195,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     public void testTimeoutIsPassed() throws ExecutionException, InterruptedException, IOException {
         setup();
         for (int i = 1; i < 100; i++) {
-            indexRandom(false, doc("findmefound" + i, randomAlphaOfLength(2000)+"findmefound"));
+            indexRandom(false, doc("findmefound" + i, randomAlphaOfLength(2000) + "findmefound"));
         }
         refresh();
         client().admin().indices().prepareForceMerge("test").setMaxNumSegments(1).setFlush(true).get();

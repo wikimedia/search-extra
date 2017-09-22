@@ -170,13 +170,13 @@ public class NGramAutomatonTest extends RandomizedTest {
         assertExpression("te.*me", 2, new And<String>(leaves("te", "me")));
     }
 
-    @Test(expected=TooComplexToDeterminizeException.class)
+    @Test(expected = TooComplexToDeterminizeException.class)
     public void tooBig() {
         assertTrigramExpression("\\[\\[(Datei|File|Bild|Image):[^]]*alt=[^]|}]{50,200}",
                 null /* ignored */);
     }
 
-    @Test(expected=TooComplexToDeterminizeException.class)
+    @Test(expected = TooComplexToDeterminizeException.class)
     public void tooBigToo() {
         assertTrigramExpression("[^]]*alt=[^]\\|}]{80,}",
                 null /* ignored */);
@@ -196,7 +196,7 @@ public class NGramAutomatonTest extends RandomizedTest {
     }
 
     @Test
-    @Repeat(iterations=100)
+    @Repeat(iterations = 100)
     public void randomRegexp() {
         // Some of the regex strings don't actually compile so just retry until we get a good one.
         String str;
@@ -216,7 +216,7 @@ public class NGramAutomatonTest extends RandomizedTest {
      * Tests that building the automaton doesn't blow up in unexpected ways.
      */
     @Test
-    @Repeat(iterations=100)
+    @Repeat(iterations = 100)
     public void randomAutomaton() {
         Automaton automaton = AutomatonTestUtil.randomAutomaton(getRandom());
         NGramAutomaton ngramAutomaton;

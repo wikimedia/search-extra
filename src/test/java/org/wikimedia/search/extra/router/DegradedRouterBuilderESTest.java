@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mock;
 import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
 
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
-public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder>{
+public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return Collections.singleton(MockPluginWithoutNativeScript.class);
     }
@@ -64,7 +64,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
 
         query = rewrite(query);
 
-        if(cond.isPresent()) {
+        if (cond.isPresent()) {
             assertThat(query, instanceOf(TermQuery.class));
             TermQuery tq = (TermQuery) query;
             String expect = cond.get().type().name() + ":" + cond.get().definition().name();
@@ -92,7 +92,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         DegradedRouterQueryBuilder builder = newBuilder();
         QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
-        for(int i = randomIntBetween(1,10); i > 0; i--) {
+        for (int i = randomIntBetween(1,10); i > 0; i--) {
             addCondition(builder, new WrapperQueryBuilder(toRewrite.toString()));
         }
         QueryBuilder rewrittenBuilder = QueryBuilder.rewriteQuery(builder, createShardContext());

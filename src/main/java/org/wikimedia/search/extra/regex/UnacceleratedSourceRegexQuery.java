@@ -1,6 +1,5 @@
 package org.wikimedia.search.extra.regex;
 
-
 import lombok.EqualsAndHashCode;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;

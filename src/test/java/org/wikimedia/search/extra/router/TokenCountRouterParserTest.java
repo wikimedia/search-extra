@@ -22,7 +22,7 @@ public class TokenCountRouterParserTest extends LuceneTestCase {
                 "   \"field\": \"text\",\n" +
                 "   \"text\": \"input query\",\n" +
                 "   \"conditions\" : [\n" +
-                "       {\n"+
+                "       {\n" +
                 "           \"gte\": 2,\n" +
                 "           \"query\": {\n" +
                 "               \"match_phrase\": {\n" +
