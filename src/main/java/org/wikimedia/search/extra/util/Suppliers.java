@@ -1,9 +1,10 @@
 package org.wikimedia.search.extra.util;
 
-import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-public class Suppliers {
+import javax.annotation.Nullable;
+
+public final class Suppliers {
     private Suppliers() {
     }
 

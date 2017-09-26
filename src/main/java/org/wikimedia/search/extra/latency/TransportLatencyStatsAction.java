@@ -1,5 +1,7 @@
 package org.wikimedia.search.extra.latency;
 
+import java.util.List;
+
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.nodes.BaseNodeRequest;
@@ -10,12 +12,9 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
-
 import org.wikimedia.search.extra.latency.LatencyStatsAction.LatencyStatsNodeResponse;
 import org.wikimedia.search.extra.latency.LatencyStatsAction.LatencyStatsNodesRequest;
 import org.wikimedia.search.extra.latency.LatencyStatsAction.LatencyStatsNodesResponse;
-
-import java.util.List;
 
 public class TransportLatencyStatsAction extends TransportNodesAction<LatencyStatsNodesRequest,
         LatencyStatsNodesResponse, TransportLatencyStatsAction.LatencyStatsNodeRequest,

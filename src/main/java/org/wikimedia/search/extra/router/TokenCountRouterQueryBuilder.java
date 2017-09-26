@@ -1,9 +1,11 @@
 package org.wikimedia.search.extra.router;
 
-import com.google.common.annotations.VisibleForTesting;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
@@ -20,27 +22,28 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.Optional;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
- * Builds a token_count_router query
+ * Builds a token_count_router query.
  */
 @Getter
 @Setter
 @Accessors(fluent = true, chain = true)
 public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Condition, TokenCountRouterQueryBuilder> {
-    public final static ParseField NAME = new ParseField("token_count_router");
-    private final static ParseField TEXT = new ParseField("text");
-    private final static ParseField FIELD = new ParseField("field");
-    private final static ParseField ANALYZER = new ParseField("analyzer");
-    private final static ParseField DISCOUNT_OVERLAPS = new ParseField("discount_overlaps");
-    private final static boolean DEFAULT_DISCOUNT_OVERLAPS = true;
+    public static final ParseField NAME = new ParseField("token_count_router");
+    private static final ParseField TEXT = new ParseField("text");
+    private static final ParseField FIELD = new ParseField("field");
+    private static final ParseField ANALYZER = new ParseField("analyzer");
+    private static final ParseField DISCOUNT_OVERLAPS = new ParseField("discount_overlaps");
+    private static final boolean DEFAULT_DISCOUNT_OVERLAPS = true;
 
-    private final static ObjectParser<TokenCountRouterQueryBuilder, QueryParseContext> PARSER;
-    private final static ObjectParser<ConditionParserState, QueryParseContext> COND_PARSER;
+    private static final ObjectParser<TokenCountRouterQueryBuilder, QueryParseContext> PARSER;
+    private static final ObjectParser<ConditionParserState, QueryParseContext> COND_PARSER;
 
     static {
         COND_PARSER = new ObjectParser<>("condition", ConditionParserState::new);

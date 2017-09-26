@@ -1,8 +1,10 @@
 package org.wikimedia.search.extra.regex;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.Locale;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
@@ -12,10 +14,9 @@ import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.SlowRechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 
-import java.io.IOException;
-import java.util.Locale;
-
-import static org.junit.Assert.assertTrue;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
 
 public class SourceRegexQueryRecheckTest {
     private static final Logger log = LogManager.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());

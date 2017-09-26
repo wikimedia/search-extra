@@ -2,6 +2,8 @@ package org.wikimedia.search.extra.superdetectnoop;
 
 import static org.wikimedia.search.extra.superdetectnoop.ChangeHandler.TypeSafe.nullAndTypeSafe;
 
+import javax.annotation.Nonnull;
+
 /**
  * Detects if the stored version of the document is newer than the provided
  * version, and noop's the entire update. Necessary because the elasticsearch
@@ -10,7 +12,7 @@ import static org.wikimedia.search.extra.superdetectnoop.ChangeHandler.TypeSafe.
  *
  * Only works properly with whole numbers up to 2^63-1
  */
-public class VersionedDocumentHandler implements ChangeHandler<Number> {
+public final class VersionedDocumentHandler implements ChangeHandler<Number> {
     public static class Recognizer implements ChangeHandler.Recognizer {
         private static final String DESCRIPTION = "documentVersion";
 
@@ -31,7 +33,7 @@ public class VersionedDocumentHandler implements ChangeHandler<Number> {
     }
 
     @Override
-    public ChangeHandler.Result handle(Number oldVersion, Number newVersion) {
+    public ChangeHandler.Result handle(@Nonnull Number oldVersion, @Nonnull Number newVersion) {
         if (oldVersion.longValue() == newVersion.longValue()) {
             // If version is identical we should let other
             // fields decide if the update is necessary

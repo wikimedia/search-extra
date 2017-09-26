@@ -3,7 +3,7 @@ package org.wikimedia.search.extra.regex.expression;
 /**
  * Always true.
  */
-public class True<T> implements Expression<T> {
+public final class True<T> implements Expression<T> {
     private static final True<Object> TRUE = new True<>();
 
     /**

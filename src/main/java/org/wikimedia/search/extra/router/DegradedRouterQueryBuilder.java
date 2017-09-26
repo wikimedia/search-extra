@@ -1,10 +1,11 @@
 package org.wikimedia.search.extra.router;
 
-import com.google.common.annotations.VisibleForTesting;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -14,17 +15,17 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
-
-import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCondition;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.Optional;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
- * Builds a token_count_router query
+ * Builds a token_count_router query.
  *
  * Getter/Setter are only for testing
  */
@@ -37,10 +38,11 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
     private static final ParseField BUCKET = new ParseField("bucket");
     private static final ParseField PERCENTILE = new ParseField("percentile");
 
-    private final static ObjectParser<DegradedRouterQueryBuilder, QueryParseContext> PARSER;
-    private final static ObjectParser<DegradedConditionParserState, QueryParseContext> COND_PARSER;
+    private static final ObjectParser<DegradedRouterQueryBuilder, QueryParseContext> PARSER;
+    private static final ObjectParser<DegradedConditionParserState, QueryParseContext> COND_PARSER;
 
     static {
+        Condition c = null;
         COND_PARSER = new ObjectParser<>("condition", DegradedConditionParserState::new);
         COND_PARSER.declareString((cps, value) -> cps.type(DegradedConditionType.valueOf(value)), TYPE);
         COND_PARSER.declareString(DegradedConditionParserState::bucket, BUCKET);
@@ -88,7 +90,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
 
     @EqualsAndHashCode(callSuper = true)
     @Getter
-    static class DegradedCondition extends Condition {
+    static class DegradedCondition extends AbstractRouterQueryBuilder.Condition {
         private final String bucket;
         private final Double percentile;
         private final DegradedConditionType type;

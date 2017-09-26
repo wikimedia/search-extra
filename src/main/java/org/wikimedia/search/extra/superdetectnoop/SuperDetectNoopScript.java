@@ -1,14 +1,7 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import org.elasticsearch.script.AbstractExecutableScript;
-import org.elasticsearch.script.CompiledScript;
-import org.elasticsearch.script.ExecutableScript;
-import org.elasticsearch.script.NativeScriptFactory;
-import org.elasticsearch.script.ScriptEngineService;
-import org.elasticsearch.script.SearchScript;
-import org.elasticsearch.search.lookup.SearchLookup;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,7 +9,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nullable;
+
+import org.elasticsearch.script.AbstractExecutableScript;
+import org.elasticsearch.script.CompiledScript;
+import org.elasticsearch.script.ExecutableScript;
+import org.elasticsearch.script.NativeScriptFactory;
+import org.elasticsearch.script.ScriptEngineService;
+import org.elasticsearch.script.SearchScript;
+import org.elasticsearch.search.lookup.SearchLookup;
 
 /**
  * Like the detect_noop option on updates but with pluggable "close enough"

@@ -1,23 +1,24 @@
 package org.wikimedia.search.extra.latency;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.search.internal.SearchContext;
-import org.junit.Test;
-import org.wikimedia.search.extra.util.Suppliers.MutableSupplier;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.search.internal.SearchContext;
+import org.junit.Test;
+import org.wikimedia.search.extra.util.Suppliers.MutableSupplier;
+
+import com.carrotsearch.randomizedtesting.RandomizedTest;
 
 public class SearchLatencyListenerTest extends RandomizedTest {
     @Test
@@ -121,7 +122,7 @@ public class SearchLatencyListenerTest extends RandomizedTest {
 
         assertEquals(tv.millis(), getMillisAtPercentile(listener, "baz", 0D), delta(tv.millis()));
         listener.rotate();
-        assertEquals(tv2.millis(), getMillisAtPercentile(listener,"baz", 0D), delta(tv2.millis()));
+        assertEquals(tv2.millis(), getMillisAtPercentile(listener, "baz", 0D), delta(tv2.millis()));
         assertEquals(1, listener.getLatencyStats(Collections.singleton(0D)).size());
         listener.rotate();
         // The histogram should be completely removed now

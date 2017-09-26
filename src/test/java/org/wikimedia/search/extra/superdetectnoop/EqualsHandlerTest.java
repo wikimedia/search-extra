@@ -1,13 +1,13 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import org.apache.lucene.util.LuceneTestCase;
-import org.junit.Test;
+import static org.hamcrest.Matchers.instanceOf;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.instanceOf;
+import org.apache.lucene.util.LuceneTestCase;
+import org.junit.Test;
 
 public class EqualsHandlerTest extends LuceneTestCase {
     private ChangeHandler<Object> handler() {

@@ -1,16 +1,18 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 
 /**
@@ -74,6 +76,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
         return false;
     }
 
+    @SuppressWarnings({"NPathComplexity", "CyclomaticComplexity"})
     @Override
     public Expression<T> simplify() {
         if (simplified) {
@@ -130,6 +133,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
         }
     }
 
+    @SuppressWarnings({"CyclomaticComplexity"})
     @Nullable
     private Expression<T> extractCommon(Iterable<Expression<T>> newComponents) {
         // Are all composite subexpressions of the same type?

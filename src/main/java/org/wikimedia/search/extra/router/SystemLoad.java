@@ -1,9 +1,9 @@
 package org.wikimedia.search.extra.router;
 
+import java.util.Objects;
+
 import org.elasticsearch.monitor.os.OsService;
 import org.wikimedia.search.extra.latency.SearchLatencyProbe;
-
-import java.util.Objects;
 
 public class SystemLoad {
     private final SearchLatencyProbe latencyProbe;

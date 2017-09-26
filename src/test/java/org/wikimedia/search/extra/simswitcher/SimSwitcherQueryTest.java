@@ -16,6 +16,15 @@
 
 package org.wikimedia.search.extra.simswitcher;
 
+import static org.hamcrest.Matchers.greaterThan;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -53,15 +62,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.hamcrest.Matchers.greaterThan;
-
+@SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class SimSwitcherQueryTest extends LuceneTestCase {
 
     private IndexSearcher searcherUnderTest;
@@ -73,7 +74,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
     private Map<String, Similarity> similarityMap;
 
     // docs with doc ids array index
-    private final String[] docs = new String[] { "how now brown cow",
+    private final String[] docs = new String[] {"how now brown cow",
             "brown is the color of cows",
             "brown cow",
             "banana cows are yummy"};
@@ -151,7 +152,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
         String q = "brown cow";
         for (Map.Entry<String, Similarity> entry : similarityMap.entrySet()) {
             String msg = "switch from " + similarity.getClass().getSimpleName() + " to " + entry.getKey();
-            Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(),q);
+            Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(), q);
             Query hacked = new SimSwitcherQuery(entry.getValue(), new QueryBuilder(analyzer).createBooleanQuery("main_field", q));
             TopDocs docs = searcherUnderTest.search(query, 10);
             Weight weight = searcherUnderTest.createNormalizedWeight(query, true);

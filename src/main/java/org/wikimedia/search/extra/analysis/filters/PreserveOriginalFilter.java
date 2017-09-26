@@ -1,6 +1,9 @@
 package org.wikimedia.search.extra.analysis.filters;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
@@ -10,12 +13,11 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttributeImpl;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * A token filter that wraps another one to preserve original terms at the same
- * position. The purpose is very similar to {@link KeywordRepeatFilter}+{@link RemoveDuplicatesTokenFilter}
+ * A token filter that wraps another one to preserve original terms at the same position.
+ * The purpose is very similar to {@link KeywordRepeatFilter}+{@link RemoveDuplicatesTokenFilter}
  * but this approach does not require that the filters support the keyword attribute.
  */
 // TODO: check if the behaviour of equals() is actually what is expected. Read
@@ -31,8 +33,8 @@ public class PreserveOriginalFilter extends TokenFilter {
     @Nullable private State preserve;
 
     /**
-     * Builds a new PreserveOriginalFilter, the input TokenStream must be filtered by
-     * a PreserveOriginalFilter.Recorder.
+     * Builds a new PreserveOriginalFilter, the input TokenStream must be filtered by a PreserveOriginalFilter.Recorder.
+     *
      * @param input input
      * @throws IllegalArgumentException if the analysis chain does not contain an OriginalTermAttribute
      */
@@ -47,7 +49,8 @@ public class PreserveOriginalFilter extends TokenFilter {
     }
 
     /**
-     * Constructor using lucene factory classes
+     * Constructor using lucene factory classes.
+     *
      * @param input original input stream
      * @param wrapped token filter we want to wrap
      */
@@ -76,8 +79,7 @@ public class PreserveOriginalFilter extends TokenFilter {
     }
 
     /**
-     * A simple filter that records a copy of the current token
-     * in the OriginalTermAttribute attribute.
+     * A simple filter that records a copy of the current token in the OriginalTermAttribute attribute.
      */
     public static class Recorder extends TokenFilter {
         private final OriginalTermAttribute original = this.addAttribute(OriginalTermAttribute.class);
@@ -100,8 +102,8 @@ public class PreserveOriginalFilter extends TokenFilter {
     }
 
     /**
-     * A copy of {@link CharTermAttribute} taken by {@link Recorder}. This copy
-     * is restored by {@link PreserveOriginalFilter} at the same position if
+     * A copy of {@link CharTermAttribute} taken by {@link Recorder}.
+     * This copy is restored by {@link PreserveOriginalFilter} at the same position if
      * the token is different.
      */
     public interface OriginalTermAttribute extends CharTermAttribute {}

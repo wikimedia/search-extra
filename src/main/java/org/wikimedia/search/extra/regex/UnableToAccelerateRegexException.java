@@ -1,7 +1,8 @@
 package org.wikimedia.search.extra.regex;
 
-import javax.annotation.Nullable;
 import java.util.Locale;
+
+import javax.annotation.Nullable;
 
 /**
  * Thrown when the filter is unable to accelerate a regex and

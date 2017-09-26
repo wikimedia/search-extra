@@ -1,5 +1,16 @@
 package org.wikimedia.search.extra.router;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -24,17 +35,6 @@ import org.elasticsearch.test.AbstractQueryTestCase;
 import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
-
 public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCountRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return Collections.singleton(MockPluginWithoutNativeScript.class);
@@ -44,7 +44,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
     @Override
     protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
         mapperService.merge("token_count_router_type",
-                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }}}" ),
+                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }}}"),
                 MapperService.MergeReason.MAPPING_UPDATE, false);
     }
 
@@ -61,7 +61,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
             builder.fallback(new MatchAllQueryBuilder());
         }
 
-        for (int i = randomIntBetween(1,10); i > 0; i--) {
+        for (int i = randomIntBetween(1, 10); i > 0; i--) {
             AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
             builder.condition(cond, value, new TermQueryBuilder(cond.name(), String.valueOf(value)));
@@ -200,7 +200,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         builder.analyzer(randomAnalyzer());
         QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
-        for (int i = randomIntBetween(1,10); i > 0; i--) {
+        for (int i = randomIntBetween(1, 10); i > 0; i--) {
             AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
             builder.condition(cond, value, new WrapperQueryBuilder(toRewrite.toString()));

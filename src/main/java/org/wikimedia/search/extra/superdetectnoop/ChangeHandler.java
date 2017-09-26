@@ -1,7 +1,8 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import javax.annotation.Nullable;
 import java.util.Objects;
+
+import javax.annotation.Nullable;
 
 /**
  * Detects if two values are different enough to be changed.
@@ -63,7 +64,7 @@ public interface ChangeHandler<T> {
         }
 
         @Override
-        public Result handle(T oldValue, T newValue) {
+        public Result handle(@Nullable T oldValue, @Nullable T newValue) {
             if (oldValue == null) {
                 return Changed.forBoolean(newValue == null, newValue);
             }
@@ -125,7 +126,7 @@ public interface ChangeHandler<T> {
         }
 
         @Override
-        public Result handle(Object oldValue, Object newValue) {
+        public Result handle(@Nullable Object oldValue, @Nullable Object newValue) {
             T oldValueCast;
             T newValueCast;
             try {

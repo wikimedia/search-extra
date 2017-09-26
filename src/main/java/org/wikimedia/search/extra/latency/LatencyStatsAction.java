@@ -1,10 +1,19 @@
 package org.wikimedia.search.extra.latency;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.AccessLevel;
-import lombok.Getter;
+import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.averagingDouble;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
+
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionRequestBuilder;
 import org.elasticsearch.action.FailedNodeException;
@@ -20,23 +29,16 @@ import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-
 import org.wikimedia.search.extra.latency.SearchLatencyProbe.LatencyStat;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 
-import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.averagingDouble;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.AccessLevel;
+import lombok.Getter;
 
-public class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNodesRequest,
+public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNodesRequest,
         LatencyStatsAction.LatencyStatsNodesResponse, LatencyStatsAction.LatencyStatsRequestBuilder> {
 
     static final String NAME = "extra:latency/stats";

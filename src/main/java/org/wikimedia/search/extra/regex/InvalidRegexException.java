@@ -1,7 +1,7 @@
 package org.wikimedia.search.extra.regex;
 
 /**
- * Represents a regex that was invalid
+ * Represents a regex that was invalid.
  */
 public class InvalidRegexException extends RuntimeException {
     private static final long serialVersionUID = -3150742093136571040L;

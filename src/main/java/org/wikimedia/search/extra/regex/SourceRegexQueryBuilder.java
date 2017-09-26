@@ -1,12 +1,14 @@
 package org.wikimedia.search.extra.regex;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constructorArg;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -24,13 +26,13 @@ import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.util.FieldValues;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-
-import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constructorArg;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * Builds source_regex filters.
@@ -62,16 +64,16 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         parser.declareBoolean(SourceRegexQueryBuilder::loadFromSource, LOAD_FROM_SOURCE);
         parser.declareString(SourceRegexQueryBuilder::ngramField, NGRAM_FIELD);
         parser.declareInt(SourceRegexQueryBuilder::gramSize, GRAM_SIZE);
-        parser.declareInt((x,i) -> x.settings().maxExpand(i), Settings.MAX_EXPAND);
-        parser.declareInt((x,i) -> x.settings().maxStatesTraced(i), Settings.MAX_STATES_TRACED);
-        parser.declareInt((x,i) -> x.settings().maxDeterminizedStates(i), Settings.MAX_DETERMINIZED_STATES);
-        parser.declareInt((x,i) -> x.settings().maxNgramsExtracted(i), Settings.MAX_NGRAMS_EXTRACTED);
-        parser.declareInt((x,i) -> x.settings().maxInspect(i), Settings.MAX_INSPECT);
-        parser.declareBoolean((x,b) -> x.settings().caseSensitive(b), Settings.CASE_SENSITIVE);
-        parser.declareString((x,s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
-        parser.declareBoolean((x,b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
-        parser.declareInt((x,i) -> x.settings().maxNgramClauses(i), Settings.MAX_NGRAM_CLAUSES);
-        parser.declareString((x,s) -> x.settings().timeout(s), Settings.TIMEOUT);
+        parser.declareInt((x, i) -> x.settings().maxExpand(i), Settings.MAX_EXPAND);
+        parser.declareInt((x, i) -> x.settings().maxStatesTraced(i), Settings.MAX_STATES_TRACED);
+        parser.declareInt((x, i) -> x.settings().maxDeterminizedStates(i), Settings.MAX_DETERMINIZED_STATES);
+        parser.declareInt((x, i) -> x.settings().maxNgramsExtracted(i), Settings.MAX_NGRAMS_EXTRACTED);
+        parser.declareInt((x, i) -> x.settings().maxInspect(i), Settings.MAX_INSPECT);
+        parser.declareBoolean((x, b) -> x.settings().caseSensitive(b), Settings.CASE_SENSITIVE);
+        parser.declareString((x, s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
+        parser.declareBoolean((x, b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
+        parser.declareInt((x, i) -> x.settings().maxNgramClauses(i), Settings.MAX_NGRAM_CLAUSES);
+        parser.declareString((x, s) -> x.settings().timeout(s), Settings.TIMEOUT);
         declareStandardFields(parser);
         return parser;
     }
@@ -232,16 +234,16 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
     @Getter
     @EqualsAndHashCode
     static class Settings {
-        final static ParseField MAX_EXPAND = new ParseField("max_expand");
-        final static ParseField MAX_STATES_TRACED = new ParseField("max_states_traced");
-        final static ParseField MAX_DETERMINIZED_STATES = new ParseField("max_determinized_states");
-        final static ParseField MAX_NGRAMS_EXTRACTED = new ParseField("max_ngrams_extracted");
-        final static ParseField MAX_INSPECT = new ParseField("max_inspect");
-        final static ParseField CASE_SENSITIVE = new ParseField("case_sensitive");
-        final static ParseField LOCALE = new ParseField("locale");
-        final static ParseField REJECT_UNACCELERATED = new ParseField("reject_unaccelerated");
-        final static ParseField MAX_NGRAM_CLAUSES = new ParseField("max_ngram_clauses");
-        final static ParseField TIMEOUT = new ParseField("timeout");
+        static final ParseField MAX_EXPAND = new ParseField("max_expand");
+        static final ParseField MAX_STATES_TRACED = new ParseField("max_states_traced");
+        static final ParseField MAX_DETERMINIZED_STATES = new ParseField("max_determinized_states");
+        static final ParseField MAX_NGRAMS_EXTRACTED = new ParseField("max_ngrams_extracted");
+        static final ParseField MAX_INSPECT = new ParseField("max_inspect");
+        static final ParseField CASE_SENSITIVE = new ParseField("case_sensitive");
+        static final ParseField LOCALE = new ParseField("locale");
+        static final ParseField REJECT_UNACCELERATED = new ParseField("reject_unaccelerated");
+        static final ParseField MAX_NGRAM_CLAUSES = new ParseField("max_ngram_clauses");
+        static final ParseField TIMEOUT = new ParseField("timeout");
 
         private static final int DEFAULT_MAX_EXPAND = 4;
         private static final int DEFAULT_MAX_STATES_TRACED = 10000;
@@ -312,7 +314,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
 
         private long timeout;
 
-        public Settings() {
+        Settings() {
         }
 
         private Settings(StreamInput in) throws IOException {
@@ -350,6 +352,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             out.writeVLong(timeout);
         }
 
+        @SuppressWarnings({"NPathComplexity", "CyclomaticComplexity"})
         public XContentBuilder innerXContent(XContentBuilder builder, Params params) throws IOException {
             if (maxExpand != DEFAULT_MAX_EXPAND) {
                 builder.field(MAX_EXPAND.getPreferredName(), maxExpand);

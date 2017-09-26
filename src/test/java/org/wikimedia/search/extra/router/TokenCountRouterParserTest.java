@@ -1,5 +1,11 @@
 package org.wikimedia.search.extra.router;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
+
+import java.io.IOException;
+import java.util.Optional;
+
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
 import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
@@ -8,12 +14,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.Test;
 import org.wikimedia.search.extra.QueryBuilderTestUtils;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
-
-import java.io.IOException;
-import java.util.Optional;
-
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 public class TokenCountRouterParserTest extends LuceneTestCase {
     @Test

@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.regex;
 
-import lombok.EqualsAndHashCode;
+import java.io.IOException;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -14,24 +15,25 @@ import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
 
-import java.io.IOException;
+import lombok.EqualsAndHashCode;
 
 /**
  * Accelerated version of the source_regex query.
  */
-@EqualsAndHashCode( callSuper = true )
+@EqualsAndHashCode(callSuper = true)
 class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     private final Query approximation;
 
     /**
-     * A new accelerated regex query
+     * A new accelerated regex query.
+     *
      * @param rechecker the rechecker used to perform the costly regex on doc content
      * @param fieldPath the path to the field where the doc content is stored
      * @param loader the loader used to load the field content
      * @param settings the regex settings
      * @param approximation the approximation query build over the trigram index
      */
-    public AcceleratedSourceRegexQuery(Rechecker rechecker, String fieldPath, Loader loader, Settings settings, Query approximation) {
+    AcceleratedSourceRegexQuery(Rechecker rechecker, String fieldPath, Loader loader, Settings settings, Query approximation) {
         super(rechecker, fieldPath, loader, settings);
         this.approximation = approximation;
     }

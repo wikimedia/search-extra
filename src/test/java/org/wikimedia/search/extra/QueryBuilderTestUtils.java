@@ -1,5 +1,11 @@
 package org.wikimedia.search.extra;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -9,17 +15,11 @@ import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.plugins.SearchPlugin.QuerySpec;
 import org.elasticsearch.search.SearchModule;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 /**
- * Various test utils to parse json queries
+ * Various test utils to parse json queries.
  */
 public class QueryBuilderTestUtils {
-    public final static QueryBuilderTestUtils FULLY_FEATURED = new QueryBuilderTestUtils();
+    public static final QueryBuilderTestUtils FULLY_FEATURED = new QueryBuilderTestUtils();
 
     private final NamedXContentRegistry xContentRegistry;
 

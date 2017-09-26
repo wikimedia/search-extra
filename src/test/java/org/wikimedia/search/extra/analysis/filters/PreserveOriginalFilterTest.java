@@ -1,7 +1,17 @@
 package org.wikimedia.search.extra.analysis.filters;
 
-import com.google.common.base.Charsets;
-import com.google.common.primitives.Ints;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.BaseTokenStreamTestCase;
 import org.apache.lucene.analysis.CharArraySet;
@@ -24,13 +34,8 @@ import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import com.google.common.base.Charsets;
+import com.google.common.primitives.Ints;
 
 public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     private final int shingleMaxSize = random().nextInt(3) + 3;
@@ -42,10 +47,10 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             TokenStream ts = ws.tokenStream("", input);
             assertTokenStreamContents(ts,
                     new String[]{"hello", "Hello", "world", "World"},
-                    new int[]{0,0,10,10}, // start offsets
-                    new int[]{5,5,15,15}, // end offsets
+                    new int[]{0, 0, 10, 10}, // start offsets
+                    new int[]{5, 5, 15, 15}, // end offsets
                     null, // types, not supported
-                    new int[]{1,0,2,0}, // pos increments
+                    new int[]{1, 0, 2, 0}, // pos increments
                     null, // pos size (unsupported)
                     15, // last offset
                     null, //keywordAtts, (unsupported)
@@ -58,8 +63,8 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new WhitespaceTokenizer();
-                TokenStream ts = new StopFilter(tok, new CharArraySet(new HashSet<>(Arrays.asList("the")), true));
-                ts = new PreserveOriginalFilter(ts, TokenFilterFactory.forName("lowercase", Collections.<String,String>emptyMap()));
+                TokenStream ts = new StopFilter(tok, new CharArraySet(new HashSet<>(singletonList("the")), true));
+                ts = new PreserveOriginalFilter(ts, TokenFilterFactory.forName("lowercase", emptyMap()));
                 return new TokenStreamComponents(tok, ts);
             }
         };
@@ -74,10 +79,10 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             TokenStream ts = ws.tokenStream("", input);
             assertTokenStreamContents(ts,
                     new String[]{"hello", "Hello", "world", "World"},
-                    new int[]{0,0,10,10}, // start offsets
-                    new int[]{5,5,15,15}, // end offsets
+                    new int[]{0, 0, 10, 10}, // start offsets
+                    new int[]{5, 5, 15, 15}, // end offsets
                     null, // types, not supported
-                    new int[]{1,0,2,0}, // pos increments
+                    new int[]{1, 0, 2, 0}, // pos increments
                     null, // pos size (unsupported)
                     15, // last offset
                     null, //keywordAtts, (unsupported)
@@ -91,7 +96,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new WhitespaceTokenizer();
                 TokenStream ts = new PreserveOriginalFilter.Recorder(tok);
-                ts = new StopFilter(ts, new CharArraySet(new HashSet<>(Arrays.asList("the")), true));
+                ts = new StopFilter(ts, new CharArraySet(new HashSet<>(asList("the")), true));
                 ts = new LowerCaseFilter(ts);
                 ts = new PreserveOriginalFilter(ts);
                 return new TokenStreamComponents(tok, ts);
@@ -117,8 +122,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     }
 
     /**
-     * Test that the preserve original filters work like other
-     * preserve strategies:
+     * Test that the preserve original filters work like other preserve strategies.
      * - ascii folding
      * - KeywordRepeatFilter + RemoveDuplicatesTokenFilter
      * @throws IOException
@@ -168,15 +172,15 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new StandardTokenizer();
-                TokenStream ts = new StopFilter(tok,FrenchAnalyzer.getDefaultStopSet());
+                TokenStream ts = new StopFilter(tok, FrenchAnalyzer.getDefaultStopSet());
                 ts = new KeywordRepeatFilter(ts);
                 // Keyword repeat emits token in the wrong order (returns the preserved first)
                 // this code switches token by pair
                 ts = new TokenFilter(ts) {
-                    private State state = null;
+                    private @Nullable State state;
                     private final PositionIncrementAttribute pattr = getAttribute(PositionIncrementAttribute.class);
                     @Override
-                    public final boolean incrementToken() throws IOException {
+                    public boolean incrementToken() throws IOException {
                         if (state != null) {
                             restoreState(state);
                             pattr.setPositionIncrement(0);
@@ -248,8 +252,8 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new StandardTokenizer();
-                TokenStream ts = new StopFilter(tok,FrenchAnalyzer.getDefaultStopSet());
-                ts = new ASCIIFoldingFilter(ts ,true);
+                TokenStream ts = new StopFilter(tok, FrenchAnalyzer.getDefaultStopSet());
+                ts = new ASCIIFoldingFilter(ts, true);
                 return new TokenStreamComponents(tok, ts);
             }
         };
@@ -277,7 +281,15 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             }
             expected.end();
             finalOffset = oattr.endOffset();
-            assertTokenStreamContents(actual, output.toArray(new String[0]), Ints.toArray(startOffsets), Ints.toArray(endOffsets), null, Ints.toArray(posInc), null, finalOffset, null, true);
+            assertTokenStreamContents(actual,
+                    output.toArray(new String[0]),
+                    Ints.toArray(startOffsets),
+                    Ints.toArray(endOffsets),
+                    null, Ints.toArray(posInc),
+                    null,
+                    finalOffset,
+                    null,
+                    true);
         }
     }
 }

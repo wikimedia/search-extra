@@ -6,6 +6,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 /**
  * Implements Set-like behavior for lists.
  */
@@ -37,8 +39,8 @@ public class SetHandler implements ChangeHandler<Object> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public ChangeHandler.Result handle(Object oldValue, Object newValue) {
+    @SuppressWarnings({"unchecked", "CyclomaticComplexity", "NPathComplexity"})
+    public ChangeHandler.Result handle(@Nullable Object oldValue, @Nullable Object newValue) {
         if (newValue == null) {
             return Changed.forBoolean(oldValue == null, null);
         }

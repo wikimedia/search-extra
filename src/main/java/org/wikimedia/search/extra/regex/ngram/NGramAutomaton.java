@@ -1,8 +1,14 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import com.google.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -17,13 +23,10 @@ import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import com.google.common.collect.ImmutableSet;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 /**
  * A finite automaton who's transitions are ngrams that must be in the string or
@@ -139,7 +142,8 @@ public class NGramAutomaton {
         int totalLeavingState = source.initTransition(currentState, transition);
         for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
             source.getNextTransition(transition);
-            int min, max;
+            int min;
+            int max;
             if (transition.max - transition.min >= maxExpand) {
                 // Consider this transition useless.
                 min = 0;
@@ -183,7 +187,8 @@ public class NGramAutomaton {
             }
             for (int currentLeavingState = 0; currentLeavingState < totalLeavingState; currentLeavingState++) {
                 source.getNextTransition(transition);
-                int min, max;
+                int min;
+                int max;
                 if (transition.max - transition.min >= maxExpand) {
                     // Consider this transition useless.
                     min = 0;
@@ -256,11 +261,11 @@ public class NGramAutomaton {
      * and prefix.
      */
     @EqualsAndHashCode(of = { "prefix", "sourceState" })
-    private static class NGramState implements ExpressionSource<String> {
+    private static final class NGramState implements ExpressionSource<String> {
         /**
          * We use the 0 char to stand in for code points we can't match.
          */
-        private static final String INVALID_CHAR = new String(new int[] { 0 }, 0, 1);
+        private static final String INVALID_CHAR = new String(new int[] {0}, 0, 1);
         /**
          * We print code points we can't match as double underscores.
          */
@@ -295,7 +300,7 @@ public class NGramAutomaton {
         /**
          * Is this state in the path being turned into an expression.
          */
-        private boolean inPath = false;
+        private boolean inPath;
 
         private NGramState(int sourceState, String prefix, boolean initial) {
             this.sourceState = sourceState;
@@ -335,7 +340,7 @@ public class NGramAutomaton {
         }
     }
 
-    private static class NGramTransition implements ExpressionSource<String> {
+    private static final class NGramTransition implements ExpressionSource<String> {
         private final NGramState from;
         private final NGramState to;
         @Nullable private final String ngram;

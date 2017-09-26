@@ -1,5 +1,10 @@
 package org.wikimedia.search.extra.levenshtein;
 
+import java.io.IOException;
+import java.util.Objects;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.spell.LevensteinDistance;
@@ -11,10 +16,6 @@ import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.search.lookup.FieldLookup;
 import org.elasticsearch.search.lookup.LeafSearchLookup;
 import org.elasticsearch.search.lookup.SearchLookup;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Objects;
 
 /**
  * Function score based on levenshtein distance.

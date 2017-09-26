@@ -1,8 +1,7 @@
 package org.wikimedia.search.extra.regex.ngram;
 
-import com.carrotsearch.randomizedtesting.RandomizedRunner;
-import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
+import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
+
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.AutomatonTestUtil;
@@ -17,7 +16,9 @@ import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.Or;
 import org.wikimedia.search.extra.regex.expression.True;
 
-import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
+import com.carrotsearch.randomizedtesting.RandomizedRunner;
+import com.carrotsearch.randomizedtesting.RandomizedTest;
+import com.carrotsearch.randomizedtesting.annotations.Repeat;
 
 @RunWith(RandomizedRunner.class)
 public class NGramAutomatonTest extends RandomizedTest {
@@ -197,6 +198,7 @@ public class NGramAutomatonTest extends RandomizedTest {
 
     @Test
     @Repeat(iterations = 100)
+    @SuppressWarnings("IllegalCatch")
     public void randomRegexp() {
         // Some of the regex strings don't actually compile so just retry until we get a good one.
         String str;

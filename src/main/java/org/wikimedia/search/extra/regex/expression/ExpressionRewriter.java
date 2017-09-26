@@ -1,16 +1,17 @@
 package org.wikimedia.search.extra.regex.expression;
 
-import com.google.common.collect.ImmutableSet;
-
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
- * Boolean expression rewriter
+ * Boolean expression rewriter.
+ *
  * @param <T> type holding leaves
  */
 public class ExpressionRewriter<T> {
-    public final static int MAX_BOOLEAN_CLAUSES = 1024;
+    public static final int MAX_BOOLEAN_CLAUSES = 1024;
 
     private final Expression<T> expression;
 

@@ -1,17 +1,7 @@
 package org.wikimedia.search.extra.latency;
 
-import com.google.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
-import org.elasticsearch.common.component.AbstractLifecycleComponent;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.shard.SearchOperationListener;
-import org.elasticsearch.search.internal.SearchContext;
-import org.elasticsearch.threadpool.ThreadPool;
+import static java.util.stream.Collectors.toList;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -22,7 +12,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-import static java.util.stream.Collectors.toList;
+import javax.annotation.Nullable;
+
+import org.HdrHistogram.Histogram;
+import org.HdrHistogram.Recorder;
+import org.elasticsearch.common.component.AbstractLifecycleComponent;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.shard.SearchOperationListener;
+import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.threadpool.ThreadPool;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class SearchLatencyListener extends AbstractLifecycleComponent implements SearchOperationListener, SearchLatencyProbe {
     // Keep a rolling histogram over the last minute with 5 second rotation. This allows

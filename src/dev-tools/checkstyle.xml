@@ -11,15 +11,15 @@
             <property name="tokens" value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, DO_WHILE, EQUAL, GE, GT, LAMBDA, LAND, LCURLY, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN, LITERAL_SWITCH, LITERAL_SYNCHRONIZED, LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION, RCURLY, SL, SLIST, SL_ASSIGN, SR, SR_ASSIGN, STAR_ASSIGN, LITERAL_ASSERT, TYPE_EXTENSION_AND"/>
         </module>
         <module name="AvoidStarImport"/>
-        <module name="CustomImportOrder">
-            <property name="customImportOrderRules"
-                      value="THIRD_PARTY_PACKAGE###SPECIAL_IMPORTS###STANDARD_JAVA_PACKAGE###STATIC"/>
-            <property name="specialImportsRegExp" value="^javax\."/>
-            <property name="standardPackageRegExp" value="^java\."/>
-            <property name="sortImportsInGroupAlphabetically" value="true"/>
-            <property name="separateLineBetweenGroups" value="false"/>
-        </module>
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
+        <module name="ImportOrder">
+            <property name="option" value="top"/>
+            <property name="groups" value="/^java\./,javax,org,com,"/>
+            <property name="ordered" value="false"/>
+            <property name="caseSensitive" value="false"/>
+            <property name="separated" value="true"/>
+            <property name="sortStaticImportsAlphabetically" value="true"/>
+        </module>
     </module>
 </module>

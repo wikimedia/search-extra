@@ -1,17 +1,18 @@
 package org.wikimedia.search.extra.util;
 
-import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.lucene.index.IndexReader;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.support.XContentMapValues;
 import org.elasticsearch.index.fieldvisitor.CustomFieldsVisitor;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Hub for fetching field values.

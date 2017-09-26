@@ -1,5 +1,15 @@
 package org.wikimedia.search.extra.router;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.mockito.Mockito.mock;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -20,16 +30,6 @@ import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
 import org.wikimedia.search.extra.latency.SearchLatencyProbe;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedConditionType;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.mockito.Mockito.mock;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
 
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder> {
@@ -92,7 +92,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         DegradedRouterQueryBuilder builder = newBuilder();
         QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
-        for (int i = randomIntBetween(1,10); i > 0; i--) {
+        for (int i = randomIntBetween(1, 10); i > 0; i--) {
             addCondition(builder, new WrapperQueryBuilder(toRewrite.toString()));
         }
         QueryBuilder rewrittenBuilder = QueryBuilder.rewriteQuery(builder, createShardContext());

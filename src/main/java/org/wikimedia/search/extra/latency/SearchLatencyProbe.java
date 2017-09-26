@@ -1,14 +1,15 @@
 package org.wikimedia.search.extra.latency;
 
-import lombok.Getter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.unit.TimeValue;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import lombok.Getter;
 
 public interface SearchLatencyProbe {
 

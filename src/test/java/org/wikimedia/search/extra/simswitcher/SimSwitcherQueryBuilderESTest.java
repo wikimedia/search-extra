@@ -16,6 +16,15 @@
 
 package org.wikimedia.search.extra.simswitcher;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.similarities.BM25Similarity;
@@ -26,15 +35,6 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import static org.hamcrest.CoreMatchers.instanceOf;
 
 public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwitcherQueryBuilder> {
 
@@ -49,7 +49,7 @@ public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwit
     }
 
     /**
-     * Create the query that is being tested
+     * Create the query that is being tested.
      */
     @Override
     protected SimSwitcherQueryBuilder doCreateTestQueryBuilder() {

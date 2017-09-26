@@ -4,7 +4,7 @@ import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.RunAutomaton;
 
 class ContainsCharacterRunAutomaton extends RunAutomaton {
-    public ContainsCharacterRunAutomaton(Automaton a) {
+    ContainsCharacterRunAutomaton(Automaton a) {
         super(a, Character.MAX_CODE_POINT);
     }
 
@@ -53,8 +53,8 @@ class ContainsCharacterRunAutomaton extends RunAutomaton {
         return cp;
     }
 
-    public static class LowerCasing extends ContainsCharacterRunAutomaton {
-        public LowerCasing(Automaton a) {
+    static class LowerCasing extends ContainsCharacterRunAutomaton {
+        LowerCasing(Automaton a) {
             super(a);
         }
 
@@ -64,8 +64,8 @@ class ContainsCharacterRunAutomaton extends RunAutomaton {
         }
     }
 
-    public static class GreekLowerCasing extends ContainsCharacterRunAutomaton {
-        public GreekLowerCasing(Automaton a) {
+    static class GreekLowerCasing extends ContainsCharacterRunAutomaton {
+        GreekLowerCasing(Automaton a) {
             super(a);
         }
 
@@ -74,6 +74,7 @@ class ContainsCharacterRunAutomaton extends RunAutomaton {
          * Lucene's GreekLowerCaseFilter's lowerCase method. If that method had
          * been public and static we wouldn't need to do this.
          */
+        @SuppressWarnings("CyclomaticComplexity")
         @Override
         protected int lowerCaseIfNeeded(int cp) {
             switch (cp) {

@@ -1,5 +1,19 @@
 package org.wikimedia.search.extra.regex;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertFailures;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchHits;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsString;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -10,20 +24,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.ExecutionException;
-
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertFailures;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchHits;
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.containsString;
 
 public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTest {
     @Test
@@ -115,6 +115,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     @Test
+    @SuppressWarnings("deprecation") // Still to test maxInspect even if deprecated
     public void maxInspectLimitsNumberOfMatches() throws InterruptedException, ExecutionException, IOException {
         setup();
         indexRandom(true, doc("findme", "test"));
@@ -211,7 +212,10 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         */
         // When running with a timeout set on the search body no assertion should fail
         // This query should match no docs
-        SearchResponse resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found").timeout("1ms")).setTimeout(TimeValue.timeValueSeconds(1)).setSize(10).get();
+        SearchResponse resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found").timeout("1ms"))
+                .setTimeout(TimeValue.timeValueSeconds(1))
+                .setSize(10)
+                .get();
         assertTrue(resp.isTimedOut());
 
         resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found")).setTimeout(TimeValue.timeValueMillis(1)).setSize(10).get();
@@ -327,7 +331,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     public void indexLowerCaseTestCases() throws InterruptedException, ExecutionException {
-        indexRandom(true,//
+        indexRandom(true,
                 /*
                  * This is ά which lowercases to itself with a regular lowercase
                  * regeme but in Greek it lowercases to α.

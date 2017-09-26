@@ -1,5 +1,14 @@
 package org.wikimedia.search.extra.regex;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Locale;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Query;
@@ -16,15 +25,6 @@ import org.wikimedia.search.extra.MockPluginWithoutNativeScript;
 import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.util.FieldValues;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Locale;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
-
 public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
         return Collections.singleton(MockPluginWithoutNativeScript.class);
@@ -38,11 +38,12 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
                 new CompressedXContent("{\"properties\":{" +
                         "\"" + MY_FIELD + "\":{\"type\":\"text\" }," +
                         "\"" + MY_FIELD_NGRAM + "\":{\"type\":\"text\" }" +
-                        "}}" ),
+                        "}}"),
                 MapperService.MergeReason.MAPPING_UPDATE, false);
     }
 
     @Override
+    @SuppressWarnings({"deprecation", "NPathComplexity", "CyclomaticComplexity"}) // still need to test maxInspect until we remove it
     protected SourceRegexQueryBuilder doCreateTestQueryBuilder() {
         SourceRegexQueryBuilder builder = new SourceRegexQueryBuilder(MY_FIELD, "ramdom[reg]ex");
         if (randomBoolean()) {
@@ -112,6 +113,7 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
         }
     }
 
+    @SuppressWarnings({"deprecation"}) // still need to test maxInspect until we remove it
     public void testParseDocExample() throws IOException {
         String json = "{\"source_regex\": {\n" +
                 "   \"field\": \"" + MY_FIELD + "\",\n" +

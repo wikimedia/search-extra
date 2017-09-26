@@ -1,13 +1,13 @@
 package org.wikimedia.search.extra.latency;
 
+import java.io.IOException;
+
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
-
-import java.io.IOException;
 
 public class RestGetLatencyStats extends BaseRestHandler {
     public RestGetLatencyStats(Settings settings, RestController controller) {

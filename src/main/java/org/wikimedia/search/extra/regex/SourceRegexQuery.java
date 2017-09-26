@@ -1,9 +1,12 @@
 package org.wikimedia.search.extra.regex;
 
-import com.google.common.annotations.VisibleForTesting;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import java.io.IOException;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.stream.StreamSupport;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
@@ -19,10 +22,11 @@ import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Objects;
+import com.google.common.annotations.VisibleForTesting;
+
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @EqualsAndHashCode(callSuper = false)
 @VisibleForTesting
@@ -37,8 +41,9 @@ public class SourceRegexQuery extends Query {
     private final Rechecker rechecker;
     @Nullable private final Analyzer ngramAnalyzer;
 
-    public SourceRegexQuery(String fieldPath, @Nullable String ngramFieldPath, String regex, FieldValues.Loader loader, Settings settings,
-            int gramSize, @Nullable Analyzer ngramAnalyzer) {
+    public SourceRegexQuery(String fieldPath, @Nullable String ngramFieldPath, String regex,
+                            FieldValues.Loader loader, Settings settings, int gramSize,
+                            @Nullable Analyzer ngramAnalyzer) {
         this.fieldPath = fieldPath;
         this.ngramFieldPath = ngramFieldPath;
         this.regex = Objects.requireNonNull(regex);
@@ -59,6 +64,7 @@ public class SourceRegexQuery extends Query {
     }
 
     @Override
+    @SuppressWarnings("CyclomaticComplexity")
     public Query rewrite(IndexReader reader) throws IOException {
         // TODO: investigate moving this logic inside the Builder
         // Rewrite the query as an AcceleratedSourceRegexQuery or UnacceleratedSourceRegexQuery
@@ -212,15 +218,9 @@ public class SourceRegexQuery extends Query {
 
         @Override
         public boolean recheck(Iterable<String> values) {
-            for (String value : values) {
-                if (!settings.caseSensitive()) {
-                    value = value.toLowerCase(settings.locale());
-                }
-                if (getCharRun().contains(value)) {
-                    return true;
-                }
-            }
-            return false;
+            return StreamSupport.stream(values.spliterator(), false)
+                .map((s) -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
+                .anyMatch((s) -> getCharRun().contains(s));
         }
 
         private ContainsCharacterRunAutomaton getCharRun() {
@@ -264,15 +264,9 @@ public class SourceRegexQuery extends Query {
          */
         @Override
         public boolean recheck(Iterable<String> values) {
-            for (String value : values) {
-                if (!settings.caseSensitive()) {
-                    value = value.toLowerCase(settings.locale());
-                }
-                if (getCharRun().run(value)) {
-                    return true;
-                }
-            }
-            return false;
+            return StreamSupport.stream(values.spliterator(), false)
+                    .map((s) -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
+                    .anyMatch((s) -> getCharRun().run(s));
         }
 
         private CharacterRunAutomaton getCharRun() {

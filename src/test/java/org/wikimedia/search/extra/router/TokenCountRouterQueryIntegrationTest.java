@@ -1,16 +1,16 @@
 package org.wikimedia.search.extra.router;
 
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.junit.Test;
-import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
-
-import java.io.IOException;
-
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoSearchHits;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchHits;
+
+import java.io.IOException;
+
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.junit.Test;
+import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
 public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrationTest {
     private void init() throws IOException {

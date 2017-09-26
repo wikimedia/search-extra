@@ -1,6 +1,10 @@
 package org.wikimedia.search.extra.regex;
 
-import lombok.EqualsAndHashCode;
+import java.io.IOException;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -21,15 +25,13 @@ import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.List;
+import lombok.EqualsAndHashCode;
 
 /**
  * Unaccelerated source_regex query.
  * It will scan all the docs in the index.
  */
-@EqualsAndHashCode( callSuper = false )
+@EqualsAndHashCode(callSuper = false)
 class UnacceleratedSourceRegexQuery extends Query {
     protected final Rechecker rechecker;
     protected final String fieldPath;
@@ -43,13 +45,14 @@ class UnacceleratedSourceRegexQuery extends Query {
     protected final long preventCache = System.currentTimeMillis();
 
     /**
-     * A new accelerated regex query
+     * A new accelerated regex query.
+     *
      * @param rechecker the rechecker used to perform the costly regex on doc content
      * @param fieldPath the path to the field where the doc content is stored
      * @param loader the loader used to load the field content
      * @param settings the regex settings
      */
-    public UnacceleratedSourceRegexQuery(Rechecker rechecker, String fieldPath, Loader loader, Settings settings) {
+    UnacceleratedSourceRegexQuery(Rechecker rechecker, String fieldPath, Loader loader, Settings settings) {
         super();
         this.rechecker = rechecker;
         this.fieldPath = fieldPath;
@@ -123,14 +126,14 @@ class UnacceleratedSourceRegexQuery extends Query {
     }
 
     /**
-     * Horrible hack to workaround the fact that TimeLimitingCollector.TimeExceededException has a private ctor
+     * Horrible hack to workaround the fact that TimeLimitingCollector.TimeExceededException has a private ctor.
      * FIXME: find proper solutions to handle timeouts
      */
     protected static class TimeoutChecker {
         @Nullable private LeafCollector collector;
         private final Collector topCollector;
 
-        public TimeoutChecker(long timeout, Counter counter) {
+        TimeoutChecker(long timeout, Counter counter) {
             if (timeout > 0) {
                 topCollector = new TimeLimitingCollector(NULL_COLLECTOR, counter, timeout);
             } else {
@@ -138,15 +141,16 @@ class UnacceleratedSourceRegexQuery extends Query {
             }
         }
 
-        public TimeoutChecker(long timeout) {
+        TimeoutChecker(long timeout) {
             this(timeout, COUNTER);
         }
 
         public void check(int docId) throws IOException {
+            assert collector != null;
             collector.collect(docId);
         }
 
-        public void nextSegment(LeafReaderContext context) throws IOException {
+        void nextSegment(LeafReaderContext context) throws IOException {
             collector = topCollector.getLeafCollector(context);
         }
 

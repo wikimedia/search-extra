@@ -16,16 +16,17 @@
 
 package org.wikimedia.search.extra.simswitcher;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import static java.util.Objects.requireNonNull;
+
+import java.io.IOException;
+import java.util.Objects;
+
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.similarities.Similarity;
 
-import java.io.IOException;
-import java.util.Objects;
-
-import static java.util.Objects.requireNonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Query wrapper that overrides the similarity provided
