@@ -14,7 +14,7 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 
-public class DegradedRouterQueryBuilderParserTest extends LuceneTestCase {
+public class DegradedRouterQueryBuilderESTest extends LuceneTestCase {
     @Test
     public void testParseExample() throws IOException {
         String json = "{\"degraded_router\": {\n" +

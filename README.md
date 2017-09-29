@@ -12,6 +12,9 @@ all documents.
 * [token_count_router](docs/token_count_router.md) - Simple query wrapper that
 evaluates some conditions based on the number of tokens of the input query.
 
+* [simswitcher](docs/simswitcher.md) - Simple query wrapper that allows to override
+similarity settings at query time (expert: use with caution).
+
 Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but
 supports configurable sloppiness. New in 1.5.0, 1.4.1, and 1.3.1.

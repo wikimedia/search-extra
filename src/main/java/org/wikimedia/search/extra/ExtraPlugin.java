@@ -38,6 +38,7 @@ import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder;
 import org.wikimedia.search.extra.router.SystemLoad;
 import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
+import org.wikimedia.search.extra.simswitcher.SimSwitcherQueryBuilder;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
 import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
@@ -102,7 +103,8 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
                 new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
                 new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
                 new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent),
-                new QuerySpec<>(DegradedRouterQueryBuilder.NAME, (in) -> new DegradedRouterQueryBuilder(in, loadStats), (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats))
+                new QuerySpec<>(DegradedRouterQueryBuilder.NAME, (in) -> new DegradedRouterQueryBuilder(in, loadStats), (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats)),
+                new QuerySpec<>(SimSwitcherQueryBuilder.NAME, SimSwitcherQueryBuilder::new, SimSwitcherQueryBuilder::fromXContent)
         );
     }
 
