@@ -28,7 +28,6 @@ import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory;
-import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
 import org.wikimedia.search.extra.latency.LatencyStatsAction;
 import org.wikimedia.search.extra.latency.RestGetLatencyStats;
 import org.wikimedia.search.extra.latency.SearchLatencyListener;
@@ -101,7 +100,6 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
     public List<QuerySpec<?>> getQueries() {
         return asList(
                 new QuerySpec<>(SourceRegexQueryBuilder.NAME, SourceRegexQueryBuilder::new, SourceRegexQueryBuilder::fromXContent),
-                new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
                 new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent),
                 new QuerySpec<>(DegradedRouterQueryBuilder.NAME, (in) -> new DegradedRouterQueryBuilder(in, loadStats), (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats)),
                 new QuerySpec<>(SimSwitcherQueryBuilder.NAME, SimSwitcherQueryBuilder::new, SimSwitcherQueryBuilder::fromXContent)
