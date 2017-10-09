@@ -3,22 +3,21 @@ package org.wikimedia.search.extra.superdetectnoop;
 import static org.apache.lucene.util.TestUtil.randomSimpleString;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.util.CollectionUtil;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
-import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Ordering;
 
 /**
  * Runs Monte Carlo method to help you pick the best parameters for
@@ -28,12 +27,7 @@ import com.google.common.collect.Ordering;
 public class SetHandlerMonteCarlo extends RandomizedTest {
     private static final Logger log = ESLoggerFactory.getLogger("monte carlo");
     private static final int MAX_LIST = 10000;
-    private static final Function<List<Integer>, Integer> ORDER = new Function<List<Integer>, Integer>() {
-        @Override
-        public Integer apply(List<Integer> arg0) {
-            return arg0.get(0);
-        }
-    };
+    private static final Comparator<List<Integer>> COMPARATOR = Comparator.comparingInt(l -> l.get(0));
 
     @Test
     public void throwDarts() {
@@ -50,7 +44,7 @@ public class SetHandlerMonteCarlo extends RandomizedTest {
             int time = (int) printTime(minConvert, maxConvert, maxKeepAsList);
             times.add(ImmutableList.of(time, minConvert, maxConvert, maxKeepAsList));
         }
-        Collections.sort(times, Ordering.natural().onResultOf(ORDER));
+        CollectionUtil.timSort(times, COMPARATOR);
         for (Object t : times) {
             log.info("{}", t);
         }
