@@ -13,6 +13,8 @@
     <version>5.5.2.4-SNAPSHOT</version>
     <description>Extra queries and filters for Elasticsearch.</description>
 
+    <url>https://doc.wikimedia.org/search-extra/extra/</url>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -41,14 +43,6 @@
         <system>GitHub</system>
         <url>https://github.com/wikimedia/extra/issues</url>
     </issueManagement>
-
-    <distributionManagement>
-        <site>
-            <id>search-extra.site</id>
-            <name>Search extra documentation</name>
-            <url>https://doc.wikimedia.org/search-extra/extra/</url>
-        </site>
-    </distributionManagement>
 
     <properties>
         <elasticsearch.version>5.5.2</elasticsearch.version>
