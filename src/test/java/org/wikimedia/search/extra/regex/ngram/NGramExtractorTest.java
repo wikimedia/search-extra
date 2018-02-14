@@ -1,5 +1,8 @@
 package org.wikimedia.search.extra.regex.ngram;
 
+import static org.junit.Assert.assertEquals;
+import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
+
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.RegExp;
@@ -7,9 +10,6 @@ import org.junit.Test;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Leaf;
 import org.wikimedia.search.extra.regex.expression.True;
-
-import static org.junit.Assert.assertEquals;
-import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
 public class NGramExtractorTest {
     @Test
