@@ -41,6 +41,7 @@ import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
 import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory;
+import org.wikimedia.search.extra.analysis.filters.SlovakStemmerFilterFactory;
 import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
 import org.wikimedia.search.extra.latency.LatencyStatsAction;
 import org.wikimedia.search.extra.latency.RestGetLatencyStats;
@@ -116,6 +117,7 @@ public class ExtraPlugin extends Plugin implements SearchPlugin, AnalysisPlugin,
         Map<String, AnalysisProvider<TokenFilterFactory>> map = new HashMap<>();
         map.put("preserve_original", PreserveOriginalFilterFactory::new);
         map.put("preserve_original_recorder", PreserveOriginalFilterFactory.RecorderFactory::new);
+        map.put("slovak_stemmer", SlovakStemmerFilterFactory::new);
         return Collections.unmodifiableMap(map);
     }
 
