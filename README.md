@@ -11,7 +11,6 @@ expression filter that is generally much much faster than sequentially checking
 all documents.
 * [token_count_router](docs/token_count_router.md) - Simple query wrapper that
 evaluates some conditions based on the number of tokens of the input query.
-
 * [simswitcher](docs/simswitcher.md) - Simple query wrapper that allows to override
 similarity settings at query time (expert: use with caution).
 
@@ -23,6 +22,8 @@ Analysis:
 * [preserve_original](docs/preserve_original.md) - A token filter that wraps a
 filter chain to keep and emit the original term at the same position. New in
 2.3.4.
+* [slovak_stemmer](docs/slovak_stemmer.md) - A token filter that provides
+stemming for the Slovak language. New in 5.5.2.
 
 Installation
 ------------
