@@ -16,8 +16,8 @@ index :
                 tokenizer : standard
                 filter : [lowercase, skstemmer]
         filter :
-        	skstemmer :
-        		type: slovak_stemmer
+                skstemmer :
+                        type: slovak_stemmer
 ```
 
 This will produce the token `slovník` seven times for the input text

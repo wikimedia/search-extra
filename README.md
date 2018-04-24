@@ -23,14 +23,14 @@ Analysis:
 filter chain to keep and emit the original term at the same position. New in
 2.3.4.
 * [slovak_stemmer](docs/slovak_stemmer.md) - A token filter that provides
-stemming for the Slovak language. New in 5.5.2.
+stemming for the Slovak language. New in 5.5.2.4.
 
 Installation
 ------------
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 5.5.2.3, master branch           | 5.5.2           |
+| 5.5.2.4, master branch           | 5.5.2           |
 | 5.5.2                            | 5.5.2           |
 | 5.3.2                            | 5.3.2           |
 | 5.2.2                            | 5.2.2           |
