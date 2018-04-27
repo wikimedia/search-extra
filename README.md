@@ -3,7 +3,12 @@ Extra Queries and Filters [![Build Status](https://integration.wikimedia.org/ci/
 
 The plan is for this to include any extra queries, filters, native scripts,
 score functions, and anything else we think we end up creating to make search
-nice for Wikimedia. At this point it only contains:
+nice for Wikimedia. It contains 2 diffferent plugins:
+
+
+### extra
+
+The extra plugin contains utilities that are generally useful.
 
 Queries:
 * [source_regex](docs/source_regex.md) - An nGram accelerated regular
@@ -22,6 +27,12 @@ Analysis:
 * [preserve_original](docs/preserve_original.md) - A token filter that wraps a
 filter chain to keep and emit the original term at the same position. New in
 2.3.4.
+
+### extra-analysis-slovak
+
+This plugin contains a Slovak stemmer.
+
+Analysis:
 * [slovak_stemmer](docs/slovak_stemmer.md) - A token filter that provides
 stemming for the Slovak language. New in 5.5.2.4.
 
@@ -60,6 +71,7 @@ Install it like so for Elasticsearch x.y.z:
 
 ```bash
 ./bin/elasticsearch-plugin install org.wikimedia.search:extra:x.y.z
+./bin/elasticsearch-plugin install org.wikimedia.search:extra-analysis-slovak:x.y.z
 ```
 
 Build
