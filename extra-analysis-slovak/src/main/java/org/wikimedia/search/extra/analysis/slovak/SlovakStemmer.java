@@ -62,7 +62,7 @@
  * comparison to Polish.
  */
 
-package org.wikimedia.search.extra.analysis.filters;
+package org.wikimedia.search.extra.analysis.slovak;
 
 import static org.apache.lucene.analysis.util.StemmerUtil.deleteN;
 import static org.apache.lucene.analysis.util.StemmerUtil.endsWith;

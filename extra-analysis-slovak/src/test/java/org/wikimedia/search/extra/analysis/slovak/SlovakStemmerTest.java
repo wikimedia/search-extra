@@ -1,4 +1,4 @@
-package org.wikimedia.search.extra.analysis.filters;
+package org.wikimedia.search.extra.analysis.slovak;
 
 import static org.junit.Assert.assertEquals;
 

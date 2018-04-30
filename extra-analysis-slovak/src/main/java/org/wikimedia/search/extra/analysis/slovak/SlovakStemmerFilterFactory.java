@@ -1,4 +1,4 @@
-package org.wikimedia.search.extra.analysis.filters;
+package org.wikimedia.search.extra.analysis.slovak;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.elasticsearch.common.settings.Settings;
