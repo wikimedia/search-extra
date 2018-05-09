@@ -10,7 +10,7 @@
 
     <groupId>org.wikimedia.search</groupId>
     <artifactId>extra-parent</artifactId>
-    <version>5.5.2.5</version>
+    <version>5.5.2.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <description>Extra queries and filters for Elasticsearch.</description>
 
@@ -42,7 +42,7 @@
     <scm>
         <connection>scm:git:https://gerrit.wikimedia.org/r/search/extra</connection>
         <developerConnection>scm:git:ssh://gerrit.wikimedia.org:29418/search/extra</developerConnection>
-        <tag>extra-parent-5.5.2.5</tag>
+        <tag>HEAD</tag>
         <url>https://gerrit.wikimedia.org/r/#/admin/projects/search/extra</url>
     </scm>
 
@@ -180,15 +180,15 @@
                     <configuration>
                         <skipTests>${skip.unit.tests}</skipTests>
                         <listeners>
-                            <report-text showNumFailures="30" showOutput="onerror" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="false" showSuiteSummary="true" showThrowable="true" timestamps="false"></report-text>
-                            <report-ant-xml dir="${project.build.directory}/surefire-reports" mavenExtensions="true"></report-ant-xml>
+                            <report-text showNumFailures="30" showOutput="onerror" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="false" showSuiteSummary="true" showThrowable="true" timestamps="false" />
+                            <report-ant-xml dir="${project.build.directory}/surefire-reports" mavenExtensions="true" />
                         </listeners>
                         <heartbeat>20</heartbeat>
                         <jvmOutputAction>warn</jvmOutputAction>
                         <leaveTemporary>true</leaveTemporary>
                         <sysouts>false</sysouts>
                         <assertions>
-                            <enable></enable>
+                            <enable />
                         </assertions>
                         <jvmArgs>
                             <param>-Xmx512m</param>
@@ -285,7 +285,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -299,7 +299,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
