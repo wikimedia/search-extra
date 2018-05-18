@@ -27,6 +27,7 @@ Analysis:
 * [preserve_original](docs/preserve_original.md) - A token filter that wraps a
 filter chain to keep and emit the original term at the same position. New in
 2.3.4.
+* [term_freq](docs/term_freq_token_filter.md) - A token filter to populate the term frequency from the input string. New in 5.5.2.6.
 
 ### extra-analysis-slovak
 
