@@ -183,7 +183,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         long testOverhead = 2000;
         long timeout = 100; // 3243, 2212
         long st = -System.currentTimeMillis();
-        resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}afound")).setSize(10).setTimeout(TimeValue.timeValueMillis(timeout)).get();
+        resp = search(filter("((f.){1,10}n.){1,10}afound")).setSize(10).setTimeout(TimeValue.timeValueMillis(timeout)).get();
         st += System.currentTimeMillis();
         //System.out.println(st);
         // Test the accuracy of the timeout
@@ -212,13 +212,13 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         */
         // When running with a timeout set on the search body no assertion should fail
         // This query should match no docs
-        SearchResponse resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found").timeout("1ms"))
+        SearchResponse resp = search(filter("((f.){1,10}n.){1,10}m..found").timeout("1ms"))
                 .setTimeout(TimeValue.timeValueSeconds(1))
                 .setSize(10)
                 .get();
         assertTrue(resp.isTimedOut());
 
-        resp = search(filter("(((f.){1,20}n.){1,20}m.){1,20}n..found")).setTimeout(TimeValue.timeValueMillis(1)).setSize(10).get();
+        resp = search(filter("((f.){1,10}n.){1,10}m..found")).setTimeout(TimeValue.timeValueMillis(1)).setSize(20).get();
         assertFalse(resp.isTimedOut()); // I suppose this could randomly fail...
     }
 

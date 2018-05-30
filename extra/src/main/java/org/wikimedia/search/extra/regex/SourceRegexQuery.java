@@ -183,7 +183,7 @@ public class SourceRegexQuery extends Query {
                 if (!settings.caseSensitive()) {
                     regexString = regexString.toLowerCase(settings.locale());
                 }
-                Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
+                Automaton automaton = regexToAutomaton(new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON),
                         settings.maxDeterminizedStates());
                 if (settings.locale().getLanguage().equals("el")) {
                     charRun = new ContainsCharacterRunAutomaton.GreekLowerCasing(automaton);
@@ -229,7 +229,7 @@ public class SourceRegexQuery extends Query {
                 if (!settings.caseSensitive()) {
                     regexString = regexString.toLowerCase(settings.locale());
                 }
-                Automaton automaton = regexToAutomaton(new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON),
+                Automaton automaton = regexToAutomaton(new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON),
                         settings.maxDeterminizedStates());
                 charRun = new ContainsCharacterRunAutomaton(automaton);
             }
@@ -275,7 +275,7 @@ public class SourceRegexQuery extends Query {
                 if (!settings.caseSensitive()) {
                     regexString = regexString.toLowerCase(settings.locale());
                 }
-                Automaton automaton = regexToAutomaton(new RegExp(".*" + regexString + ".*", RegExp.ALL ^ RegExp.AUTOMATON),
+                Automaton automaton = regexToAutomaton(new RegExp(".*(" + regexString + ").*", RegExp.ALL ^ RegExp.AUTOMATON),
                         settings.maxDeterminizedStates());
                 charRun = new CharacterRunAutomaton(automaton);
             }

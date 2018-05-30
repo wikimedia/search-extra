@@ -1,5 +1,6 @@
 package org.wikimedia.search.extra.regex;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -30,16 +31,31 @@ public class SourceRegexQueryRecheckTest {
     }
 
     @Test
+    public void insensitiveNoMatch() {
+        Settings settings = new Settings();
+        // This was a pathological case, taking more than a minute for a single iteration.
+        // Solved by prefixing .* to all regex's and making a single pass through the source.
+        many("case insensitive", ".*does not match anything", settings, 1000, false);
+    }
+
+    @Test
+    public void sensitiveNoMatch() {
+        Settings settings = new Settings();
+        settings.caseSensitive(true);
+        many("case sensitive", ".*does not match anything", settings, 1000, false);
+    }
+
+    @Test
     public void insensitiveShortRegex() {
         Settings settings = new Settings();
-        many("case insensitive", "cat", settings, 1000, false);
+        many("case insensitive", "cat", settings, 1000, true);
     }
 
     @Test
     public void sensitiveShortRegex() {
         Settings settings = new Settings();
         settings.caseSensitive(true);
-        many("case sensitive", "cat", settings, 1000, false);
+        many("case sensitive", "cat", settings, 1000, true);
     }
 
     @Test
@@ -68,20 +84,25 @@ public class SourceRegexQueryRecheckTest {
         many("case sensitive", "days.+and", settings, 1000, true);
     }
 
-    private void many(String name, String regex, Settings settings, int times, boolean matchIsNearTheEnd) {
-        long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex);
-        long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex);
+    private void many(String name, String regex, Settings settings, int times, boolean isMatching) {
+        long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex, isMatching);
+        long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex, isMatching);
         if (!settings.caseSensitive()) {
             long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),
-                    "case converting", name, settings, times, regex);
+                    "case converting", name, settings, times, regex, isMatching);
         }
     }
 
-    private long manyTestCase(Rechecker rechecker, String recheckerName, String name, Settings settings, int times, String regex) {
+    private long manyTestCase(Rechecker rechecker, String recheckerName, String name, Settings settings, int times, String regex, boolean isMatching) {
         long start = System.currentTimeMillis();
         for (int i = 0; i < times; i++) {
-            assertTrue(rechecker.recheck(ImmutableList.of(rashidun)));
-            assertTrue(rechecker.recheck(ImmutableList.of(obama)));
+            if (isMatching) {
+                assertTrue(rechecker.recheck(ImmutableList.of(rashidun)));
+                assertTrue(rechecker.recheck(ImmutableList.of(obama)));
+            } else {
+                assertFalse(rechecker.recheck(ImmutableList.of(rashidun)));
+                assertFalse(rechecker.recheck(ImmutableList.of(obama)));
+            }
         }
         long took = System.currentTimeMillis() - start;
         log.info("{} took {} millis to match /{}/", String.format(Locale.ROOT, "%20s %10s", recheckerName, name), took, regex);

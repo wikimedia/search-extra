@@ -14,36 +14,18 @@ class ContainsCharacterRunAutomaton extends RunAutomaton {
      * @param s string to check
      */
     public boolean contains(String s) {
-        int end = s.length();
-        int offset = 0;
-        // super.initial is final
-        final int initial = 0;
-        while (offset < end) {
-            int cp = s.codePointAt(offset);
-            offset += Character.charCount(cp);
-            int p = step(initial, lowerCaseIfNeeded(cp));
+        /*
+         * By requiring all callers to wrap their regex in `.*(regexp)` we
+         * can make a single pass on s to determine if a match exists.
+         */
+        for (int cp, p = 0, i = 0; i < s.length(); i += Character.charCount(cp)) {
+            cp = s.codePointAt(i);
+            p = step(p, lowerCaseIfNeeded(cp));
             if (p == -1) {
-                continue;
+                break;
             }
             if (isAccept(p)) {
                 return true;
-            }
-            /*
-             * Unrolling the first iteration of this loop (above) yields a
-             * significant performance improvement when most code points don't
-             * have a transition out of the initial state (which is common).
-             * This is because saves us one call to String.codePointAt per
-             * iteration of the outer loop.
-             */
-            for (int i = offset; i < end; i += Character.charCount(cp)) {
-                cp = s.codePointAt(i);
-                p = step(p, lowerCaseIfNeeded(cp));
-                if (p == -1) {
-                    break;
-                }
-                if (isAccept(p)) {
-                    return true;
-                }
             }
         }
         return false;
