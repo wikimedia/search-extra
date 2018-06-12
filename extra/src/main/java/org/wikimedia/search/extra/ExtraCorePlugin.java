@@ -59,6 +59,7 @@ import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
 import org.wikimedia.search.extra.superdetectnoop.VersionedDocumentHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
+import org.wikimedia.search.extra.termfreq.TermFreqFilterQueryBuilder;
 import org.wikimedia.search.extra.util.Suppliers.MutableSupplier;
 
 
@@ -108,7 +109,8 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
                 new QuerySpec<>(DegradedRouterQueryBuilder.NAME,
                         (in) -> new DegradedRouterQueryBuilder(in, loadStats),
                         (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats)),
-                new QuerySpec<>(SimSwitcherQueryBuilder.NAME, SimSwitcherQueryBuilder::new, SimSwitcherQueryBuilder::fromXContent)
+                new QuerySpec<>(SimSwitcherQueryBuilder.NAME, SimSwitcherQueryBuilder::new, SimSwitcherQueryBuilder::fromXContent),
+                new QuerySpec<>(TermFreqFilterQueryBuilder.NAME, TermFreqFilterQueryBuilder::new, TermFreqFilterQueryBuilder::fromXContent)
         );
     }
 
