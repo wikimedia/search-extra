@@ -101,11 +101,6 @@
                 <version>${elasticsearch.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.hdrhistogram</groupId>
-                <artifactId>HdrHistogram</artifactId>
-                <version>2.1.9</version>
-            </dependency>
-            <dependency>
                 <groupId>org.wikimedia.search</groupId>
                 <artifactId>extra-analysis-slovak</artifactId>
                 <version>${project.version}</version>
@@ -124,6 +119,12 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
                 <version>2.7</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hdrhistogram</groupId>
+                <artifactId>HdrHistogram</artifactId>
+                <version>2.1.9</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
