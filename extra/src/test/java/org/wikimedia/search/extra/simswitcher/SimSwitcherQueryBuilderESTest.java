@@ -21,31 +21,55 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.similarities.BM25Similarity;
+import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.compress.CompressedXContent;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.wikimedia.search.extra.MockCorePluginWithoutNativeScript;
+import org.wikimedia.search.extra.ExtraCorePlugin;
 
 public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwitcherQueryBuilder> {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(MockCorePluginWithoutNativeScript.class);
+        return Collections.singleton(ExtraCorePlugin.class);
+    }
+
+    @Override
+    protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
+        mapperService.merge("_doc",
+                new CompressedXContent("{\"properties\":{" +
+                        "\"test\":{\"type\":\"text\" }" +
+                        "}}"),
+                MapperService.MergeReason.MAPPING_UPDATE, false);
     }
 
     @Override
     protected Set<String> getObjectsHoldingArbitraryContent() {
         return Collections.singleton(SimSwitcherQueryBuilder.PARAMS.getPreferredName());
+    }
+
+    @Override
+    protected boolean isCachable(SimSwitcherQueryBuilder queryBuilder) {
+        return false;
+    }
+
+    @Override
+    public void testUnknownField() {
+        String json = "{\"" + SimSwitcherQueryBuilder.NAME + "\": {"
+                + "\"newField\": \"blah\"}}";
+        ParsingException e = expectThrows(ParsingException.class, () -> parseQuery(json));
+        assertTrue(e.getMessage().contains("newField"));
     }
 
     /**
@@ -56,10 +80,11 @@ public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwit
         SimSwitcherQueryBuilder builder = new SimSwitcherQueryBuilder();
         builder.setSubQuery(QueryBuilders.matchQuery("test", "test"));
         builder.setSimilarityType("BM25");
-        Map<String, Object> params = new HashMap<>();
-        params.put("k1", "1.5");
-        params.put("b", "0.8");
-        builder.setParams(Collections.unmodifiableMap(params));
+        Settings params = Settings.builder()
+                .put("k1", "1.5")
+                .put("b", "0.8")
+                .build();
+        builder.setParams(params);
         return builder;
     }
 

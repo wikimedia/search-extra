@@ -96,12 +96,12 @@ public class FuzzyLikeThisQuery extends Query {
         @Nullable
         final String queryString;
         final String fieldName;
-        final float minSimilarity;
+        final int maxDist;
         final int prefixLength;
 
-        FieldVals(String name, float similarity, int length, String queryString) {
+        FieldVals(String name, int maxDist, int length, String queryString) {
             fieldName = name;
-            minSimilarity = similarity;
+            this.maxDist = maxDist;
             prefixLength = length;
             this.queryString = queryString;
         }
@@ -111,11 +111,11 @@ public class FuzzyLikeThisQuery extends Query {
      * Adds user input for "fuzzification".
      *
      * @param queryString   The string which will be parsed by the analyzer and for which fuzzy variants will be parsed
-     * @param minSimilarity The minimum similarity of the term variants (see FuzzyTermsEnum)
+     * @param maxDist The max edit distance of the term variants (see FuzzyTermsEnum)
      * @param prefixLength  Length of required common prefix on variant terms (see FuzzyTermsEnum)
      */
-    public void addTerms(String queryString, String fieldName, float minSimilarity, int prefixLength) {
-        fieldVals.add(new FieldVals(fieldName, minSimilarity, prefixLength, queryString));
+    public void addTerms(String queryString, String fieldName, int maxDist, int prefixLength) {
+        fieldVals.add(new FieldVals(fieldName, maxDist, prefixLength, queryString));
     }
 
     @SuppressWarnings("CyclomaticComplexity")
@@ -142,7 +142,7 @@ public class FuzzyLikeThisQuery extends Query {
                     AttributeSource atts = new AttributeSource();
                     MaxNonCompetitiveBoostAttribute maxBoostAtt =
                             atts.addAttribute(MaxNonCompetitiveBoostAttribute.class);
-                    FuzzyTermsEnum fe = new FuzzyTermsEnum(terms, atts, startTerm, f.minSimilarity, f.prefixLength, true);
+                    FuzzyTermsEnum fe = new FuzzyTermsEnum(terms, atts, startTerm, f.maxDist, f.prefixLength, true);
                     //store the df so all variants use same idf
                     int df = reader.docFreq(startTerm);
                     int numVariants = 0;
@@ -219,7 +219,6 @@ public class FuzzyLikeThisQuery extends Query {
                 bq.add(tq, BooleanClause.Occur.SHOULD);
             } else {
                 BooleanQuery.Builder termVariants = new BooleanQuery.Builder(); //disable coord and IDF for these term variants
-                termVariants.setDisableCoord(true);
                 for (ScoreTerm st : variants) {
                     // found a match
                     Query tq = ignoreTF ? new ConstantScoreQuery(new TermQuery(st.term)) : new TermQuery(st.term);

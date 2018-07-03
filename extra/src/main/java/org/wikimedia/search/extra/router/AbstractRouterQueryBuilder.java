@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -24,7 +23,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
@@ -47,7 +45,7 @@ import lombok.experimental.Accessors;
 public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends AbstractRouterQueryBuilder<C, QB>> extends AbstractQueryBuilder<QB> {
     private static final ParseField FALLBACK = new ParseField("fallback");
     private static final ParseField CONDITIONS = new ParseField("conditions");
-    private static final ParseField QUERY = new ParseField("query");
+    public static final ParseField QUERY = new ParseField("query");
 
     @Getter(AccessLevel.PRIVATE)
     private List<C> conditions;
@@ -81,7 +79,7 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
     /**
      * Evaluates conditions and returns the associated QueryBuilder.
      */
-    QueryBuilder doRewrite(Predicate<C> condition) {
+    final QueryBuilder doRewrite(Predicate<C> condition) {
         QueryBuilder qb = conditions.stream()
                 .filter(condition)
                 .findFirst()
@@ -113,7 +111,7 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
 
     @Override
     @SuppressFBWarnings("ACEM_ABSTRACT_CLASS_EMPTY_METHODS")
-    protected Query doToQuery(QueryShardContext queryShardContext) throws IOException {
+    protected Query doToQuery(QueryShardContext queryShardContext) {
         throw new UnsupportedOperationException("This query must be rewritten.");
     }
 
@@ -149,9 +147,9 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
      */
     @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER", justification = "No need to be generic in this case")
     static <C extends Condition, CPS extends AbstractConditionParserState<C>> C parseCondition(
-            ObjectParser<CPS, QueryParseContext> condParser, XContentParser parser, QueryParseContext parseContext
+            ObjectParser<CPS, Void> condParser, XContentParser parser
     ) throws IOException {
-        CPS state = condParser.parse(parser, parseContext);
+        CPS state = condParser.parse(parser, null);
         state.checkValid();
         return state.condition();
     }
@@ -161,12 +159,11 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
      * Parse and build the query.
      */
     @SuppressFBWarnings(value = "LEST_LOST_EXCEPTION_STACK_TRACE", justification = "The new exception contains all needed context")
-    static <QB extends AbstractRouterQueryBuilder<?, QB>> Optional<QB> fromXContent(
-            ObjectParser<QB, QueryParseContext> objectParser, QueryParseContext parseContext) throws IOException {
-        XContentParser parser = parseContext.parser();
+    static <QB extends AbstractRouterQueryBuilder<?, QB>> QB fromXContent(
+            ObjectParser<QB, Void> objectParser, XContentParser parser) throws IOException {
         final QB builder;
         try {
-            builder = objectParser.parse(parser, parseContext);
+            builder = objectParser.parse(parser, null);
         } catch (IllegalArgumentException iae) {
             throw new ParsingException(parser.getTokenLocation(), iae.getMessage());
         }
@@ -180,7 +177,7 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
             throw new ParsingException(parser.getTokenLocation(), "No fallback query defined");
         }
 
-        return Optional.of(builder);
+        return builder;
     }
 
     /**
@@ -242,12 +239,11 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
      * Helper method to declare a field on the ObjectParser.
      */
     static <C extends Condition, QB extends AbstractRouterQueryBuilder<C, QB>> void declareRouterFields(
-            ObjectParser<QB, QueryParseContext> parser,
-            ContextParser<QueryParseContext, C> objectParser) {
+            ObjectParser<QB, Void> parser,
+            ContextParser<Void, C> objectParser) {
         parser.declareObjectArray(QB::conditions, objectParser, CONDITIONS);
         parser.declareObject(QB::fallback,
-            (p, ctx) -> ctx.parseInnerQueryBuilder()
-                .orElseThrow(() -> new ParsingException(p.getTokenLocation(), "No fallback query defined")),
+            (p, ctx) -> parseInnerQueryBuilder(p),
             FALLBACK);
     }
 
@@ -255,15 +251,14 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
      * Helper method to declare a condition field on the ObjectParser.
      */
     static <CPS extends AbstractConditionParserState<?>> void declareConditionFields(
-            ObjectParser<CPS, QueryParseContext> parser) {
+            ObjectParser<CPS, Void> parser) {
         for (ConditionDefinition def : ConditionDefinition.values()) {
             // gt: int, addPredicate will fail if a predicate has already been set
             parser.declareInt((cps, value) -> cps.addPredicate(def, value), def.parseField);
         }
         // query: { }
         parser.declareObject(CPS::setQuery,
-                (p, ctx) -> ctx.parseInnerQueryBuilder()
-                        .orElseThrow(() -> new ParsingException(p.getTokenLocation(), "No query defined for condition")),
+                (p, ctx) -> parseInnerQueryBuilder(p),
                 QUERY);
     }
 

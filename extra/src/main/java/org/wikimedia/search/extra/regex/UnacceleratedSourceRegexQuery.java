@@ -2,24 +2,18 @@ package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
 import java.util.List;
-
-import javax.annotation.Nullable;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.TimeLimitingCollector;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.util.Counter;
-import org.apache.lucene.util.mutable.MutableValueInt;
+import org.elasticsearch.tasks.TaskCancelledException;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
@@ -66,26 +60,19 @@ class UnacceleratedSourceRegexQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        return new ConstantScoreWeight(this) {
-            // TODO: Get rid of this shared mutable state, we should be able to use
-            // the generic timeout system.
-            private final MutableValueInt inspected = new MutableValueInt();
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+        return new ConstantScoreWeight(this, 1F) {
+            @Override
+            public boolean isCacheable(LeafReaderContext leafReaderContext) {
+                return false;
+            }
+
             private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout());
 
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
-                timeoutChecker.nextSegment(context);
-                // We can stop matching early if we are allowed to inspect less
-                // doc than the number of docs available in this segment.
-                // This is because we use a DocIdSetIterator.all.
-                int remaining = settings.maxInspect() - inspected.value;
-                if (remaining < 0) {
-                    remaining = 0;
-                }
-                int maxDoc = remaining > context.reader().maxDoc() ? context.reader().maxDoc() : remaining;
-                final DocIdSetIterator approximation = DocIdSetIterator.all(maxDoc);
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approximation, context, inspected, timeoutChecker));
+                final DocIdSetIterator approximation = DocIdSetIterator.all(context.reader().maxDoc());
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approximation, context, timeoutChecker));
             }
         };
     }
@@ -93,23 +80,17 @@ class UnacceleratedSourceRegexQuery extends Query {
     protected class RegexTwoPhaseIterator extends TwoPhaseIterator {
         private final LeafReaderContext context;
         private final TimeoutChecker timeoutChecker;
-        private final MutableValueInt inspected;
 
-        protected RegexTwoPhaseIterator(DocIdSetIterator approximation, LeafReaderContext context, MutableValueInt inspected, TimeoutChecker timeoutChecker) {
+        protected RegexTwoPhaseIterator(DocIdSetIterator approximation, LeafReaderContext context, TimeoutChecker timeoutChecker) {
             super(approximation);
             this.context = context;
-            this.inspected = inspected;
             this.timeoutChecker = timeoutChecker;
         }
 
         @Override
         public boolean matches() throws IOException {
-            timeoutChecker.check(approximation.docID());
-            if (inspected.value >= settings.maxInspect()) {
-                return false;
-            }
+            timeoutChecker.check();
             List<String> values = loader.load(fieldPath, context.reader(), approximation.docID());
-            inspected.value++;
             return rechecker.recheck(values);
         }
 
@@ -126,65 +107,32 @@ class UnacceleratedSourceRegexQuery extends Query {
     }
 
     /**
-     * Horrible hack to workaround the fact that TimeLimitingCollector.TimeExceededException has a private ctor.
-     * FIXME: find proper solutions to handle timeouts
+     * Will throw TaskCancelledException when calling check(docId) if the timeout is reached.
+     * It's meant to cancel the work of the search thread only after the elastic timeout has been detected.
+     * - If elastic detects the timeout after us the client will receive a shard failure
+     * - If elastic detects the timeout before us the client will receive a partial response, this timeout
+     *   will have to (ideally) be detected just after that to avoid unnecessary load on the server.
+     *
+     * This makes timeout adjustment a bit hazardous:
+     * - the source regex timeout must be slightly greater than the search request timeout
+     *   so that elastic has a chance to return partial results.
      */
     protected static class TimeoutChecker {
-        @Nullable private LeafCollector collector;
-        private final Collector topCollector;
-
-        TimeoutChecker(long timeout, Counter counter) {
-            if (timeout > 0) {
-                topCollector = new TimeLimitingCollector(NULL_COLLECTOR, counter, timeout);
-            } else {
-                topCollector = NULL_COLLECTOR;
-            }
-        }
-
-        TimeoutChecker(long timeout) {
-            this(timeout, COUNTER);
-        }
-
-        public void check(int docId) throws IOException {
-            assert collector != null;
-            collector.collect(docId);
-        }
-
-        void nextSegment(LeafReaderContext context) throws IOException {
-            collector = topCollector.getLeafCollector(context);
-        }
-
-        private static final Collector NULL_COLLECTOR = new SimpleCollector() {
-            @Override
-            public void collect(int doc) {}
-            @Override
-            public boolean needsScores() {
-                return true;
-            }
-        };
+        private final long startTime;
+        private final long timeOut;
 
         /**
-         * Simple naive Counter impl.
-         * We need this not to spawn a new thread.
-         * Elastic uses its own Counter that we can't access.
-         * The purpose of having a counter updated by a thread
-         * is to avoid too many syscall, for us the overhead
-         * of calling System.currentTimeMillis() on every doc
-         * is marginal compared to loading the field content
-         * and applying the regex.
+         * @param timeout (in ms)
          */
-        private static final Counter COUNTER = new Counter() {
-            @Override
-            public long addAndGet(long delta) {
-                // Should never be called in our context
-                // Only a TimerThread can call this method
-                throw new UnsupportedOperationException("This counter is not meant to be used with like that...");
-            }
+        TimeoutChecker(long timeout) {
+            this.timeOut = TimeUnit.MILLISECONDS.toNanos(timeout);
+            this.startTime = System.nanoTime();
+        }
 
-            @Override
-            public long get() {
-                return System.currentTimeMillis();
+        public void check() {
+            if (timeOut > 0 && System.nanoTime() - startTime > timeOut) {
+                throw new TaskCancelledException("Timed out");
             }
-        };
+        }
     }
 }

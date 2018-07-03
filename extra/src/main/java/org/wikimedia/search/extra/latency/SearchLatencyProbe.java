@@ -28,13 +28,13 @@ public interface SearchLatencyProbe {
         LatencyStat(StreamInput in) throws IOException {
             this.bucket = in.readString();
             this.percentile = in.readDouble();
-            this.latency = new TimeValue(in);
+            this.latency = in.readTimeValue();
         }
 
         public void writeTo(StreamOutput out) throws IOException {
             out.writeString(bucket);
             out.writeDouble(this.percentile);
-            latency.writeTo(out);
+            out.writeTimeValue(latency);
         }
     }
 

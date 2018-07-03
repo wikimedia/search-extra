@@ -64,7 +64,7 @@ public class TermFreqFilterQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) {
         return new TermFreqFilterWeight(this, term, predicate);
     }
 
@@ -99,15 +99,6 @@ public class TermFreqFilterQuery extends Query {
         }
 
         @Override
-        public float getValueForNormalization() {
-            return 1F;
-        }
-
-        @Override
-        public void normalize(float v, float v1) {
-        }
-
-        @Override
         public Scorer scorer(LeafReaderContext leafReaderContext) throws IOException {
             PostingsEnum innerDocs = leafReaderContext.reader().postings(term);
             if (innerDocs == null) {
@@ -137,11 +128,6 @@ public class TermFreqFilterQuery extends Query {
                 }
 
                 @Override
-                public int freq() throws IOException {
-                    return innerDocs.freq();
-                }
-
-                @Override
                 public DocIdSetIterator iterator() {
                     return innerDocs;
                 }
@@ -151,6 +137,11 @@ public class TermFreqFilterQuery extends Query {
                     return iter;
                 }
             };
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext leafReaderContext) {
+            return true;
         }
     }
 }

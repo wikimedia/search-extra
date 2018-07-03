@@ -24,11 +24,11 @@ public class LevenshteinDistanceScoreIntegrationTest extends AbstractPluginInteg
         assertAcked(prepareCreate("test").addMapping(
                 "type1",
                 jsonBuilder().startObject().startObject("type1").startObject("properties")
-                        .startObject("content").field("type", "string")
+                        .startObject("content").field("type", "text")
                             .field("store", false)
                             .field("copy_to", "content_stored").endObject()
                         .startObject("content_stored")
-                            .field("type", "string").field("store", true).endObject()
+                            .field("type", "text").field("store", true).endObject()
                         .endObject().endObject().endObject()).get());
 
         client().prepareIndex("test", "type1", "1").setSource("content", "Haste makes waste").get();

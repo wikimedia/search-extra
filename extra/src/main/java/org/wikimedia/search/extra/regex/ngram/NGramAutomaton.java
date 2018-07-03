@@ -14,7 +14,6 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.Transition;
-import org.elasticsearch.common.io.FastStringReader;
 import org.wikimedia.search.extra.regex.expression.And;
 import org.wikimedia.search.extra.regex.expression.Expression;
 import org.wikimedia.search.extra.regex.expression.ExpressionSource;
@@ -224,7 +223,7 @@ public class NGramAutomaton {
         if (ngram == null) {
             return ngram;
         }
-        try (TokenStream ts = ngramAnalyzer.tokenStream("", new FastStringReader(ngram))) {
+        try (TokenStream ts = ngramAnalyzer.tokenStream("", ngram)) {
             CharTermAttribute cattr = ts.addAttribute(CharTermAttribute.class);
             ts.reset();
             if (ts.incrementToken()) {

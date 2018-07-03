@@ -19,6 +19,7 @@ import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.monitor.os.OsService;
@@ -26,7 +27,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
 import org.junit.runner.RunWith;
-import org.wikimedia.search.extra.MockCorePluginWithoutNativeScript;
+import org.wikimedia.search.extra.ExtraCorePlugin;
 import org.wikimedia.search.extra.latency.SearchLatencyProbe;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedConditionType;
@@ -34,11 +35,25 @@ import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCond
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(MockCorePluginWithoutNativeScript.class);
+        return Collections.singleton(ExtraCorePlugin.class);
     }
 
     @Override
     protected boolean builderGeneratesCacheableQueries() {
+        return false;
+    }
+
+    @Override
+    protected boolean supportsBoostAndQueryName() {
+        // we supports query names and boost in theory
+        // problem is that it does not work well in the test
+        // because
+        // 1/ Rewritable will copy our top-level boost/name
+        //    to the chosen query at rewrite time
+        // 2/ regenerate the json after rewrite
+        // 3/ reparse the query
+        // 4/ the test on equality fails because the fallback query has now
+        //    the top-level query name/boost
         return false;
     }
 
@@ -95,7 +110,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         for (int i = randomIntBetween(1, 10); i > 0; i--) {
             addCondition(builder, new WrapperQueryBuilder(toRewrite.toString()));
         }
-        QueryBuilder rewrittenBuilder = QueryBuilder.rewriteQuery(builder, createShardContext());
+        QueryBuilder rewrittenBuilder = Rewriteable.rewrite(builder, createShardContext());
         assertEquals(rewrittenBuilder, toRewrite);
     }
 

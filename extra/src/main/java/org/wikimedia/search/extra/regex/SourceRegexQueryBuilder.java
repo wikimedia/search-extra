@@ -5,7 +5,6 @@ import static org.elasticsearch.common.xcontent.ConstructingObjectParser.constru
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -19,9 +18,9 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.util.FieldValues;
@@ -53,10 +52,10 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
     public static final boolean DEFAULT_LOAD_FROM_SOURCE = true;
     public static final int DEFAULT_GRAM_SIZE = 3;
 
-    private static final ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> PARSER = constructParser();
+    private static final ConstructingObjectParser<SourceRegexQueryBuilder, Void> PARSER = constructParser();
 
-    private static ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> constructParser() {
-        ConstructingObjectParser<SourceRegexQueryBuilder, QueryParseContext> parser =
+    private static ConstructingObjectParser<SourceRegexQueryBuilder, Void> constructParser() {
+        ConstructingObjectParser<SourceRegexQueryBuilder, Void> parser =
                 new ConstructingObjectParser<>(NAME.getPreferredName(),
                 (o) -> new SourceRegexQueryBuilder((String) o[0], (String) o[1]));
         parser.declareString(constructorArg(), FIELD);
@@ -68,7 +67,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         parser.declareInt((x, i) -> x.settings().maxStatesTraced(i), Settings.MAX_STATES_TRACED);
         parser.declareInt((x, i) -> x.settings().maxDeterminizedStates(i), Settings.MAX_DETERMINIZED_STATES);
         parser.declareInt((x, i) -> x.settings().maxNgramsExtracted(i), Settings.MAX_NGRAMS_EXTRACTED);
-        parser.declareInt((x, i) -> x.settings().maxInspect(i), Settings.MAX_INSPECT);
         parser.declareBoolean((x, b) -> x.settings().caseSensitive(b), Settings.CASE_SENSITIVE);
         parser.declareString((x, s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
         parser.declareBoolean((x, b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
@@ -175,12 +173,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         return this;
     }
 
-    @Deprecated
-    public SourceRegexQueryBuilder maxInspect(int i) {
-        settings.maxInspect = i;
-        return this;
-    }
-
     public SourceRegexQueryBuilder rejectUnaccelerated(boolean b) {
         settings.rejectUnaccelerated = b;
         return this;
@@ -238,7 +230,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         static final ParseField MAX_STATES_TRACED = new ParseField("max_states_traced");
         static final ParseField MAX_DETERMINIZED_STATES = new ParseField("max_determinized_states");
         static final ParseField MAX_NGRAMS_EXTRACTED = new ParseField("max_ngrams_extracted");
-        static final ParseField MAX_INSPECT = new ParseField("max_inspect");
         static final ParseField CASE_SENSITIVE = new ParseField("case_sensitive");
         static final ParseField LOCALE = new ParseField("locale");
         static final ParseField REJECT_UNACCELERATED = new ParseField("reject_unaccelerated");
@@ -249,7 +240,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         private static final int DEFAULT_MAX_STATES_TRACED = 10000;
         private static final int DEFAULT_MAX_DETERMINIZED_STATES = 20000;
         private static final int DEFAULT_MAX_NGRAMS_EXTRACTED = 100;
-        private static final int DEFAULT_MAX_INSPECT = Integer.MAX_VALUE;
         private static final boolean DEFAULT_CASE_SENSITIVE = false;
         private static final Locale DEFAULT_LOCALE = Locale.ROOT;
         private static final boolean DEFAULT_REJECT_UNACCELERATED = false;
@@ -296,11 +286,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
          * reasonably well.
          */
         private int maxNgramsExtracted = DEFAULT_MAX_NGRAMS_EXTRACTED;
-        /**
-         * @deprecated use a generic time limiting collector
-         */
-        @Deprecated
-        private int maxInspect = DEFAULT_MAX_INSPECT;
         private boolean caseSensitive = DEFAULT_CASE_SENSITIVE;
         @NonNull
         private Locale locale = DEFAULT_LOCALE;
@@ -322,7 +307,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             maxStatesTraced = in.readVInt();
             maxDeterminizedStates = in.readVInt();
             maxNgramsExtracted = in.readVInt();
-            maxInspect = in.readVInt();
             caseSensitive = in.readBoolean();
             locale = LocaleUtils.parse(in.readString());
             rejectUnaccelerated = in.readBoolean();
@@ -344,9 +328,8 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             out.writeVInt(maxStatesTraced);
             out.writeVInt(maxDeterminizedStates);
             out.writeVInt(maxNgramsExtracted);
-            out.writeVInt(maxInspect);
             out.writeBoolean(caseSensitive);
-            out.writeString(LocaleUtils.toString(locale));
+            out.writeString(locale.toString());
             out.writeBoolean(rejectUnaccelerated);
             out.writeVInt(maxNgramClauses);
             out.writeVLong(timeout);
@@ -365,9 +348,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             }
             if (maxNgramsExtracted != DEFAULT_MAX_NGRAMS_EXTRACTED) {
                 builder.field(MAX_NGRAMS_EXTRACTED.getPreferredName(), maxNgramsExtracted);
-            }
-            if (maxInspect != DEFAULT_MAX_INSPECT) {
-                builder.field(MAX_INSPECT.getPreferredName(), maxInspect);
             }
             if (caseSensitive != DEFAULT_CASE_SENSITIVE) {
                 builder.field(CASE_SENSITIVE.getPreferredName(), caseSensitive);
@@ -408,11 +388,11 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         builder.endObject();
     }
 
-    public static Optional<SourceRegexQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
+    public static SourceRegexQueryBuilder fromXContent(XContentParser parser) throws IOException {
         try {
-            return Optional.of(PARSER.parse(context.parser(), context));
+            return PARSER.parse(parser, null);
         } catch (IllegalArgumentException iae) {
-            throw new ParsingException(context.parser().getTokenLocation(), iae.getMessage(), iae);
+            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
     }
 }

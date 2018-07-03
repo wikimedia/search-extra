@@ -68,9 +68,9 @@ public class SimSwitcherQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
         if (!needsScores) {
-            return searcher.createWeight(subQuery, false);
+            return searcher.createWeight(subQuery, false, boost);
         }
         final Similarity oldSim = searcher.getSimilarity(true);
         try {
@@ -79,7 +79,7 @@ public class SimSwitcherQuery extends Query {
             // same ContextIndexSearcher)
             // and that setSimilarity is delegated to super not the real IndexSearcher
             searcher.setSimilarity(similarity);
-            return searcher.createWeight(subQuery, true);
+            return searcher.createWeight(subQuery, true, boost);
         } finally {
             searcher.setSimilarity(oldSim);
         }

@@ -96,7 +96,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
         ).collect(Collectors.toMap((s) -> s.getClass().getSimpleName(), (s) -> s));
         // choose one
         similarity = new ArrayList<>(similarityMap.values()).get(random().nextInt(similarityMap.size()));
-        PerFieldSimilarityWrapper simWrapper = new PerFieldSimilarityWrapper(similarity) {
+        PerFieldSimilarityWrapper simWrapper = new PerFieldSimilarityWrapper() {
             @Override
             public Similarity get(String name) {
                 Similarity sim = similarityMap.get(name);
@@ -135,7 +135,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
             Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(), q);
             Query hacked = new QueryBuilder(analyzer).createBooleanQuery("main_field", q);
             TopDocs docs = searcherUnderTest.search(query, 10);
-            assertThat(docs.totalHits, greaterThan(0));
+            assertThat(docs.totalHits, greaterThan(0L));
             TopDocs hackedDocs = searcherUnderTest.search(new SimSwitcherQuery(entry.getValue(), hacked), 10);
             assertEquals(msg, docs.totalHits, hackedDocs.totalHits);
             IntStream.range(0, docs.scoreDocs.length).forEach((i) -> {

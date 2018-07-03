@@ -2,13 +2,11 @@ package org.wikimedia.search.extra.fuzzylike;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertFailures;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertFirstHit;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertHitCount;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertNoSearchHits;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertSearchHits;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.hasId;
-import static org.hamcrest.Matchers.containsString;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -17,7 +15,6 @@ import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.rest.RestStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -71,12 +68,9 @@ public class FuzzyLikeThisIntegrationTest extends AbstractPluginIntegrationTest 
         assertHitCount(resp, 1);
         assertFirstHit(resp, hasId("image"));
 
-        // Fuzziness to zero is unsupported and causes some confusion between FuzzyLikeQuery
-        // and FuzzyTermEnums. A lot of code still rely on a float instead of maxEdits as a int.
         builder = fuzzyLikeThisQuery("test", "nostalagia").fuzziness(Fuzziness.ZERO);
-        assertFailures(client().prepareSearch("test").setTypes("test").setQuery(builder),
-                RestStatus.INTERNAL_SERVER_ERROR,
-                containsString("with transpositions enabled, distances > 2 are not supported"));
+        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        assertNoSearchHits(resp);
 
         builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.ONE);
         resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();

@@ -19,7 +19,7 @@ public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrat
                         "type1",
                         jsonBuilder().startObject().startObject("type1").startObject("properties")
                                 .startObject("content")
-                                .field("type", "string")
+                                .field("type", "text")
                                 .field("store", false)
                                 .field("analyzer", "standard")
                                 .endObject().endObject().endObject().endObject())

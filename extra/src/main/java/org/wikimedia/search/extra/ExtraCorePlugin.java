@@ -5,9 +5,9 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +19,16 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.env.NodeEnvironment;
 import org.elasticsearch.index.IndexModule;
+import org.elasticsearch.index.analysis.PreConfiguredTokenFilter;
 import org.elasticsearch.index.analysis.TokenFilterFactory;
 import org.elasticsearch.indices.analysis.AnalysisModule.AnalysisProvider;
 import org.elasticsearch.monitor.os.OsService;
@@ -35,12 +39,13 @@ import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.script.NativeScriptFactory;
-import org.elasticsearch.script.ScriptEngineService;
+import org.elasticsearch.script.ScriptContext;
+import org.elasticsearch.script.ScriptEngine;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
-import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilterFactory;
+import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilter;
+import org.wikimedia.search.extra.analysis.filters.TermFreqTokenFilter;
 import org.wikimedia.search.extra.analysis.filters.TermFreqTokenFilterFactory;
 import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
 import org.wikimedia.search.extra.latency.LatencyStatsAction;
@@ -91,7 +96,9 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
     @Override
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
-                                               NamedXContentRegistry xContentRegistry) {
+                                               NamedXContentRegistry xContentRegistry, Environment environment,
+                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry
+    ) {
         threadPoolSupplier.set(threadPool);
         return singletonList(latencyListener);
     }
@@ -116,29 +123,20 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
 
     @Override
     public Map<String, AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
-        Map<String, AnalysisProvider<TokenFilterFactory>> map = new HashMap<>();
-        map.put("preserve_original", PreserveOriginalFilterFactory::new);
-        map.put("preserve_original_recorder", PreserveOriginalFilterFactory.RecorderFactory::new);
-        map.put("term_freq", TermFreqTokenFilterFactory::new);
-        return Collections.unmodifiableMap(map);
-    }
-
-    /**
-     * Use SuperNoopScriptEngineService from {@link #getScriptEngineService(Settings)} instead.
-     *
-     * Native scripts have been deprecated from core
-     * We still keep it in the meantime to allow clients to switch
-     * to inline script of type super_detect_noop
-     */
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public List<NativeScriptFactory> getNativeScripts() {
-        return singletonList(new SuperDetectNoopScript.SuperNoopNativeScriptFactory(superDetectNoopService));
+        return Collections.singletonMap("term_freq", AnalysisPlugin.requriesAnalysisSettings(TermFreqTokenFilterFactory::new));
     }
 
     @Override
-    public ScriptEngineService getScriptEngineService(Settings settings) {
+    public List<PreConfiguredTokenFilter> getPreConfiguredTokenFilters() {
+        return Arrays.asList(
+            PreConfiguredTokenFilter.singleton("preserve_original", true, PreserveOriginalFilter::new),
+            PreConfiguredTokenFilter.singleton("preserve_original_recorder", true, PreserveOriginalFilter.Recorder::new),
+            PreConfiguredTokenFilter.singleton("term_freq", true, TermFreqTokenFilter::new)
+        );
+    }
+
+    @Override
+    public ScriptEngine getScriptEngine(Settings settings, Collection<ScriptContext<?>> contexts) {
         return superDetectNoopService;
     }
 
@@ -146,7 +144,7 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
     public List<ScoreFunctionSpec<?>> getScoreFunctions() {
         return singletonList(
             new ScoreFunctionSpec<>(
-                    LevenshteinDistanceScoreBuilder.NAME.getPreferredName(),
+                    LevenshteinDistanceScoreBuilder.NAME,
                     LevenshteinDistanceScoreBuilder::new,
                     LevenshteinDistanceScoreBuilder::fromXContent
             )

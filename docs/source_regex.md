@@ -101,11 +101,6 @@ Defaults to ```4```.
 before the algorithm gives up and assumes the regex is too complex and throws
 an error back to the user.  Defaults to ```10000``` which handily covers all
 regexes I cared to test.
-* ```max_inspect``` Maximum number of source field to run the regex against
-before giving up and just declaring all remaining fields not matching by fiat.
-Defaults to ```MAX_INT```.  Set this to ```10000``` or something nice and low
-to prevent regular expressions that cannot be sped up from taking up too many
-resources.
 * ```case_sensitive``` Is the regular expression case sensitive?  Defaults to
 ```false```.  Note that acceleration is always case *insensitive* which is why
 the trigrams index in the example had the lowercase filter.  That is important!

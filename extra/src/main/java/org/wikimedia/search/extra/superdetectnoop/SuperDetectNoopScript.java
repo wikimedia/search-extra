@@ -11,52 +11,17 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.elasticsearch.script.AbstractExecutableScript;
-import org.elasticsearch.script.CompiledScript;
 import org.elasticsearch.script.ExecutableScript;
-import org.elasticsearch.script.NativeScriptFactory;
-import org.elasticsearch.script.ScriptEngineService;
-import org.elasticsearch.script.SearchScript;
-import org.elasticsearch.search.lookup.SearchLookup;
+import org.elasticsearch.script.ScriptContext;
+import org.elasticsearch.script.ScriptEngine;
 
 /**
  * Like the detect_noop option on updates but with pluggable "close enough"
  * detectors! So much power!
  */
-public class SuperDetectNoopScript extends AbstractExecutableScript {
+public class SuperDetectNoopScript implements ExecutableScript {
 
-    /**
-     * Use SuperNoopScriptEngineService instead.
-     *
-     * Native scripts have been deprecated from core
-     * We still keep it in the meantime to allow clients to switch
-     * to inline script of type super_detect_noop
-     */
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public static class SuperNoopNativeScriptFactory implements NativeScriptFactory {
-        private final SuperNoopScriptEngineService service;
-        public SuperNoopNativeScriptFactory(SuperNoopScriptEngineService service) {
-            this.service = service;
-        }
-
-        @Override
-        public ExecutableScript newScript(Map<String, Object> map) {
-            return service.newScript(map);
-        }
-
-        @Override
-        public boolean needsScores() {
-            return false;
-        }
-
-        @Override
-        public String getName() {
-            return "super_detect_noop";
-        }
-    }
-
-    public static class SuperNoopScriptEngineService implements ScriptEngineService {
+    public static class SuperNoopScriptEngineService implements ScriptEngine {
         private final Set<ChangeHandler.Recognizer> changeHandlerRecognizers;
 
         public SuperNoopScriptEngineService(Set<ChangeHandler.Recognizer> changeHandlerRecognizers) {
@@ -69,23 +34,12 @@ public class SuperDetectNoopScript extends AbstractExecutableScript {
         }
 
         @Override
-        public Object compile(String scriptName, String scriptSource, Map<String, String> map) {
-            return "super_detect_noop (compiled script is useless)";
-        }
-
-        @Override
-        public ExecutableScript executable(CompiledScript compiledScript, Map<String, Object> map) {
-            return newScript(map);
-        }
-
-        @Override
-        public SearchScript search(CompiledScript compiledScript, SearchLookup searchLookup, Map<String, Object> map) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean isInlineScriptEnabled() {
-            return true;
+        public <T> T compile(String scriptName, String scriptSource, ScriptContext<T> context, Map<String, String> map) {
+            if (!"update".equals(context.name)) {
+                throw new IllegalArgumentException("Unsuppored context [" + context.name + "], " +
+                        "super_detect_noop only supports the [update] context");
+            }
+            return context.factoryClazz.cast((ExecutableScript.Factory) this::newScript);
         }
 
         @Override

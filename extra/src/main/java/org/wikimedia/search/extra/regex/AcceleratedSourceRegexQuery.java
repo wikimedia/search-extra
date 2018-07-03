@@ -2,6 +2,8 @@ package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
 
+import javax.annotation.Nullable;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -10,7 +12,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.util.mutable.MutableValueInt;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
@@ -39,24 +40,26 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
         // Build the approximation based on trigrams
         // Creating the Weight from the Searcher with needScore:false allows the searcher to cache our approximation.
-        final Weight approxWeight = searcher.createWeight(approximation, false);
-        return new ConstantScoreWeight(this) {
-            // TODO: Get rid of this shared mutable state, we should be able to use
-            // the generic timeout system.
-            private final MutableValueInt inspected = new MutableValueInt();
+        final Weight approxWeight = searcher.createWeight(approximation, false, boost);
+        return new ConstantScoreWeight(this, 1F) {
+            @Override
+            public boolean isCacheable(LeafReaderContext leafReaderContext) {
+                return false;
+            }
+
             private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout());
 
             @Override
+            @Nullable
             public Scorer scorer(final LeafReaderContext context) throws IOException {
                 final Scorer approxScorer = approxWeight.scorer(context);
                 if (approxScorer == null) {
                     return null;
                 }
-                timeoutChecker.nextSegment(context);
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, inspected, timeoutChecker));
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, timeoutChecker));
             }
         };
     }

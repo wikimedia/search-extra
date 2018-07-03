@@ -2,7 +2,6 @@ package org.wikimedia.search.extra.router;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -12,8 +11,8 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.io.stream.Writeable;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCondition;
 
@@ -38,11 +37,10 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
     private static final ParseField BUCKET = new ParseField("bucket");
     private static final ParseField PERCENTILE = new ParseField("percentile");
 
-    private static final ObjectParser<DegradedRouterQueryBuilder, QueryParseContext> PARSER;
-    private static final ObjectParser<DegradedConditionParserState, QueryParseContext> COND_PARSER;
+    private static final ObjectParser<DegradedRouterQueryBuilder, Void> PARSER;
+    private static final ObjectParser<DegradedConditionParserState, Void> COND_PARSER;
 
     static {
-        Condition c = null;
         COND_PARSER = new ObjectParser<>("condition", DegradedConditionParserState::new);
         COND_PARSER.declareString((cps, value) -> cps.type(DegradedConditionType.valueOf(value)), TYPE);
         COND_PARSER.declareString(DegradedConditionParserState::bucket, BUCKET);
@@ -51,7 +49,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
 
         PARSER = new ObjectParser<>(NAME.getPreferredName(), DegradedRouterQueryBuilder::new);
         declareStandardFields(PARSER);
-        declareRouterFields(PARSER, (p, pc) -> parseCondition(COND_PARSER, p, pc));
+        declareRouterFields(PARSER, (p, pc) -> parseCondition(COND_PARSER, p));
     }
 
     // This intentionally is not considered in doEquals or doHashCode, as
@@ -72,11 +70,11 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         return NAME.getPreferredName();
     }
 
-    public static Optional<DegradedRouterQueryBuilder> fromXContent(
-            QueryParseContext parseContext, SystemLoad systemLoad
+    public static DegradedRouterQueryBuilder fromXContent(
+            XContentParser parser, SystemLoad systemLoad
     ) throws IOException {
-        final Optional<DegradedRouterQueryBuilder> builder = AbstractRouterQueryBuilder.fromXContent(PARSER, parseContext);
-        builder.ifPresent((b) -> b.systemLoad = systemLoad);
+        DegradedRouterQueryBuilder builder = AbstractRouterQueryBuilder.fromXContent(PARSER, parser);
+        builder.systemLoad = systemLoad;
         return builder;
     }
 
@@ -85,6 +83,10 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         // The nowInMillis call tells certain implementations of QueryRewriteContext
         // that the results of this rewrite are not cacheable.
         context.nowInMillis();
+        if (context.convertToShardContext() == null) {
+            // We want to rewrite on the shard not the coordinating node.
+            return this;
+        }
         return super.doRewrite(condition -> condition.test(systemLoad));
     }
 

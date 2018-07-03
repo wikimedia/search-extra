@@ -22,11 +22,9 @@ package org.wikimedia.search.extra.fuzzylike;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,18 +33,16 @@ import javax.annotation.Nullable;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.mapper.StringFieldMapper;
 import org.elasticsearch.index.mapper.TextFieldMapper;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 
@@ -82,7 +78,6 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
     private static final int DEFAULT_MAX_QUERY_TERMS = 25;
 
     private static final Set<String> SUPPORTED_TYPES = new HashSet<>(Arrays.asList(
-            StringFieldMapper.CONTENT_TYPE,
             TextFieldMapper.CONTENT_TYPE
     ));
 
@@ -202,9 +197,7 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
     }
 
     @SuppressWarnings("CyclomaticComplexity")
-    public static Optional<FuzzyLikeThisQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
-        XContentParser parser = parseContext.parser();
-
+    public static FuzzyLikeThisQueryBuilder fromXContent(XContentParser parser) throws IOException {
         int maxNumTerms = DEFAULT_MAX_QUERY_TERMS;
         List<String> fields = null;
         String likeText = null;
@@ -220,25 +213,25 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if (LIKE_TEXT.match(currentFieldName)) {
+                if (LIKE_TEXT.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     likeText = parser.text();
-                } else if (MAX_QUERY_TERMS.match(currentFieldName)) {
+                } else if (MAX_QUERY_TERMS.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     maxNumTerms = parser.intValue();
-                } else if (IGNORE_TF.match(currentFieldName)) {
+                } else if (IGNORE_TF.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     ignoreTF = parser.booleanValue();
-                } else if (FUZZINESS.match(currentFieldName)) {
+                } else if (FUZZINESS.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     fuzziness = Fuzziness.parse(parser);
-                } else if (PREFIX_LENGTH.match(currentFieldName)) {
+                } else if (PREFIX_LENGTH.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     prefixLength = parser.intValue();
-                } else if (ANALYZER.match(currentFieldName)) {
+                } else if (ANALYZER.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     analyzer = parser.text();
-                } else if (FAIL_ON_UNSUPPORTED_FIELD.match(currentFieldName)) {
+                } else if (FAIL_ON_UNSUPPORTED_FIELD.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     failOnUnsupportedField = parser.booleanValue();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "[flt] query does not support [" + currentFieldName + "]");
                 }
             } else if (token == XContentParser.Token.START_ARRAY) {
-                if (FIELDS.match(currentFieldName)) {
+                if (FIELDS.match(currentFieldName, LoggingDeprecationHandler.INSTANCE)) {
                     fields = new ArrayList<>();
                     while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
                         fields.add(parser.text());
@@ -256,7 +249,7 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
             throw new ParsingException(parser.getTokenLocation(), "fuzzy_like_this requires 'like_text' to be specified");
         }
 
-        String[] fs = fields != null ? fields.stream().toArray(String[]::new) : null;
+        String[] fs = fields != null ? fields.toArray(new String[0]) : null;
 
         FuzzyLikeThisQueryBuilder builder = new FuzzyLikeThisQueryBuilder(fs, likeText);
 
@@ -267,14 +260,14 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
             .prefixLength(prefixLength)
             .failOnUnsupportedField(failOnUnsupportedField);
 
-        return Optional.of(builder);
+        return builder;
     }
 
     @Override
-    protected Query doToQuery(QueryShardContext context) throws IOException {
+    protected Query doToQuery(QueryShardContext context) {
         final List<String> fields;
         if (this.fields == null) {
-            fields = Collections.singletonList(context.defaultField());
+            fields = context.defaultFields();
         } else {
             fields = Arrays.stream(this.fields)
                         .filter(x -> context.fieldMapper(x) != null)
@@ -302,15 +295,9 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
         }
 
         FuzzyLikeThisQuery query = new FuzzyLikeThisQuery(maxQueryTerms, analyzer);
-        float minSimilarity = fuzziness.asFloat();
-        if (minSimilarity >= 1.0f && minSimilarity != (int)minSimilarity) {
-            throw new ElasticsearchParseException("fractional edit distances are not allowed");
-        }
-        if (minSimilarity < 0.0f)  {
-            throw new ElasticsearchParseException("minimumSimilarity cannot be less than 0");
-        }
+        int maxDist = fuzziness.asDistance();
         for (String field : fields) {
-            query.addTerms(likeText, field, minSimilarity, prefixLength);
+            query.addTerms(likeText, field, maxDist, prefixLength);
         }
         query.setIgnoreTF(ignoreTF);
         return query;

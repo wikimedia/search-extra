@@ -1,10 +1,9 @@
 package org.wikimedia.search.extra.regex;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
@@ -14,27 +13,25 @@ import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.compress.CompressedXContent;
 import org.elasticsearch.index.mapper.MapperService;
-import org.elasticsearch.index.query.MatchNoneQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryShardContext;
+import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.wikimedia.search.extra.MockCorePluginWithoutNativeScript;
-import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
+import org.wikimedia.search.extra.ExtraCorePlugin;
 import org.wikimedia.search.extra.util.FieldValues;
 
 public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(MockCorePluginWithoutNativeScript.class);
+        return Collections.singleton(ExtraCorePlugin.class);
     }
     private static final String MY_FIELD = "regex_field";
     private static final String MY_FIELD_NGRAM = "regex_field_ngram";
 
     @Override
     protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
-        mapperService.merge("trigram_field",
+        mapperService.merge("_doc",
                 new CompressedXContent("{\"properties\":{" +
                         "\"" + MY_FIELD + "\":{\"type\":\"text\" }," +
                         "\"" + MY_FIELD_NGRAM + "\":{\"type\":\"text\" }" +
@@ -43,52 +40,29 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
     }
 
     @Override
-    @SuppressWarnings({"deprecation", "NPathComplexity", "CyclomaticComplexity"}) // still need to test maxInspect until we remove it
     protected SourceRegexQueryBuilder doCreateTestQueryBuilder() {
         SourceRegexQueryBuilder builder = new SourceRegexQueryBuilder(MY_FIELD, "ramdom[reg]ex");
-        if (randomBoolean()) {
-            builder.caseSensitive(randomBoolean());
-        }
-        if (randomBoolean()) {
-            builder.gramSize(randomIntBetween(2, 4));
-        }
-        if (randomBoolean()) {
-            builder.loadFromSource(randomBoolean());
-        }
-        if (randomBoolean()) {
-            builder.loadFromSource(randomBoolean());
-        }
-        if (randomBoolean()) {
-            builder.settings().timeout(randomIntBetween(10, 300));
-        }
-        if (randomBoolean()) {
-            builder.settings().maxNgramClauses(randomIntBetween(1, 1000));
-        }
-        if (randomBoolean()) {
-            builder.settings().rejectUnaccelerated(randomBoolean());
-        }
-        if (randomBoolean()) {
-            builder.settings().locale(randomFrom(Locale.FRENCH, Locale.ENGLISH, new Locale("el"), new Locale("ga"), new Locale("tr")));
-        }
-        if (randomBoolean()) {
-            builder.settings().caseSensitive(randomBoolean());
-        }
-        if (randomBoolean()) {
-            builder.settings().maxInspect(randomIntBetween(1, 10000));
-        }
-        if (randomBoolean()) {
-            builder.settings().maxDeterminizedStates(randomIntBetween(1, 10000));
-        }
-        if (randomBoolean()) {
-            builder.settings().maxNgramsExtracted(randomIntBetween(1, 200));
-        }
-        if (randomBoolean()) {
-            builder.settings().maxExpand(randomIntBetween(1, 200));
-        }
-        if (randomBoolean()) {
-            builder.settings().maxStatesTraced(randomIntBetween(100, 10000));
-        }
+        randomlyDo(
+            () -> builder.caseSensitive(randomBoolean()),
+            () -> builder.gramSize(randomIntBetween(2, 4)),
+            () -> builder.loadFromSource(randomBoolean()),
+            () -> builder.loadFromSource(randomBoolean()),
+            () -> builder.settings().timeout(randomIntBetween(10, 300)),
+            () -> builder.settings().maxNgramClauses(randomIntBetween(1, 1000)),
+            () -> builder.settings().rejectUnaccelerated(randomBoolean()),
+            () -> builder.settings().locale(randomFrom(Locale.FRENCH, Locale.ENGLISH, new Locale("el"), new Locale("ga"), new Locale("tr"))),
+            () -> builder.settings().caseSensitive(randomBoolean()),
+            () -> builder.settings().maxDeterminizedStates(randomIntBetween(1, 10000)),
+            () -> builder.settings().maxNgramsExtracted(randomIntBetween(1, 200)),
+            () -> builder.settings().maxExpand(randomIntBetween(1, 200)),
+            () -> builder.settings().maxStatesTraced(randomIntBetween(100, 10000)));
         return builder;
+    }
+
+    private void randomlyDo(Runnable...r) {
+        Arrays.stream(r)
+            .filter((x) -> randomBoolean())
+            .forEach(Runnable::run);
     }
 
     @Override
@@ -113,7 +87,6 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
         }
     }
 
-    @SuppressWarnings({"deprecation"}) // still need to test maxInspect until we remove it
     public void testParseDocExample() throws IOException {
         String json = "{\"source_regex\": {\n" +
                 "   \"field\": \"" + MY_FIELD + "\",\n" +
@@ -125,7 +98,6 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
                 "   \"max_states_traced\" : 10001,\n" +
                 "   \"max_determinized_states\" : 20001,\n" +
                 "   \"max_ngrams_extracted\" : 101,\n" +
-                "   \"max_inspect\" : 11,\n" +
                 "   \"locale\" : \"fr\",\n" +
                 "   \"reject_unaccelerated\" : true,\n" +
                 "   \"max_ngram_clauses\" : 1001,\n" +
@@ -142,28 +114,11 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
         expected.maxStatesTraced(10001);
         expected.maxDeterminizedStates(20001);
         expected.settings().maxNgramsExtracted(101);
-        expected.maxInspect(11);
         expected.locale(Locale.FRENCH);
         expected.rejectUnaccelerated(true);
         expected.settings().maxNgramClauses(1001);
         expected.settings().timeout(1000);
         assertEquals(expected, parsed);
-    }
-
-    public void testUnknownAnalyzer() {
-        TokenCountRouterQueryBuilder expected = new TokenCountRouterQueryBuilder();
-        expected.field("unknown_field");
-        expected.text("input query");
-        expected.condition(gte, 2, QueryBuilders.matchPhraseQuery("text", "input query"));
-        expected.fallback(new MatchNoneQueryBuilder());
-        QueryShardContext context = createShardContext();
-        assertThat(expectThrows(IllegalArgumentException.class, () -> QueryBuilder.rewriteQuery(expected, context)).getMessage(),
-                containsString("Unknown field [unknown_field]"));
-
-        expected.field(null);
-        expected.analyzer("unknown_analyzer");
-        assertThat(expectThrows(IllegalArgumentException.class, () -> QueryBuilder.rewriteQuery(expected, context)).getMessage(),
-                containsString("Unknown analyzer [unknown_analyzer]"));
     }
 
     @Override
@@ -194,7 +149,7 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
     private Query buildAndRewrite(SourceRegexQueryBuilder query) throws IOException {
         IndexReader ir = new MemoryIndex().createSearcher().getIndexReader();
         QueryShardContext context = createShardContext();
-        QueryBuilder rewritten = QueryBuilder.rewriteQuery(query, context);
+        QueryBuilder rewritten = Rewriteable.rewrite(query, context);
         Query lquery = rewritten.toQuery(context);
         return lquery.rewrite(ir);
     }

@@ -3,7 +3,6 @@ package org.wikimedia.search.extra.router;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
@@ -14,7 +13,7 @@ import org.wikimedia.search.extra.QueryBuilderTestUtils;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition;
 import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedConditionType;
 
-public class DegradedRouterQueryBuilderESTest extends LuceneTestCase {
+public class DegradedRouterQueryBuilderTest extends LuceneTestCase {
     @Test
     public void testParseExample() throws IOException {
         String json = "{\"degraded_router\": {\n" +
@@ -34,9 +33,7 @@ public class DegradedRouterQueryBuilderESTest extends LuceneTestCase {
                 "   }\n" +
                 "}}";
 
-        Optional<QueryBuilder> optional = QueryBuilderTestUtils.FULLY_FEATURED.parseQuery(json);
-        assertTrue(optional.isPresent());
-        QueryBuilder builder = optional.get();
+        QueryBuilder builder = QueryBuilderTestUtils.FULLY_FEATURED.parseQuery(json);
         assertThat(builder, instanceOf(DegradedRouterQueryBuilder.class));
         DegradedRouterQueryBuilder qb = (DegradedRouterQueryBuilder) builder;
         assertNotNull(qb.systemLoad());

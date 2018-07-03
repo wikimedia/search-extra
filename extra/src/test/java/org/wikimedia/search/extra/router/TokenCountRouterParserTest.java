@@ -4,7 +4,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
@@ -36,9 +35,7 @@ public class TokenCountRouterParserTest extends LuceneTestCase {
                 "   }\n" +
                 "}}";
 
-        Optional<QueryBuilder> optional = QueryBuilderTestUtils.FULLY_FEATURED.parseQuery(json);
-        assertTrue(optional.isPresent());
-        QueryBuilder builder = optional.get();
+        QueryBuilder builder = QueryBuilderTestUtils.FULLY_FEATURED.parseQuery(json);
         assertThat(builder, instanceOf(TokenCountRouterQueryBuilder.class));
         TokenCountRouterQueryBuilder tok = (TokenCountRouterQueryBuilder) builder;
         assertEquals("text", tok.field());

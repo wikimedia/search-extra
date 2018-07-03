@@ -13,13 +13,13 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
-import org.wikimedia.search.extra.MockCorePluginWithoutNativeScript;
+import org.wikimedia.search.extra.ExtraCorePlugin;
 
 public class TermFreqFilterQueryBuilderESTest extends AbstractQueryTestCase<TermFreqFilterQueryBuilder> {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(MockCorePluginWithoutNativeScript.class);
+        return Collections.singleton(ExtraCorePlugin.class);
     }
 
     @Override

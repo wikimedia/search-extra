@@ -10,10 +10,10 @@ import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.lucene.search.function.ScoreFunction;
+import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MappedFieldType;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.QueryShardException;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
@@ -35,6 +35,14 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder<Levens
     private final String text;
     @Nullable @Setter private String missing;
 
+    private static final ConstructingObjectParser<LevenshteinDistanceScoreBuilder, Void> PARSER = new ConstructingObjectParser<>(NAME.getPreferredName(),
+            params -> new LevenshteinDistanceScoreBuilder((String) params[0], (String) params[1]));
+
+    static {
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), FIELD);
+        PARSER.declareString(ConstructingObjectParser.constructorArg(), TEXT);
+        PARSER.declareString((b, s) -> b.missing = s, MISSING);
+    }
     public LevenshteinDistanceScoreBuilder(String field, String text) {
         this.field = field;
         this.text = text;
@@ -83,7 +91,7 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder<Levens
     }
 
     @Override
-    protected ScoreFunction doToFunction(QueryShardContext context) throws IOException {
+    protected ScoreFunction doToFunction(QueryShardContext context) {
         MappedFieldType fieldType = context.getMapperService().fullName(field);
 
         if (fieldType == null) {
@@ -92,37 +100,7 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder<Levens
         return new LevenshteinDistanceScore(context.lookup(), fieldType, text, missing);
     }
 
-    public static LevenshteinDistanceScoreBuilder fromXContent(QueryParseContext parseContext) throws IOException, ParsingException {
-        String currentFieldName = null;
-        String field = null;
-        String text = null;
-        String missing = null;
-        XContentParser.Token token;
-        XContentParser parser = parseContext.parser();
-        while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
-            if (token == XContentParser.Token.FIELD_NAME) {
-                currentFieldName = parser.currentName();
-            } else if (token.isValue()) {
-                if (FIELD.match(currentFieldName)) {
-                    field = parser.text();
-                } else if (TEXT.match(currentFieldName)) {
-                    text = parser.text();
-                } else if (MISSING.match(currentFieldName)) {
-                    missing = parser.text();
-                } else {
-                    throw new ParsingException(parser.getTokenLocation(), "{} query does not support {}", NAME,  currentFieldName);
-                }
-            } else {
-                throw new ParsingException(parser.getTokenLocation(), "Cannot parse {}, expected field name or field value but got {}", NAME,  token);
-            }
-        }
-
-        if (field == null) {
-            throw new ParsingException(parser.getTokenLocation(), "{} required field 'field' missing", NAME);
-        }
-        if (text == null) {
-            throw new ParsingException(parser.getTokenLocation(), "{} required field 'text' missing", NAME);
-        }
-        return new LevenshteinDistanceScoreBuilder(field, text).missing(missing);
+    public static LevenshteinDistanceScoreBuilder fromXContent(XContentParser parser) throws IOException, ParsingException {
+        return PARSER.parse(parser, null);
     }
 }

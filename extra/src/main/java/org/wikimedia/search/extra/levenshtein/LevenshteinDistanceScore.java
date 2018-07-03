@@ -1,13 +1,12 @@
 package org.wikimedia.search.extra.levenshtein;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import javax.annotation.Nullable;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.spell.LevensteinDistance;
+import org.apache.lucene.search.spell.LevenshteinDistance;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.common.lucene.search.function.LeafScoreFunction;
@@ -31,7 +30,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
     private final String value;
     private final SearchLookup lookup;
     @Nullable private final String missing;
-    private final LevensteinDistance levenshtein = new LevensteinDistance();
+    private final LevenshteinDistance levenshtein = new LevenshteinDistance();
 
     public LevenshteinDistanceScore(SearchLookup lookup, MappedFieldType fieldType, String value, @Nullable String missing) {
         super(CombineFunction.REPLACE);
@@ -72,7 +71,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
     }
 
     @Override
-    public LeafScoreFunction getLeafScoreFunction(final LeafReaderContext ctx) throws IOException {
+    public LeafScoreFunction getLeafScoreFunction(final LeafReaderContext ctx) {
         final LeafSearchLookup leafLookup = lookup.getLeafSearchLookup(ctx);
         return new LeafScoreFunction() {
             @Override
@@ -90,7 +89,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
                 explanation += "\n field value : " + loadValue(leafLookup);
 
                 Explanation scoreExp = Explanation.match(subQueryScore.getValue(), "_score: ", subQueryScore);
-                return Explanation.match(CombineFunction.toFloat(score), explanation, scoreExp);
+                return Explanation.match((float) score, explanation, scoreExp);
             }
         };
     }
@@ -108,6 +107,19 @@ public class LevenshteinDistanceScore extends ScoreFunction {
                 Objects.equals(this.value, o.value) &&
                 Objects.equals(this.missing, o.missing);
 
+    }
+
+    public MappedFieldType getFieldType() {
+        return fieldType;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    @Nullable
+    public String getMissing() {
+        return missing;
     }
 
     @Override

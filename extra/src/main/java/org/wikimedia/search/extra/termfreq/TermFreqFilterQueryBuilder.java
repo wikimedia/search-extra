@@ -7,7 +7,6 @@ import static org.wikimedia.search.extra.util.ConcreteIntPredicate.lte;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
@@ -18,9 +17,9 @@ import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MappedFieldType;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.util.ConcreteIntPredicate;
 
@@ -35,7 +34,7 @@ public class TermFreqFilterQueryBuilder extends AbstractQueryBuilder<TermFreqFil
     private static final ParseField LTE = new ParseField("lte");
     private static final ParseField EQ = new ParseField("eq");
 
-    private static final ObjectParser<TermFreqFilterQueryBuilder, QueryParseContext> PARSER = new ObjectParser<>(NAME, TermFreqFilterQueryBuilder::new);
+    private static final ObjectParser<TermFreqFilterQueryBuilder, Void> PARSER = new ObjectParser<>(NAME, TermFreqFilterQueryBuilder::new);
 
     static {
         PARSER.declareString(TermFreqFilterQueryBuilder::setField, FIELD);
@@ -87,38 +86,38 @@ public class TermFreqFilterQueryBuilder extends AbstractQueryBuilder<TermFreqFil
     }
 
     @SuppressWarnings("CyclomaticComplexity")
-    public static Optional<TermFreqFilterQueryBuilder> fromXContent(QueryParseContext context) throws IOException {
+    public static TermFreqFilterQueryBuilder fromXContent(XContentParser parser) throws IOException {
         TermFreqFilterQueryBuilder builder;
         try {
-            builder = PARSER.parse(context.parser(), context);
+            builder = PARSER.parse(parser, null);
         } catch (IllegalArgumentException iae) {
-            throw new ParsingException(context.parser().getTokenLocation(), iae.getMessage(), iae);
+            throw new ParsingException(parser.getTokenLocation(), iae.getMessage(), iae);
         }
 
         if (builder.term == null) {
-            throw new ParsingException(context.parser().getTokenLocation(), TERM.getPreferredName() + " is mandatory");
+            throw new ParsingException(parser.getTokenLocation(), TERM.getPreferredName() + " is mandatory");
         }
         if (builder.field == null) {
-            throw new ParsingException(context.parser().getTokenLocation(), FIELD.getPreferredName() + " is mandatory");
+            throw new ParsingException(parser.getTokenLocation(), FIELD.getPreferredName() + " is mandatory");
         }
         if (builder.equal != null) {
             if (builder.from != null || builder.to != null) {
-                throw new ParsingException(context.parser().getTokenLocation(), EQ.getPreferredName() + " cannot be used with other comparators");
+                throw new ParsingException(parser.getTokenLocation(), EQ.getPreferredName() + " cannot be used with other comparators");
             }
         } else if (builder.from == null && builder.to == null) {
-            throw new ParsingException(context.parser().getTokenLocation(), "Invalid range provided eq or lt[e] and gt[e] must be provided");
+            throw new ParsingException(parser.getTokenLocation(), "Invalid range provided eq or lt[e] and gt[e] must be provided");
         }
         if (builder.from != null && builder.to != null) {
-            checkRange(context, builder);
+            checkRange(parser, builder);
         }
-        return Optional.of(builder);
+        return builder;
     }
 
-    private static void checkRange(QueryParseContext context, TermFreqFilterQueryBuilder builder) {
+    private static void checkRange(XContentParser parser, TermFreqFilterQueryBuilder builder) {
         int minDiff = (builder.includeTo ? 0 : 1) + (builder.includeFrom ? 0 : 1);
         int diff = builder.to - builder.from;
         if (diff < minDiff) {
-            throw new ParsingException(context.parser().getTokenLocation(),
+            throw new ParsingException(parser.getTokenLocation(),
                     "Invalid range provided invalid range provided [" + builder.from + "," + builder.to + "]");
         }
     }

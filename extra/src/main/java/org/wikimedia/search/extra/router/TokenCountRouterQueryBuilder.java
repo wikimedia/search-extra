@@ -2,7 +2,6 @@ package org.wikimedia.search.extra.router;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -17,9 +16,10 @@ import org.elasticsearch.common.xcontent.ObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.mapper.MappedFieldType;
+import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryRewriteContext;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -42,8 +42,8 @@ public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Con
     private static final ParseField DISCOUNT_OVERLAPS = new ParseField("discount_overlaps");
     private static final boolean DEFAULT_DISCOUNT_OVERLAPS = true;
 
-    private static final ObjectParser<TokenCountRouterQueryBuilder, QueryParseContext> PARSER;
-    private static final ObjectParser<ConditionParserState, QueryParseContext> COND_PARSER;
+    private static final ObjectParser<TokenCountRouterQueryBuilder, Void> PARSER;
+    private static final ObjectParser<ConditionParserState, Void> COND_PARSER;
 
     static {
         COND_PARSER = new ObjectParser<>("condition", ConditionParserState::new);
@@ -54,7 +54,7 @@ public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Con
         PARSER.declareString(TokenCountRouterQueryBuilder::field, FIELD);
         PARSER.declareString(TokenCountRouterQueryBuilder::analyzer, ANALYZER);
         PARSER.declareBoolean(TokenCountRouterQueryBuilder::discountOverlaps, DISCOUNT_OVERLAPS);
-        declareRouterFields(PARSER, (p, pc) -> parseCondition(COND_PARSER, p, pc));
+        declareRouterFields(PARSER, (p, pc) -> parseCondition(COND_PARSER, p));
         declareStandardFields(PARSER);
     }
 
@@ -107,35 +107,37 @@ public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Con
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static Optional<TokenCountRouterQueryBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
-        final Optional<TokenCountRouterQueryBuilder> builder = AbstractRouterQueryBuilder.fromXContent(PARSER, parseContext);
+    public static TokenCountRouterQueryBuilder fromXContent(XContentParser parser) throws IOException {
+        TokenCountRouterQueryBuilder builder = AbstractRouterQueryBuilder.fromXContent(PARSER, parser);
 
-        XContentParser parser = parseContext.parser();
-        builder.filter(b -> b.text != null)
-                .orElseThrow(() -> new ParsingException(parser.getTokenLocation(), "No text provided"));
+        if (builder.text == null) {
+            throw new ParsingException(parser.getTokenLocation(), "No text provided");
+        }
 
-        builder.filter(b -> b.analyzer != null || b.field != null)
-                .orElseThrow(() -> new ParsingException(parser.getTokenLocation(), "Missing field or analyzer definition"));
+        if (builder.analyzer == null && builder.field == null) {
+            throw new ParsingException(parser.getTokenLocation(), "Missing field or analyzer definition");
+        }
 
         return builder;
     }
 
-    private Analyzer resolveAnalyzer(QueryRewriteContext context) {
+    private Analyzer resolveAnalyzer(QueryShardContext context) {
         final Analyzer luceneAnalyzer;
+        MapperService mapper = context.getMapperService();
         if (analyzer != null) {
-            luceneAnalyzer = context.getMapperService().getIndexAnalyzers().get(analyzer);
+            luceneAnalyzer = mapper.getIndexAnalyzers().get(analyzer);
             if (luceneAnalyzer == null) {
                 throw new IllegalArgumentException("Unknown analyzer [" + analyzer + "]");
             }
         } else if (field != null) {
-            MappedFieldType fieldMapper = context.getMapperService().fullName(field);
+            MappedFieldType fieldMapper = mapper.fullName(field);
             if (fieldMapper == null) {
                 throw new IllegalArgumentException("Unknown field [" + field + "]");
             }
             if (fieldMapper.searchQuoteAnalyzer() != null) {
                 luceneAnalyzer = fieldMapper.searchAnalyzer();
             } else {
-                luceneAnalyzer = context.getMapperService().searchAnalyzer();
+                luceneAnalyzer = mapper.searchAnalyzer();
             }
         } else {
             throw new IllegalArgumentException("field or analyzer must be set");
@@ -148,9 +150,13 @@ public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Con
 
     @Override
     public QueryBuilder doRewrite(QueryRewriteContext context) throws IOException {
-        final Analyzer luceneAnalyzer = resolveAnalyzer(context);
-        final int count = countToken(luceneAnalyzer, text, discountOverlaps);
-        return super.doRewrite((c) -> c.test(count));
+        QueryShardContext shardContext = context.convertToShardContext();
+        if (shardContext != null) {
+            final Analyzer luceneAnalyzer = resolveAnalyzer(shardContext);
+            final int count = countToken(luceneAnalyzer, text, discountOverlaps);
+            return super.doRewrite((c) -> c.test(count));
+        }
+        return this;
     }
 
     static int countToken(Analyzer analyzer, String text, boolean discountOverlaps) throws IOException {

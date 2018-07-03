@@ -3,15 +3,15 @@ package org.wikimedia.search.extra;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.DeprecationHandler;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.plugins.SearchPlugin.QuerySpec;
 import org.elasticsearch.search.SearchModule;
 
@@ -34,15 +34,17 @@ public class QueryBuilderTestUtils {
 
     public QueryBuilderTestUtils(List<QuerySpec<?>> querySpecs) {
         List<NamedXContentRegistry.Entry> entries = querySpecs.stream()
-                .map((spec) -> new NamedXContentRegistry.Entry(Optional.class,
+                .map((spec) -> new NamedXContentRegistry.Entry(QueryBuilder.class,
                         spec.getName(),
-                        p -> spec.getParser().fromXContent(new QueryParseContext(p))))
+                        p -> spec.getParser().fromXContent(p)))
                 .collect(Collectors.toList());
         this.xContentRegistry = new NamedXContentRegistry(entries);
     }
 
-    public Optional<QueryBuilder> parseQuery(String query) throws IOException {
-        XContentParser parser = JsonXContent.jsonXContent.createParser(xContentRegistry, query);
-        return new QueryParseContext(parser).parseInnerQueryBuilder();
+    public QueryBuilder parseQuery(String query) throws IOException {
+        XContentParser parser = JsonXContent.jsonXContent.createParser(xContentRegistry,
+                DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
+                query);
+        return AbstractQueryBuilder.parseInnerQueryBuilder(parser);
     }
 }

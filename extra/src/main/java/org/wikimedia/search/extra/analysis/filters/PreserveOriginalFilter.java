@@ -84,7 +84,7 @@ public class PreserveOriginalFilter extends TokenFilter {
     public static class Recorder extends TokenFilter {
         private final OriginalTermAttribute original = this.addAttribute(OriginalTermAttribute.class);
         private final CharTermAttribute cattr = this.addAttribute(CharTermAttribute.class);
-        protected Recorder(TokenStream input) {
+        public Recorder(TokenStream input) {
             super(input);
         }
 

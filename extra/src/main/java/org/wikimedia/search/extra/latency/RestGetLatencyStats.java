@@ -16,6 +16,11 @@ public class RestGetLatencyStats extends BaseRestHandler {
     }
 
     @Override
+    public String getName() {
+        return "latency_stats";
+    }
+
+    @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
         return (channel) -> LatencyStatsAction.INSTANCE.newRequestBuilder(client).execute(new RestActions.NodesResponseRestListener<>(channel));
     }

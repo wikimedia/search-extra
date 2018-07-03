@@ -15,7 +15,9 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StoredField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
@@ -62,7 +64,11 @@ public class TermFreqFilterQueryTest extends LuceneTestCase {
             Document doc = new Document();
 
             doc.add(new StoredField("freq", freq));
-            doc.add(newTextField("main_field", "word1|" + freq + " word2|" + (nbDocs - i), Field.Store.YES));
+            FieldType type = new FieldType();
+            type.setStored(false);
+            type.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+            Field f = newField("main_field", "word1|" + freq + " word2|" + (nbDocs - i), type);
+            doc.add(f);
             indexWriterUnderTest.addDocument(doc);
         }
 
