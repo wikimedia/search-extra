@@ -18,7 +18,7 @@ all documents.
 evaluates some conditions based on the number of tokens of the input query.
 * [simswitcher](docs/simswitcher.md) - Simple query wrapper that allows to override
 similarity settings at query time (expert: use with caution).
-* [term_freq](docs/term_freq_filter_query.md) - Simple term query with filtering based on term frequency.
+* [term_freq](docs/term_freq_filter_query.md) - Simple term query with filtering based on term frequency.
 
 Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but
@@ -43,7 +43,7 @@ Installation
 
 | Extra Queries and Filters Plugin |  ElasticSearch  |
 |----------------------------------|-----------------|
-| 6.3.1.1, master branch           | 6.3.1           |
+| 6.3.1.2, master branch           | 6.3.1           |
 | 5.5.2.7                          | 5.5.2           |
 | 5.5.2                            | 5.5.2           |
 | 5.3.2                            | 5.3.2           |
