@@ -100,7 +100,7 @@ public class SearchLatencyListenerTest extends RandomizedTest {
             }
         }
 
-        double expectedMs = values.stream().sorted().skip(1900).findFirst().get() / TimeValue.NSEC_PER_MSEC;
+        double expectedMs = values.stream().sorted().skip(1900).findFirst().orElseThrow(AssertionError::new) / TimeValue.NSEC_PER_MSEC;
         assertEquals(expectedMs, getMillisAtPercentile(listener, "foo", 95D), delta(expectedMs));
     }
 

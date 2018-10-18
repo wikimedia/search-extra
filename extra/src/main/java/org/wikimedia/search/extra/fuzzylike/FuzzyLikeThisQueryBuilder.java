@@ -22,6 +22,7 @@ package org.wikimedia.search.extra.fuzzylike;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -77,7 +78,7 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
     private static final boolean DEFAULT_FAIL_ON_UNSUPPORTED_FIELD = false;
     private static final int DEFAULT_MAX_QUERY_TERMS = 25;
 
-    private static final Set<String> SUPPORTED_TYPES = new HashSet<>(Arrays.asList(
+    private static final Set<String> SUPPORTED_TYPES = new HashSet<>(Collections.singletonList(
             TextFieldMapper.CONTENT_TYPE
     ));
 

@@ -125,7 +125,6 @@ public class SlovakStemmer {
                 endsWith(s, len, "ata") ||
                 endsWith(s, len, "aty") ||
                 endsWith(s, len, "ých") ||
-                endsWith(s, len, "ami") ||
                 endsWith(s, len, "ové") ||
                 endsWith(s, len, "ovi") ||
                 endsWith(s, len, "ými")) {

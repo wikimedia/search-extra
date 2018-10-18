@@ -38,7 +38,7 @@ public class SetHandlerTest {
     }
 
     private Map<String, Object> map(String key, Object value) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put(key, value);
         return map;
     }

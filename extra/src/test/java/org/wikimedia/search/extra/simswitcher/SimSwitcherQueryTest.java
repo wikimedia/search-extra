@@ -155,8 +155,8 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
             Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(), q);
             Query hacked = new SimSwitcherQuery(entry.getValue(), new QueryBuilder(analyzer).createBooleanQuery("main_field", q));
             TopDocs docs = searcherUnderTest.search(query, 10);
-            Weight weight = searcherUnderTest.createNormalizedWeight(query, true);
-            Weight hackedWeight = searcherUnderTest.createNormalizedWeight(hacked, true);
+            Weight weight = searcherUnderTest.createWeight(searcherUnderTest.rewrite(query), true, 1F);
+            Weight hackedWeight = searcherUnderTest.createWeight(searcherUnderTest.rewrite(hacked), true, 1F);
             Explanation exp = searcherUnderTest.explain(query, docs.scoreDocs[0].doc);
             Explanation hackExp = searcherUnderTest.explain(hacked, docs.scoreDocs[0].doc);
             assertEquals(msg, exp.getValue(), hackExp.getValue(), Math.ulp(exp.getValue()));

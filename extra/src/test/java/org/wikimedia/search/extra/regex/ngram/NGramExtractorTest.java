@@ -17,7 +17,7 @@ public class NGramExtractorTest {
         NGramExtractor gram = new NGramExtractor(3, 4, 10000, 100, new KeywordAnalyzer());
         Automaton automaton = new RegExp("hero of legend").toAutomaton();
         assertEquals(
-                new And<String>(leaves("her", "ero", "ro ", "o o", " of",
+                new And<>(leaves("her", "ero", "ro ", "o o", " of",
                         "of ", "f l", " le", "leg", "ege", "gen", "end")),
                 gram.extract(automaton));
         automaton = new RegExp("").toAutomaton();
@@ -35,7 +35,7 @@ public class NGramExtractorTest {
         NGramExtractor gram = new NGramExtractor(3, 4, 10000, 3, new KeywordAnalyzer());
         Automaton automaton = new RegExp("hero of legend").toAutomaton();
         assertEquals(
-                new And<String>(leaves("her", "ero", "ro ")),
+                new And<>(leaves("her", "ero", "ro ")),
                 gram.extract(automaton));
     }
 }

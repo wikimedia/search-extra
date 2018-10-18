@@ -162,8 +162,7 @@ public class NGramAutomaton {
     }
 
     private void traceRemainingStates() {
-        LinkedList<NGramState> leftToProcess = new LinkedList<>();
-        leftToProcess.addAll(initialStates);
+        LinkedList<NGramState> leftToProcess = new LinkedList<>(initialStates);
         int[] codePoint = new int[1];
         int statesTraced = 0;
         Transition transition = new Transition();

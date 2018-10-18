@@ -123,7 +123,7 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
 
     @Override
     public Map<String, AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
-        return Collections.singletonMap("term_freq", AnalysisPlugin.requriesAnalysisSettings(TermFreqTokenFilterFactory::new));
+        return Collections.singletonMap("term_freq", AnalysisPlugin.requiresAnalysisSettings(TermFreqTokenFilterFactory::new));
     }
 
     @Override

@@ -59,7 +59,7 @@ public abstract class FieldValues {
             BytesReference source = visitor.source();
             // deprecated but still in use in core
             // Monitor how it evolves in core and FetchSubPhase.java
-            // https://github.com/elastic/elasticsearch/blob/master/core/src/main/java/org/elasticsearch/search/fetch/FetchPhase.java#L233
+            // https://github.com/elastic/elasticsearch/blob/master/server/src/main/java/org/elasticsearch/search/fetch/FetchPhase.java#L290
             Map<String, Object> map = XContentHelper.convertToMap(source, false).v2();
             return XContentMapValues.extractRawValues(path, map).stream()
                     .map(Object::toString)

@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.analysis.slovak;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -74,7 +74,7 @@ public class SlovakStemmerFilterTest extends BaseTokenStreamTestCase {
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new WhitespaceTokenizer();
                 TokenStream ts = new LowerCaseFilter(tok);
-                ts = new StopFilter(ts, new CharArraySet(new HashSet<>(asList("vo")), true));
+                ts = new StopFilter(ts, new CharArraySet(new HashSet<>(singletonList("vo")), true));
                 ts = new SlovakStemmerFilter(ts);
                 return new TokenStreamComponents(tok, ts);
             }

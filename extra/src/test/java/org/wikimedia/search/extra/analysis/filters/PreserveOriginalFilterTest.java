@@ -1,12 +1,12 @@
 package org.wikimedia.search.extra.analysis.filters;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -96,7 +96,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new WhitespaceTokenizer();
                 TokenStream ts = new PreserveOriginalFilter.Recorder(tok);
-                ts = new StopFilter(ts, new CharArraySet(new HashSet<>(asList("the")), true));
+                ts = new StopFilter(ts, new CharArraySet(new HashSet<>(Collections.singletonList("the")), true));
                 ts = new LowerCaseFilter(ts);
                 ts = new PreserveOriginalFilter(ts);
                 return new TokenStreamComponents(tok, ts);

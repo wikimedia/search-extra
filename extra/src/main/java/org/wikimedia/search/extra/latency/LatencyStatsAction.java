@@ -41,7 +41,7 @@ import lombok.Getter;
 public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNodesRequest,
         LatencyStatsAction.LatencyStatsNodesResponse, LatencyStatsAction.LatencyStatsRequestBuilder> {
 
-    static final String NAME = "extra:latency/stats";
+    static final String NAME = "cluster:monitor/extra-latency-stats";
     public static final LatencyStatsAction INSTANCE = new LatencyStatsAction();
 
     private LatencyStatsAction() {

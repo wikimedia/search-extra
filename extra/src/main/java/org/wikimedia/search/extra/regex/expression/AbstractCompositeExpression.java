@@ -90,7 +90,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
             Expression<T> simplified = expression.simplify();
             changed |= expression != simplified;
             if (doesNotAffectOutcome(simplified)) {
-                changed |= true;
+                changed = true;
                 continue;
             }
             Expression<T> forcedOutcome = componentForcesOutcome(simplified);
@@ -101,7 +101,7 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
                 newComponentsBuilder = new ArrayList<>(components.size());
             }
             if (simplified.getClass() == getClass()) {
-                changed |= true;
+                changed = true;
                 newComponentsBuilder.addAll(((AbstractCompositeExpression<T>) simplified).components);
                 continue;
             }
@@ -293,7 +293,6 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
         for (Expression<T> exp : components) {
             int size = exp.countClauses();
             assert size >= 0;
-            assert cnt >= 0;
             cnt += size;
             // an integer overflow may occur for very complex
             // boolean expressions

@@ -29,7 +29,7 @@ public class NGramAutomatonTest extends RandomizedTest {
 
     @Test
     public void options() {
-        assertTrigramExpression("(cat)|(dog)|(cow)", new Or<String>(leaves("cat", "dog", "cow")));
+        assertTrigramExpression("(cat)|(dog)|(cow)", new Or<>(leaves("cat", "dog", "cow")));
     }
 
     @Test
@@ -44,7 +44,7 @@ public class NGramAutomatonTest extends RandomizedTest {
 
     @Test
     public void initialCharClassExpanded() {
-        assertTrigramExpression("[abcd]oop", new And<String>(new Or<String>(leaves("aoo", "boo", "coo", "doo")), new Leaf<>("oop")));
+        assertTrigramExpression("[abcd]oop", new And<>(new Or<>(leaves("aoo", "boo", "coo", "doo")), new Leaf<>("oop")));
     }
 
     @Test
@@ -54,9 +54,9 @@ public class NGramAutomatonTest extends RandomizedTest {
 
     @Test
     public void followingCharClassExpanded() {
-        assertTrigramExpression("oop[abcd]", new And<String>(
+        assertTrigramExpression("oop[abcd]", new And<>(
                 new Leaf<>("oop"),
-                new Or<String>(leaves("opa", "opb", "opc", "opd"))));
+                new Or<>(leaves("opa", "opb", "opc", "opd"))));
     }
 
     @Test
@@ -71,33 +71,33 @@ public class NGramAutomatonTest extends RandomizedTest {
 
     @Test
     public void optional() {
-        assertTrigramExpression("(a|[j-t])lopi", new And<String>(leaves("lop", "opi")));
+        assertTrigramExpression("(a|[j-t])lopi", new And<>(leaves("lop", "opi")));
     }
 
     @Test
     public void loop() {
-        assertTrigramExpression("ab(cdef)*gh", new Or<String>(
-                new And<String>(leaves("abc", "bcd", "cde", "def", "efg", "fgh")),
-                new And<String>(leaves("abg", "bgh"))));
+        assertTrigramExpression("ab(cdef)*gh", new Or<>(
+                new And<>(leaves("abc", "bcd", "cde", "def", "efg", "fgh")),
+                new And<>(leaves("abg", "bgh"))));
     }
 
     @Test
     public void converge() {
-        assertTrigramExpression("(ajdef)|(cdef)", new And<String>(
-                new Or<String>(
-                        new And<String>(leaves("ajd", "jde")),
+        assertTrigramExpression("(ajdef)|(cdef)", new And<>(
+                new Or<>(
+                        new And<>(leaves("ajd", "jde")),
                         new Leaf<>("cde")),
-                        new Leaf<>("def")));
+                new Leaf<>("def")));
     }
 
     @Test
     public void complex() {
-        assertTrigramExpression("h[efas] te.*me", new And<String>(
-                new Or<String>(
-                        new And<String>(leaves("ha ", "a t")),
-                        new And<String>(leaves("he ", "e t")),
-                        new And<String>(leaves("hf ", "f t")),
-                        new And<String>(leaves("hs ", "s t"))),
+        assertTrigramExpression("h[efas] te.*me", new And<>(
+                new Or<>(
+                        new And<>(leaves("ha ", "a t")),
+                        new And<>(leaves("he ", "e t")),
+                        new And<>(leaves("hf ", "f t")),
+                        new And<>(leaves("hs ", "s t"))),
                 new Leaf<>(" te")));
     }
 
@@ -105,48 +105,48 @@ public class NGramAutomatonTest extends RandomizedTest {
     // http://www.pgcon.org/2012/schedule/attachments/248_Alexander%20Korotkov%20-%20Index%20support%20for%20regular%20expression%20search.pdf
     @Test
     public void pgTrgmExample1() {
-        assertTrigramExpression("a(b+|c+)d", new Or<String>(
+        assertTrigramExpression("a(b+|c+)d", new Or<>(
                 new Leaf<>("abd"),
-                new And<String>(leaves("abb", "bbd")),
+                new And<>(leaves("abb", "bbd")),
                 new Leaf<>("acd"),
-                new And<String>(leaves("acc", "ccd"))));
+                new And<>(leaves("acc", "ccd"))));
     }
 
     @Test
     public void pgTrgmExample2() {
-        assertTrigramExpression("(abc|cba)def", new And<String>(
-                new Leaf<>("def"), new Or<String>(
-                        new And<String>(leaves("abc", "bcd", "cde")),
-                        new And<String>(leaves("cba", "bad", "ade")))));
+        assertTrigramExpression("(abc|cba)def", new And<>(
+                new Leaf<>("def"), new Or<>(
+                new And<>(leaves("abc", "bcd", "cde")),
+                new And<>(leaves("cba", "bad", "ade")))));
     }
 
     @Test
     public void pgTrgmExample3() {
-        assertTrigramExpression("abc+de", new And<String>(
+        assertTrigramExpression("abc+de", new And<>(
                 new Leaf<>("abc"),
                 new Leaf<>("cde"),
-                new Or<String>(
+                new Or<>(
                         new Leaf<>("bcd"),
-                        new And<String>(leaves("bcc", "ccd")))));
+                        new And<>(leaves("bcc", "ccd")))));
     }
 
     @Test
     public void pgTrgmExample4() {
-        assertTrigramExpression("(abc*)+de", new Or<String>(
-                new And<String>(leaves("abd", "bde")),
-                new And<String>(
+        assertTrigramExpression("(abc*)+de", new Or<>(
+                new And<>(leaves("abd", "bde")),
+                new And<>(
                         new Leaf<>("abc"),
                         new Leaf<>("cde"),
-                        new Or<String>(
+                        new Or<>(
                                 new Leaf<>("bcd"),
-                                new And<String>(leaves("bcc", "ccd"))))));
+                                new And<>(leaves("bcc", "ccd"))))));
     }
 
     @Test
     public void pgTrgmExample5() {
-        assertTrigramExpression("ab(cd)*ef", new Or<String>(
-                new And<String>(leaves("abe", "bef")),
-                new And<String>(leaves("abc", "bcd", "cde", "def"))));
+        assertTrigramExpression("ab(cd)*ef", new Or<>(
+                new And<>(leaves("abe", "bef")),
+                new And<>(leaves("abc", "bcd", "cde", "def"))));
     }
 
     /**
@@ -168,7 +168,7 @@ public class NGramAutomatonTest extends RandomizedTest {
      */
     @Test
     public void bigramFailsSometimes() {
-        assertExpression("te.*me", 2, new And<String>(leaves("te", "me")));
+        assertExpression("te.*me", 2, new And<>(leaves("te", "me")));
     }
 
     @Test(expected = TooComplexToDeterminizeException.class)

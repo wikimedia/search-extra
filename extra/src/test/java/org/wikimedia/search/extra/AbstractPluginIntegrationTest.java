@@ -7,14 +7,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.el.GreekLowerCaseFilter;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.ga.IrishLowerCaseFilter;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
+import org.apache.lucene.analysis.ngram.NGramTokenizer;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
 import org.apache.lucene.analysis.tr.TurkishLowerCaseFilter;
+import org.elasticsearch.index.analysis.AbstractIndexAnalyzerProvider;
+import org.elasticsearch.index.analysis.Analysis;
+import org.elasticsearch.index.analysis.AnalyzerProvider;
 import org.elasticsearch.index.analysis.TokenFilterFactory;
+import org.elasticsearch.index.analysis.TokenizerFactory;
 import org.elasticsearch.indices.analysis.AnalysisModule;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
@@ -32,58 +41,74 @@ public class AbstractPluginIntegrationTest extends ESIntegTestCase {
         @Override
         public Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
             Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> map = new HashMap<>();
-            map.put("lowercase", (isettings, env, name, settings) -> {
-                return new TokenFilterFactory() {
-                    @Override
-                    public String name() {
-                        return name;
-                    }
+            map.put("lowercase", (isettings, env, name, settings) -> new TokenFilterFactory() {
+                @Override
+                public String name() {
+                    return name;
+                }
 
-                    @Override
-                    public TokenStream create(TokenStream tokenStream) {
-                        String lang = settings.get("language");
-                        switch (lang) {
-                            case "greek":
-                                return new GreekLowerCaseFilter(tokenStream);
-                            case "irish":
-                                return new IrishLowerCaseFilter(tokenStream);
-                            case "turkish":
-                                return new TurkishLowerCaseFilter(tokenStream);
-                            default:
-                                return new LowerCaseFilter(tokenStream);
-                        }
+                @Override
+                public TokenStream create(TokenStream tokenStream) {
+                    String lang = settings.get("language");
+                    switch (lang) {
+                        case "greek":
+                            return new GreekLowerCaseFilter(tokenStream);
+                        case "irish":
+                            return new IrishLowerCaseFilter(tokenStream);
+                        case "turkish":
+                            return new TurkishLowerCaseFilter(tokenStream);
+                        default:
+                            return new LowerCaseFilter(tokenStream);
                     }
-                };
+                }
             });
-            map.put("keyword_repeat", (isettings, env, name, settings) -> {
-                return new TokenFilterFactory() {
-                    @Override
-                    public String name() {
-                        return name;
-                    }
+            map.put("pattern_replace", (isettings, env, name, settings) -> new TokenFilterFactory() {
+                @Override
+                public String name() {
+                    return name;
+                }
 
-                    @Override
-                    public TokenStream create(TokenStream tokenStream) {
-                        return new KeywordRepeatFilter(tokenStream);
-                    }
-                };
+                @Override
+                public TokenStream create(TokenStream tokenStream) {
+                    Pattern p = Pattern.compile(settings.get("pattern"));
+                    String repl = settings.get("replacement");
+                    return new PatternReplaceFilter(tokenStream, p, repl, true);
+                }
             });
-            map.put("pattern_replace", (isettings, env, name, settings) -> {
-                return new TokenFilterFactory() {
-                    @Override
-                    public String name() {
-                        return name;
-                    }
+            map.put("keyword_repeat", (isettings, env, name, settings) -> new TokenFilterFactory() {
+                @Override
+                public String name() {
+                    return name;
+                }
 
-                    @Override
-                    public TokenStream create(TokenStream tokenStream) {
-                        Pattern p = Pattern.compile(settings.get("pattern"));
-                        String repl = settings.get("replacement");
-                        return new PatternReplaceFilter(tokenStream, p, repl, true);
-                    }
-                };
+                @Override
+                public TokenStream create(TokenStream tokenStream) {
+                    return new KeywordRepeatFilter(tokenStream);
+                }
             });
             return Collections.unmodifiableMap(map);
+        }
+
+        @Override
+        public Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> getTokenizers() {
+            Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> map = new HashMap<>();
+            map.put("whitespace", (isettings, env, name, settings) -> WhitespaceTokenizer::new);
+            map.put("nGram", (isettings, env, name, settings) -> () ->
+                    new NGramTokenizer(settings.getAsInt("min_gram", 3), settings.getAsInt("max_gram", 3)));
+            return Collections.unmodifiableMap(map);
+        }
+
+        @Override
+        public Map<String, AnalysisModule.AnalysisProvider<AnalyzerProvider<? extends Analyzer>>> getAnalyzers() {
+            return Collections.singletonMap("english",
+                (isettings, env, name, settings) -> new AbstractIndexAnalyzerProvider<Analyzer>(isettings, name, settings) {
+                    @Override
+                    public Analyzer get() {
+                        return new EnglishAnalyzer(
+                                Analysis.parseStopWords(env, isettings.getIndexVersionCreated(), settings, EnglishAnalyzer.getDefaultStopSet()),
+                                Analysis.parseStemExclusion(settings, CharArraySet.EMPTY_SET));
+                    }
+            });
         }
     }
 }

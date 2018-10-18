@@ -60,9 +60,7 @@ public class ExpressionRewriter<T> {
             return true;
         } else {
             if (leaves.add(subExpr)) {
-                if (leaves.size() > maxResultingClauses) {
-                    return false;
-                }
+                return leaves.size() <= maxResultingClauses;
             }
             return true;
         }
