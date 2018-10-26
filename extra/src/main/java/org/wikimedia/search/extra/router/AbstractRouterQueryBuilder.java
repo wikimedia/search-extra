@@ -41,6 +41,7 @@ import lombok.experimental.Accessors;
 /**
  * Base class for "router" like queries.
  */
+@SuppressWarnings("checkstyle:classfanoutcomplexity") // TODO: refactor at some point
 @Getter
 @Setter
 @Accessors(fluent = true, chain = true)

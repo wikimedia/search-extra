@@ -37,6 +37,7 @@ import org.junit.Test;
 import com.google.common.base.Charsets;
 import com.google.common.primitives.Ints;
 
+@SuppressWarnings("checkstyle:classfanoutcomplexity") // do not care too much about complexity of test classes
 public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     private final int shingleMaxSize = random().nextInt(3) + 3;
     private final int shingleMinSize = random().nextInt(shingleMaxSize - 2) + 2;
