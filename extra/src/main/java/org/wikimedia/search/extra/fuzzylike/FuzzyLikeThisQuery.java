@@ -67,6 +67,7 @@ import lombok.EqualsAndHashCode;
  * index the average IDF of the variants is used.
  */
 @Deprecated
+@SuppressWarnings("checkstyle:classfanoutcomplexity") // Deprecated class is not worth refactoring
 @EqualsAndHashCode(callSuper = false, of = {"analyzer", "fieldVals", "ignoreTF", "maxNumTerms"})
 public class FuzzyLikeThisQuery extends Query {
     // TODO: generalize this query (at least it should not reuse this static sim!
