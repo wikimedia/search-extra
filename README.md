@@ -38,6 +38,14 @@ Analysis:
 * [slovak_stemmer](docs/slovak_stemmer.md) - A token filter that provides
 stemming for the Slovak language. New in 5.5.2.4.
 
+### extra-analysis-surrogates
+
+This plugin contains a filter to merge UTF-32 high and low surrogates that have
+been split, particularly by pre–ES 6.4 smartcn.
+
+Analysis:
+* [surrogate_merger](docs/surrogate_merger.md) - New in 5.5.2.8.
+
 Installation
 ------------
 
@@ -74,6 +82,7 @@ Install it like so for Elasticsearch x.y.z:
 ```bash
 ./bin/elasticsearch-plugin install org.wikimedia.search:extra:x.y.z
 ./bin/elasticsearch-plugin install org.wikimedia.search:extra-analysis-slovak:x.y.z
+./bin/elasticsearch-plugin install org.wikimedia.search:extra-analysis-ssurrogates:x.y.z
 ```
 
 Build

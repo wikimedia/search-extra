@@ -36,6 +36,7 @@
     <modules>
         <module>extra</module>
         <module>extra-analysis-slovak</module>
+        <module>extra-analysis-surrogates</module>
         <module>extra-common</module>
     </modules>
 
@@ -77,6 +78,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analyzers-smartcn</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-core</artifactId>
                 <version>${lucene.version}</version>
             </dependency>
@@ -103,6 +109,11 @@
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
                 <artifactId>extra-analysis-slovak</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wikimedia.search</groupId>
+                <artifactId>extra-analysis-surrogates</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
