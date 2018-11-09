@@ -12,6 +12,7 @@
     <artifactId>extra-parent</artifactId>
     <version>6.4.2-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>Elasticsearch extra plugins</name>
     <description>Extra queries and filters for Elasticsearch.</description>
 
     <url>https://doc.wikimedia.org/search-extra/extra/</url>
