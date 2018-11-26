@@ -95,7 +95,7 @@ public class SetHandler implements ChangeHandler<Object> {
      * returns an empty list.
      */
     @SuppressWarnings("unchecked")
-    private List<Object> listify(Object value) {
+    private List<Object> listify(@Nullable Object value) {
         if (value == null) {
             return new ArrayList<>();
         }

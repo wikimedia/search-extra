@@ -147,7 +147,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         load((bucket, percentile, stats) -> stats.get1MinuteLoadAverage()),
         latency((bucket, percentile, stats) -> stats.getLatency(bucket, percentile)) {
             @Override
-            public void checkValid(String bucket, Double percentile) {
+            public void checkValid(@Nullable String bucket, @Nullable Double percentile) {
                 if (bucket == null) {
                     throw new IllegalArgumentException("Missing field [bucket] in condition");
                 }
