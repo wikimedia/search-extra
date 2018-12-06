@@ -237,4 +237,9 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         }
         return new MatchAllDocsQuery(); // null == *:*
     }
+
+    @Override
+    protected boolean supportsBoostAndQueryName() {
+        return false;
+    }
 }

@@ -15,12 +15,12 @@ import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.search.SearchPhaseExecutionException;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.rest.RestStatus;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -159,37 +159,34 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     @Test
-    @Ignore
-    public void testTimeout() throws InterruptedException, ExecutionException,
-            IOException {
-        // Cannot be tested consistently it'd require a very large index... the purpose of this method is
-        // only to help debug the timeout issues with this query.
+    @Ignore("unreliable")
+    public void testTimeout() throws ExecutionException, InterruptedException, IOException {
         setup();
-        for (int i = 1; i < 10; i++) {
-            indexRandom(false, doc("findmefound" + i, "findmefound"));
+        for (int i = 1; i < 1000; i++) {
+            indexRandom(false, doc("findmefound" + i, randomAlphaOfLength(2000) + "findmefound"));
         }
-        for (int i = 1; i < 100000; i++) {
-            indexRandom(false, doc("findmenotfound" + i, "findmenotfound "));
-        }
-        client().admin().indices().prepareForceMerge("test")
-                .setMaxNumSegments(1)
-                .setFlush(true)
-                .get();
         refresh();
+        client().admin().indices().prepareForceMerge("test").setMaxNumSegments(1).setFlush(true).get();
 
-        // warmup
-        SearchResponse resp = search(filter("findme")).get();
-        Assert.assertTrue(resp.getHits().getTotalHits() > 0);
-        long testOverhead = 2000;
-        long timeout = 100; // 3243, 2212
-        long st = -System.currentTimeMillis();
-        resp = search(filter("((f.){1,10}n.){1,10}afound")).setSize(10).setTimeout(TimeValue.timeValueMillis(timeout)).get();
-        st += System.currentTimeMillis();
-        //System.out.println(st);
-        // Test the accuracy of the timeout
-        Assert.assertTrue((double)(timeout + testOverhead)*1.5 > st);
-        //Assert.assertTrue(resp.getHits().getTotalHits() > 0); // partial results are very hard to simulate...
-        Assert.assertTrue(resp.isTimedOut());
+        SearchResponse resp;
+        for (int i = 0; i < 20; i++) {
+            // it's nearly impossible to cleanly test this as we have 2 competing timeouts
+            // running:
+            // 1/ elasticsearch detects timeout first and we obtain a partial results
+            // 2/ the source_regex timeout is hit first and we get a shard failure
+            // with the message "Timed out" thrown by the source_regex query
+            try {
+                resp = search(filter("((f.){1,10}n.){1,10}m..found").timeout("500ms"))
+                        .setTimeout(TimeValue.timeValueMillis(1))
+                        .setSize(10)
+                        .get();
+                assertTrue(resp.isTimedOut());
+                break;
+            } catch (SearchPhaseExecutionException e) {
+                assertThat(e.getDetailedMessage(),
+                        containsString("Timed out"));
+            }
+        }
     }
 
     @Test
@@ -200,26 +197,20 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         }
         refresh();
         client().admin().indices().prepareForceMerge("test").setMaxNumSegments(1).setFlush(true).get();
-        // Horrible test that checks for the assertion:
-        // https://github.com/elastic/elasticsearch/blob/v2.4.1/core/src/main/java/org/elasticsearch/search/query/QueryPhase.java#L387
-        // This a way to make sure that the timeout exception is actually thrown
-        /*
-        Commented because it causes the test to not return,
-        The assertion error is seen in the logs but for unknown reason it's not
-        returned to the client...
-        assertFailures(search(filter("findmefound").timeout("1ms")).setSize(10),
-                    RestStatus.INTERNAL_SERVER_ERROR, containsString("TimeExceededException thrown even though timeout wasn't set"));
-        */
-        // When running with a timeout set on the search body no assertion should fail
-        // This query should match no docs
-        SearchResponse resp = search(filter("((f.){1,10}n.){1,10}m..found").timeout("1ms"))
-                .setTimeout(TimeValue.timeValueSeconds(1))
-                .setSize(10)
-                .get();
-        assertTrue(resp.isTimedOut());
 
-        resp = search(filter("((f.){1,10}n.){1,10}m..found")).setTimeout(TimeValue.timeValueMillis(1)).setSize(20).get();
+        SearchResponse resp = search(filter("((f.){1,10}n.){1,10}m..found"))
+                .setTimeout(TimeValue.timeValueMillis(2000))
+                .setSize(20)
+                .get();
         assertFalse(resp.isTimedOut()); // I suppose this could randomly fail...
+
+        SearchPhaseExecutionException e = expectThrows(SearchPhaseExecutionException.class,
+            () -> search(filter("((f.){1,10}n.){1,10}m..found").timeout("100ms"))
+                .setTimeout(TimeValue.timeValueMinutes(1))
+                .setSize(10)
+                .get());
+
+        assertThat(e.getDetailedMessage(), containsString("Exceeded allowed search time"));
     }
 
     @Test

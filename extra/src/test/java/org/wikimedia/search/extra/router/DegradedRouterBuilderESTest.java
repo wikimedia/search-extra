@@ -165,4 +165,9 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
         }
         builder.condition(cond, type, bucket, percentile, value, query);
     }
+
+    @Override
+    protected boolean supportsBoostAndQueryName() {
+        return false;
+    }
 }

@@ -90,7 +90,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
                 explanation += "\n field value : " + loadValue(leafLookup);
 
                 Explanation scoreExp = Explanation.match(subQueryScore.getValue(), "_score: ", subQueryScore);
-                return Explanation.match(CombineFunction.toFloat(score), explanation, scoreExp);
+                return Explanation.match((float) score, explanation, scoreExp);
             }
         };
     }
