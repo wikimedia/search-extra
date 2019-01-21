@@ -1,25 +1,23 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
-import org.elasticsearch.script.ExecutableScript;
+import org.elasticsearch.index.mapper.SourceFieldMapper;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
+import org.elasticsearch.script.UpdateScript;
 
 /**
  * Like the detect_noop option on updates but with pluggable "close enough"
  * detectors! So much power!
  */
-public class SuperDetectNoopScript implements ExecutableScript {
+public class SuperDetectNoopScript extends UpdateScript {
 
     public static class SuperNoopScriptEngineService implements ScriptEngine {
         private final Set<ChangeHandler.Recognizer> changeHandlerRecognizers;
@@ -39,7 +37,7 @@ public class SuperDetectNoopScript implements ExecutableScript {
                 throw new IllegalArgumentException("Unsuppored context [" + context.name + "], " +
                         "super_detect_noop only supports the [update] context");
             }
-            return context.factoryClazz.cast((ExecutableScript.Factory) this::newScript);
+            return context.factoryClazz.cast((UpdateScript.Factory) (params, ctx) -> new SuperDetectNoopScript(params, ctx, this));
         }
 
         @Override
@@ -68,40 +66,26 @@ public class SuperDetectNoopScript implements ExecutableScript {
             }
             throw new IllegalArgumentException("Don't recognize this type of change handler:  " + config);
         }
-
-        public ExecutableScript newScript(Map<String, Object> params) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> source = (Map<String, Object>) params.get("source");
-            return new SuperDetectNoopScript(source, handlers(params));
-        }
     }
 
     private final Map<String, Object> source;
     private final Map<String, ChangeHandler<Object>> pathToHandler;
-    @Nullable private Map<String, Object> ctx;
 
-    public SuperDetectNoopScript(Map<String, Object> source, Map<String, ChangeHandler<Object>> pathToDetector) {
-        this.source = checkNotNull(source, "source must be specified");
-        this.pathToHandler = checkNotNull(pathToDetector, "handler must be specified");
+    public SuperDetectNoopScript(Map<String, Object> params, Map<String, Object> ctx, SuperNoopScriptEngineService service) {
+        super(params, ctx);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> source = (Map<String, Object>) Objects.requireNonNull(params.get("source"), "source must be specified");
+        this.source = source;
+        this.pathToHandler = service.handlers(params);
     }
 
     @Override
-    public Object run() {
+    public void execute() {
         @SuppressWarnings("unchecked")
-        Map<String, Object> oldSource = (Map<String, Object>) ctx.get("_source");
+        Map<String, Object> oldSource = (Map<String, Object>) super.getCtx().get(SourceFieldMapper.NAME);
         UpdateStatus changed = update(oldSource, source, "");
         if (changed != UpdateStatus.UPDATED) {
-            ctx.put("op", "none");
-        }
-        // The return value is ignored
-        return null;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void setNextVar(String name, Object value) {
-        if (name.equals("ctx")) {
-            ctx = (Map<String, Object>) value;
+            super.getCtx().put("op", "noop");
         }
     }
 

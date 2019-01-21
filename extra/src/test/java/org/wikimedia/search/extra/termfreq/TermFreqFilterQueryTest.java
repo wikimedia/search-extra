@@ -67,6 +67,7 @@ public class TermFreqFilterQueryTest extends LuceneTestCase {
             FieldType type = new FieldType();
             type.setStored(false);
             type.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+            type.setStoreTermVectors(false);
             Field f = newField("main_field", "word1|" + freq + " word2|" + (nbDocs - i), type);
             doc.add(f);
             indexWriterUnderTest.addDocument(doc);

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.apache.lucene.analysis.standard.StandardFilter;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
@@ -142,7 +141,7 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
         // Remove this BC code with ES7
         assert Version.CURRENT.major == 6;
         // noop BC token filter for WMF indices created using the 5.5.2.8 version of the extra plugin
-        return PreConfiguredTokenFilter.singleton("surrogate_merger", true, StandardFilter::new);
+        return PreConfiguredTokenFilter.singleton("surrogate_merger", true, (in) -> in);
     }
 
     @Override

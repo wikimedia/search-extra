@@ -20,7 +20,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.compress.CompressedXContent;
-import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
@@ -203,7 +202,6 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
                 "}}";
         Throwable t = expectThrows(ParsingException.class, () -> parseQuery(json));
         assertThat(t.getMessage(), endsWith("[token_count_router] failed to parse field [conditions]"));
-        ESLoggerFactory.getLogger("test").error(t);
         /*t = t.getCause();
         assertThat(t.getMessage(), endsWith("[condition] failed to parse field [gt]"));
         t = t.getCause();

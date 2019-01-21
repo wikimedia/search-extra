@@ -9,7 +9,7 @@ import java.util.Locale;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.CollectionUtil;
-import org.elasticsearch.common.logging.ESLoggerFactory;
+import org.elasticsearch.common.logging.Loggers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -25,7 +25,7 @@ import com.google.common.collect.ListMultimap;
  */
 @RunWith(RandomizedRunner.class)
 public class SetHandlerMonteCarlo extends RandomizedTest {
-    private static final Logger log = ESLoggerFactory.getLogger("monte carlo");
+    private static final Logger log = Loggers.getLogger(SetHandlerMonteCarlo.class, "monte carlo");
     private static final int MAX_LIST = 10000;
     private static final Comparator<List<Integer>> COMPARATOR = Comparator.comparingInt(l -> l.get(0));
 
