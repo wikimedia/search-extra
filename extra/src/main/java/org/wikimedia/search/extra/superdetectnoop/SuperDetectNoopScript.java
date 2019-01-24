@@ -85,7 +85,7 @@ public class SuperDetectNoopScript extends UpdateScript {
         Map<String, Object> oldSource = (Map<String, Object>) super.getCtx().get(SourceFieldMapper.NAME);
         UpdateStatus changed = update(oldSource, source, "");
         if (changed != UpdateStatus.UPDATED) {
-            super.getCtx().put("op", "noop");
+            super.getCtx().put("op", "none");
         }
     }
 
