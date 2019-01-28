@@ -147,7 +147,7 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
     /**
      * The analyzer that will be used to analyze the text. Defaults to the analyzer associated with the fied.
      */
-    public FuzzyLikeThisQueryBuilder analyzer(String analyzer) {
+    public FuzzyLikeThisQueryBuilder analyzer(@Nullable String analyzer) {
         this.analyzer = analyzer;
         return this;
     }

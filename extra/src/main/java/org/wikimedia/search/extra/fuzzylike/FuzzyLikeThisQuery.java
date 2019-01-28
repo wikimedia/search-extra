@@ -65,6 +65,8 @@ import lombok.EqualsAndHashCode;
  * terms eg misspellings. Instead, all variants use the same IDF ranking (the one for the source query
  * term) and this is factored into the variant's boost. If the source query term does not exist in the
  * index the average IDF of the variants is used.
+ *
+ * @deprecated
  */
 @Deprecated
 @SuppressWarnings("checkstyle:classfanoutcomplexity") // Deprecated class is not worth refactoring

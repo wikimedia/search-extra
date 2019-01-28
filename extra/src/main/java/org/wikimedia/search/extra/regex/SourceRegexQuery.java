@@ -219,8 +219,8 @@ public class SourceRegexQuery extends Query {
         @Override
         public boolean recheck(Iterable<String> values) {
             return StreamSupport.stream(values.spliterator(), false)
-                .map((s) -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
-                .anyMatch((s) -> getCharRun().contains(s));
+                .map(s -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
+                .anyMatch(s -> getCharRun().contains(s));
         }
 
         private ContainsCharacterRunAutomaton getCharRun() {
@@ -265,8 +265,8 @@ public class SourceRegexQuery extends Query {
         @Override
         public boolean recheck(Iterable<String> values) {
             return StreamSupport.stream(values.spliterator(), false)
-                    .map((s) -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
-                    .anyMatch((s) -> getCharRun().run(s));
+                    .map(s -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
+                    .anyMatch(s -> getCharRun().run(s));
         }
 
         private CharacterRunAutomaton getCharRun() {

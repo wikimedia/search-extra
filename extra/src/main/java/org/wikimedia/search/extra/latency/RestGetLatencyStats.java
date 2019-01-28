@@ -1,7 +1,5 @@
 package org.wikimedia.search.extra.latency;
 
-import java.io.IOException;
-
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
@@ -21,7 +19,7 @@ public class RestGetLatencyStats extends BaseRestHandler {
     }
 
     @Override
-    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
-        return (channel) -> LatencyStatsAction.INSTANCE.newRequestBuilder(client).execute(new RestActions.NodesResponseRestListener<>(channel));
+    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
+        return channel -> LatencyStatsAction.INSTANCE.newRequestBuilder(client).execute(new RestActions.NodesResponseRestListener<>(channel));
     }
 }

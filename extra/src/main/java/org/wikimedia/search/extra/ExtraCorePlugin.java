@@ -4,6 +4,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
+import static java.util.function.Function.identity;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -115,8 +116,8 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
                 new QuerySpec<>(FuzzyLikeThisQueryBuilder.NAME, FuzzyLikeThisQueryBuilder::new, FuzzyLikeThisQueryBuilder::fromXContent),
                 new QuerySpec<>(TokenCountRouterQueryBuilder.NAME, TokenCountRouterQueryBuilder::new, TokenCountRouterQueryBuilder::fromXContent),
                 new QuerySpec<>(DegradedRouterQueryBuilder.NAME,
-                        (in) -> new DegradedRouterQueryBuilder(in, loadStats),
-                        (pc) -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats)),
+                        in -> new DegradedRouterQueryBuilder(in, loadStats),
+                        pc -> DegradedRouterQueryBuilder.fromXContent(pc, loadStats)),
                 new QuerySpec<>(SimSwitcherQueryBuilder.NAME, SimSwitcherQueryBuilder::new, SimSwitcherQueryBuilder::fromXContent),
                 new QuerySpec<>(TermFreqFilterQueryBuilder.NAME, TermFreqFilterQueryBuilder::new, TermFreqFilterQueryBuilder::fromXContent)
         );
@@ -141,7 +142,7 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
         // Remove this BC code with ES7
         assert Version.CURRENT.major == 6;
         // noop BC token filter for WMF indices created using the 5.5.2.8 version of the extra plugin
-        return PreConfiguredTokenFilter.singleton("surrogate_merger", true, (in) -> in);
+        return PreConfiguredTokenFilter.singleton("surrogate_merger", true, identity());
     }
 
     @Override

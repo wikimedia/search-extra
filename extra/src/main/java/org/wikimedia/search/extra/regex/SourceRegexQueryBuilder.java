@@ -57,7 +57,7 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
     private static ConstructingObjectParser<SourceRegexQueryBuilder, Void> constructParser() {
         ConstructingObjectParser<SourceRegexQueryBuilder, Void> parser =
                 new ConstructingObjectParser<>(NAME.getPreferredName(),
-                (o) -> new SourceRegexQueryBuilder((String) o[0], (String) o[1]));
+                        o -> new SourceRegexQueryBuilder((String) o[0], (String) o[1]));
         parser.declareString(constructorArg(), FIELD);
         parser.declareString(constructorArg(), REGEX);
         parser.declareBoolean(SourceRegexQueryBuilder::loadFromSource, LOAD_FROM_SOURCE);

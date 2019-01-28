@@ -73,7 +73,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
     }
 
     private RollingHistogram getOrAddBucket(String name) {
-        return statBuckets.computeIfAbsent(name, (n) -> new RollingHistogram());
+        return statBuckets.computeIfAbsent(name, n -> new RollingHistogram());
     }
 
     public long getMillisAtPercentile(String bucket, double percentile) {
@@ -90,6 +90,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
     }
 
     @SuppressFBWarnings("PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
+    @Override
     public void onQueryPhase(SearchContext searchContext, long tookInNanos) {
         if (searchContext.groupStats() == null) {
             return;
