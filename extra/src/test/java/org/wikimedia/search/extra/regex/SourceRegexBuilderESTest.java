@@ -47,7 +47,6 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
             () -> builder.gramSize(randomIntBetween(2, 4)),
             () -> builder.loadFromSource(randomBoolean()),
             () -> builder.loadFromSource(randomBoolean()),
-            () -> builder.settings().timeout(randomIntBetween(10, 300)),
             () -> builder.settings().maxNgramClauses(randomIntBetween(1, 1000)),
             () -> builder.settings().rejectUnaccelerated(randomBoolean()),
             () -> builder.settings().locale(randomFrom(Locale.FRENCH, Locale.ENGLISH, new Locale("el"), new Locale("ga"), new Locale("tr"))),
@@ -100,8 +99,7 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
                 "   \"max_ngrams_extracted\" : 101,\n" +
                 "   \"locale\" : \"fr\",\n" +
                 "   \"reject_unaccelerated\" : true,\n" +
-                "   \"max_ngram_clauses\" : 1001,\n" +
-                "   \"timeout\" : \"1000ms\"\n" +
+                "   \"max_ngram_clauses\" : 1001\n" +
                 "}}";
         QueryBuilder builder = parseQuery(json);
         assertThat(builder, instanceOf(SourceRegexQueryBuilder.class));
@@ -117,7 +115,6 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
         expected.locale(Locale.FRENCH);
         expected.rejectUnaccelerated(true);
         expected.settings().maxNgramClauses(1001);
-        expected.settings().timeout(1000);
         assertEquals(expected, parsed);
     }
 
