@@ -1,0 +1,14 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "slovak_prebuilt": {
+          "tokenizer": "standard",
+          "filter": [
+            "slovak_stemmer"
+          ]
+        }
+      }
+    }
+  }
+}

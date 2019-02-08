@@ -1,0 +1,19 @@
+{
+  "index": {
+    "analysis": {
+      "filter": {
+        "svstemmer": {
+          "type": "slovak_stemmer"
+        }
+      },
+      "analyzer": {
+        "slovak_redefined": {
+          "tokenizer": "standard",
+          "filter": [
+            "svstemmer"
+          ]
+        }
+      }
+    }
+  }
+}
