@@ -10,11 +10,11 @@ import javax.annotation.Nullable;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.LocaleUtils;
 import org.elasticsearch.common.xcontent.ConstructingObjectParser;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -71,7 +71,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         parser.declareString((x, s) -> x.settings().locale(LocaleUtils.parse(s)), Settings.LOCALE);
         parser.declareBoolean((x, b) -> x.settings().rejectUnaccelerated(b), Settings.REJECT_UNACCELERATED);
         parser.declareInt((x, i) -> x.settings().maxNgramClauses(i), Settings.MAX_NGRAM_CLAUSES);
-        parser.declareString((x, s) -> x.settings().timeout(s), Settings.TIMEOUT);
         declareStandardFields(parser);
         return parser;
     }
@@ -183,15 +182,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         return this;
     }
 
-    /**
-     * Must be set only if the search is sent with a timeout options
-     * it'll help to make the timeout more accurate.
-     */
-    public SourceRegexQueryBuilder timeout(String timeout) {
-        settings.timeout(timeout);
-        return this;
-    }
-
     public SourceRegexQueryBuilder locale(Locale el) {
         settings.locale = Objects.requireNonNull(el);
         return this;
@@ -234,7 +224,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         static final ParseField LOCALE = new ParseField("locale");
         static final ParseField REJECT_UNACCELERATED = new ParseField("reject_unaccelerated");
         static final ParseField MAX_NGRAM_CLAUSES = new ParseField("max_ngram_clauses");
-        static final ParseField TIMEOUT = new ParseField("timeout");
 
         private static final int DEFAULT_MAX_EXPAND = 4;
         private static final int DEFAULT_MAX_STATES_TRACED = 10000;
@@ -297,8 +286,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
         private boolean rejectUnaccelerated = DEFAULT_REJECT_UNACCELERATED;
         private int maxNgramClauses = DEFAULT_MAX_BOOLEAN_CLAUSES;
 
-        private long timeout;
-
         Settings() {
         }
 
@@ -311,16 +298,9 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             locale = LocaleUtils.parse(in.readString());
             rejectUnaccelerated = in.readBoolean();
             maxNgramClauses = in.readVInt();
-            timeout = in.readVLong();
-        }
-
-        public Settings timeout(long timeout) {
-            this.timeout = timeout;
-            return this;
-        }
-
-        public Settings timeout(String timeout) {
-            return timeout(TimeValue.parseTimeValue(timeout, new TimeValue(-1), TIMEOUT.getPreferredName()).millis());
+            if (in.getVersion().before(Version.V_6_5_4)) {
+                in.readVLong();
+            }
         }
 
         public void writeTo(StreamOutput out) throws IOException {
@@ -332,7 +312,9 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             out.writeString(locale.toString());
             out.writeBoolean(rejectUnaccelerated);
             out.writeVInt(maxNgramClauses);
-            out.writeVLong(timeout);
+            if (out.getVersion().before(Version.V_6_5_4)) {
+                out.writeVLong(0);
+            }
         }
 
         @SuppressWarnings({"NPathComplexity", "CyclomaticComplexity"})
@@ -360,9 +342,6 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
             }
             if (maxNgramClauses != DEFAULT_MAX_BOOLEAN_CLAUSES) {
                 builder.field(MAX_NGRAM_CLAUSES.getPreferredName(), maxNgramClauses);
-            }
-            if (timeout != DEFAULT_TIMEOUT) {
-                builder.field(TIMEOUT.getPreferredName(), timeout + "ms");
             }
             return builder;
         }

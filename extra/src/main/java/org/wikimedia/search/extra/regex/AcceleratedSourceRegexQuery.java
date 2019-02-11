@@ -50,8 +50,6 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
                 return false;
             }
 
-            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout());
-
             @Override
             @Nullable
             public Scorer scorer(final LeafReaderContext context) throws IOException {
@@ -59,7 +57,7 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
                 if (approxScorer == null) {
                     return null;
                 }
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context, timeoutChecker));
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context));
             }
         };
     }

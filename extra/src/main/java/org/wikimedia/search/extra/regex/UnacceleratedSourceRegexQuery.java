@@ -2,7 +2,6 @@ package org.wikimedia.search.extra.regex;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -13,7 +12,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
-import org.elasticsearch.tasks.TaskCancelledException;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues;
@@ -31,12 +29,6 @@ class UnacceleratedSourceRegexQuery extends Query {
     protected final String fieldPath;
     protected final FieldValues.Loader loader;
     protected final Settings settings;
-    // Hack again, elasticsearch uses a frequency based caching strategy
-    // unknown queries like this one are cached if used more than 5 times
-    // This helps to limit our chance to be cached.
-    // This could lead to unexpected behavior if the TimeExceededException
-    // is thrown while the cache is feeding its bitset.
-    protected final long preventCache = System.currentTimeMillis();
 
     /**
      * A new accelerated regex query.
@@ -67,29 +59,24 @@ class UnacceleratedSourceRegexQuery extends Query {
                 return false;
             }
 
-            private final TimeoutChecker timeoutChecker = new TimeoutChecker(settings.timeout());
-
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
                 final DocIdSetIterator approximation = DocIdSetIterator.all(context.reader().maxDoc());
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approximation, context, timeoutChecker));
+                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approximation, context));
             }
         };
     }
 
     protected class RegexTwoPhaseIterator extends TwoPhaseIterator {
         private final LeafReaderContext context;
-        private final TimeoutChecker timeoutChecker;
 
-        protected RegexTwoPhaseIterator(DocIdSetIterator approximation, LeafReaderContext context, TimeoutChecker timeoutChecker) {
+        protected RegexTwoPhaseIterator(DocIdSetIterator approximation, LeafReaderContext context) {
             super(approximation);
             this.context = context;
-            this.timeoutChecker = timeoutChecker;
         }
 
         @Override
         public boolean matches() throws IOException {
-            timeoutChecker.check();
             List<String> values = loader.load(fieldPath, context.reader(), approximation.docID());
             return rechecker.recheck(values);
         }
@@ -103,36 +90,6 @@ class UnacceleratedSourceRegexQuery extends Query {
              * cost that depends on the number of states.
              */
             return 10000f + rechecker.getCost();
-        }
-    }
-
-    /**
-     * Will throw TaskCancelledException when calling check(docId) if the timeout is reached.
-     * It's meant to cancel the work of the search thread only after the elastic timeout has been detected.
-     * - If elastic detects the timeout after us the client will receive a shard failure
-     * - If elastic detects the timeout before us the client will receive a partial response, this timeout
-     *   will have to (ideally) be detected just after that to avoid unnecessary load on the server.
-     *
-     * This makes timeout adjustment a bit hazardous:
-     * - the source regex timeout must be slightly greater than the search request timeout
-     *   so that elastic has a chance to return partial results.
-     */
-    protected static class TimeoutChecker {
-        private final long startTime;
-        private final long timeOut;
-
-        /**
-         * @param timeout (in ms)
-         */
-        TimeoutChecker(long timeout) {
-            this.timeOut = TimeUnit.MILLISECONDS.toNanos(timeout);
-            this.startTime = System.nanoTime();
-        }
-
-        public void check() {
-            if (timeOut > 0 && System.nanoTime() - startTime > timeOut) {
-                throw new TaskCancelledException("Timed out");
-            }
         }
     }
 }
