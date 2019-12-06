@@ -284,6 +284,33 @@
                     </executions>
                 </plugin>
                 <plugin>
+                    <groupId>de.is24.mavenplugins</groupId>
+                    <artifactId>deadcode4j-maven-plugin</artifactId>
+                    <configuration>
+                        <superClassesMarkingLiveCode>
+                            <liveCode>org.elasticsearch.plugins.Plugin</liveCode>
+                        </superClassesMarkingLiveCode>
+                        <classesToIgnore>
+                            <!--
+                                until https://github.com/Scout24/deadcode4j/issues/25
+                                is fixed, let's manually ignore all package-info
+                            -->
+                            <toIgnore>org.wikimedia.search.extra.analysis.filters.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.analysis.slovak.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.fuzzylike.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.latency.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.levenshtein.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.regex.expression.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.regex.ngram.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.regex.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.router.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.superdetectnoop.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.util.package-info</toIgnore>
+                        </classesToIgnore>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <configuration>
