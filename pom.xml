@@ -38,6 +38,7 @@
         <module>extra</module>
         <module>extra-analysis-slovak</module>
         <module>extra-common</module>
+        <module>extra-analysis-homoglyph</module>
     </modules>
 
     <scm>
