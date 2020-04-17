@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 
 public class TranslationTable {
     private static final Comparator<GlyphPair> sortByLength = Comparator.comparingInt(gp -> gp.getOriginal().length());
@@ -26,6 +28,7 @@ public class TranslationTable {
     }
 
     @VisibleForTesting
+    @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER", justification = "glyph order is semantically important")
     public final List<GlyphPair> scriptOneToScriptTwoList(List<GlyphPair> homoglyphPairs) {
         return homoglyphPairs.stream()
                 .sorted(sortByLength.reversed().thenComparing(sortByNaturalOrder))
@@ -33,6 +36,7 @@ public class TranslationTable {
     }
 
     @VisibleForTesting
+    @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER", justification = "glyph order is semantically important")
     public final List<GlyphPair> scriptTwoToScriptOneList(List<GlyphPair> homoglyphPairs) {
         return homoglyphPairs.stream()
                 .map(GlyphPair::swap)
