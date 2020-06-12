@@ -42,18 +42,20 @@ Examples
 curl -XDELETE localhost:9200/test?pretty
 curl -XPUT localhost:9200/test?pretty
 curl -XGET 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s&pretty'
-curl -XPUT localhost:9200/test/test/1?pretty -d'{
+curl -XPUT -H 'Content-Type: application/json' localhost:9200/test/test/1?pretty -d'{
     "foo": 6
 }'
-curl -XPOST localhost:9200/test/test/1/_update?pretty  -d'{
-    "script": "super_detect_noop",
-    "lang": "native",
-    "params": {
-        "source": {
-            "foo": 5
-        },
-        "handlers": {
-            "foo": "within 20%"
+curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_update?pretty  -d'{
+    "script": {
+        "lang": "super_detect_noop",
+        "source": "",
+        "params": {
+            "source": {
+                "foo": 5
+            },
+            "handlers": {
+                "foo": "within 20%"
+            }
         }
     }
 }'
@@ -64,22 +66,24 @@ curl localhost:9200/test/test/1?pretty
 curl -XDELETE localhost:9200/test?pretty
 curl -XPUT localhost:9200/test?pretty
 curl -XGET 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s&pretty'
-curl -XPUT localhost:9200/test/test/1 -d'{
+curl -XPUT -H 'Content-Type: application/json' localhost:9200/test/test/1 -d'{
     "foo": {
         "bar": 6
     }
 }'
-curl -XPOST localhost:9200/test/test/1/_update  -d'{
-    "script": "super_detect_noop",
-    "lang": "native",
-    "params": {
-        "source": {
-            "foo": {
-                "bar": 5
+curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_update  -d'{
+    "script": {
+        "lang": "super_detect_noop",
+        "source": "",
+        "params": {
+            "source": {
+                "foo": {
+                    "bar": 5
+                }
+            },
+            "handlers": {
+                "foo.bar": "within 20%"
             }
-        },
-        "handlers": {
-            "foo.bar": "within 20%"
         }
     }
 }'
@@ -91,38 +95,42 @@ Set operations:
 curl -XDELETE localhost:9200/test?pretty
 curl -XPUT localhost:9200/test?pretty
 curl -XGET 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s&pretty'
-curl -XPUT localhost:9200/test/test/1 -d'{
+curl -XPUT -H 'Content-Type: application/json' localhost:9200/test/test/1 -d'{
     "foo": ["cat", "dog", "fish"]
 }'
 curl localhost:9200/test/test/1?pretty
-curl -XPOST localhost:9200/test/test/1/_update  -d'{
-    "script": "super_detect_noop",
-    "lang": "native",
-    "params": {
-        "source": {
-            "foo": {
-                "add": "cow",
-                "remove": "cat"
+curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_update  -d'{
+    "script": {
+        "lang": "super_detect_noop",
+        "source": "",
+        "params": {
+            "source": {
+                "foo": {
+                    "add": "cow",
+                    "remove": "cat"
+                }
+            },
+            "handlers": {
+                "foo": "set"
             }
-        },
-        "handlers": {
-            "foo": "set"
-        }
+         }
     }
 }'
 curl localhost:9200/test/test/1?pretty
-curl -XPOST localhost:9200/test/test/1/_update  -d'{
-    "script": "super_detect_noop",
-    "lang": "native",
-    "params": {
-        "source": {
-            "foo": {
-                "add": ["cow"],
-                "remove": ["cat", "fish"]
+curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_update  -d'{
+    "script": {
+        "lang": "super_detect_noop",
+        "source": "",
+        "params": {
+            "source": {
+                "foo": {
+                    "add": ["cow"],
+                    "remove": ["cat", "fish"]
+                }
+            },
+            "handlers": {
+                "foo": "set"
             }
-        },
-        "handlers": {
-            "foo": "set"
         }
     }
 }'
