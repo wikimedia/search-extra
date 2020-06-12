@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -140,7 +141,13 @@ public class SuperDetectNoopScript extends UpdateScript {
                     handler = ChangeHandler.Equal.INSTANCE;
                 }
             }
-            ChangeHandler.Result result = handler.handle(oldSource.get(key), newEntry.getValue());
+            ChangeHandler.Result result;
+            try {
+                result = handler.handle(oldSource.get(key), newEntry.getValue());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(String.format(Locale.ROOT,
+                        "Failed updating document property %s", entryPath), e);
+            }
             if (result.isDocumentNooped()) {
                 return UpdateStatus.NOOP_DOCUMENT;
             }

@@ -1,8 +1,13 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Detects if two values are different enough to be changed.
@@ -111,7 +116,7 @@ public interface ChangeHandler<T> {
      */
     class TypeSafe<T> implements ChangeHandler<Object> {
         /**
-         * Wraps a CloseEnoughDetector in a null-safe, type-safe way.
+         * Wraps a ChangeHandler in a null-safe, type-safe way.
          */
         static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, ChangeHandler<T> delegate) {
             return new ChangeHandler.NullSafe<>(new ChangeHandler.TypeSafe<>(type, delegate));
@@ -136,6 +141,42 @@ public interface ChangeHandler<T> {
                 return Equal.INSTANCE.handle(oldValue, newValue);
             }
             return delegate.handle(oldValueCast, newValueCast);
+        }
+    }
+
+    class TypeSafeList<T> implements ChangeHandler<Object> {
+        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, ChangeHandler<List<T>> delegate) {
+            return new NullSafe<>(new TypeSafeList<>(type, delegate));
+        }
+
+        private final Class<T> type;
+        private final ChangeHandler<List<T>> delegate;
+
+        public TypeSafeList(Class<T> type, ChangeHandler<List<T>> delegate) {
+            this.type = type;
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Result handle(@Nonnull Object oldList, @Nonnull Object newList) {
+            return delegate.handle(toTypedList(oldList), toTypedList(newList));
+        }
+
+        @SuppressWarnings("unchecked")
+        @SuppressFBWarnings("PDP_POORLY_DEFINED_PARAMETER")
+        private List<T> toTypedList(Object value) {
+            List<T> list;
+            try {
+                list = (List<T>)value;
+            } catch (ClassCastException e) {
+                throw new IllegalArgumentException(String.format(Locale.ROOT,
+                        "Expected a list, but recieved (%s)", value.getClass().getName()), e);
+            }
+            if (!list.stream().allMatch(x -> type.isAssignableFrom(x.getClass()))) {
+                throw new IllegalArgumentException(String.format(Locale.ROOT,
+                        "List elements not assignable to expected type (%s)", type.getName()));
+            }
+            return list;
         }
     }
 

@@ -34,6 +34,15 @@ behaving exactly as Elasticsearch's ```detect_noop```. Possible field values:
     contained a set. The set (usually) remains an ArrayList to Elasticsearch
     because its faster that way. Thus if the set already contains duplicates
     then this won't remove them.
+    * ```multilist``` Treats the old and new value as each containing multiple
+    independent lists of strings represented in a single list with groups
+    delimited in the strings by ```/```. Updates replace the full sublist with
+    the same group name. For example given the stored value of ```["a/foo",
+    "a/bar"]``` an update of an unrelated group, such as ```["b/foo"]``` will
+    result in concatenating both lists. An update to an existing group, such as
+    ```["a/qqq"]```, will replace that group in the result. Providing a group
+    with a single tombstone value, ```__DELETE_GROUPING__```, will remove the
+    group from the multilist.
 
 
 Examples
@@ -137,6 +146,46 @@ curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_upda
 curl localhost:9200/test/test/1?pretty
 ```
 
+Multilist operations:
+```bash
+curl -XDELETE localhost:9200/test?pretty
+curl -XPUT localhost:9200/test?pretty
+curl -XGET 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s&pretty'
+curl -XPUT -H 'Content-Type: application/json' localhost:9200/test/test/1 -d'{
+    "foo": ["A/cat", "A/sphynx", "B/mammal"]
+}'
+curl localhost:9200/test/test/1?pretty
+curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_update?pretty  -d'{
+    "script": {
+        "source": "super_detect_noop",
+        "lang": "super_detect_noop",
+        "params": {
+            "source": {
+                "foo": ["C/example"]
+            },
+            "handlers": {
+                "foo": "multilist"
+            }
+        }
+    }
+}'
+curl localhost:9200/test/test/1?pretty
+curl -XPOST -H 'Content-Type: application/json' localhost:9200/test/test/1/_update  -d'{
+    "script": {
+        "source": "",
+        "lang": "super_detect_noop",
+        "params": {
+            "source": {
+                "foo": ["A/kitten", "C/__DELETE_GROUPING__"]
+            },
+            "handlers": {
+                "foo": "multilist"
+            }
+        }
+    }
+}'
+curl localhost:9200/test/test/1?pretty
+```
 
 Integrating
 -----------
