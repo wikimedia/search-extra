@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.elasticsearch.index.mapper.SourceFieldMapper;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
@@ -89,7 +91,24 @@ public class SuperDetectNoopScript extends UpdateScript {
         }
     }
 
-    private enum UpdateStatus { UPDATED, NOT_UPDATED, NOOP_DOCUMENT }
+    private enum UpdateStatus {
+        NOT_UPDATED, UPDATED, NOOP_DOCUMENT;
+
+        /**
+         * Return highest priority status.
+         */
+        UpdateStatus merge(UpdateStatus other) {
+            return this.compareTo(other) >= 0 ? this : other;
+        }
+    }
+
+    private static void applyUpdate(Map<String, Object> source, String key, @Nullable Object value) {
+        if (value == null) {
+            source.remove(key);
+        } else {
+            source.put(key, value);
+        }
+    }
 
     /**
      * Update old with the source and detector configuration of this script.
@@ -99,41 +118,36 @@ public class SuperDetectNoopScript extends UpdateScript {
         for (Map.Entry<String, Object> newEntry : newSource.entrySet()) {
             String key = newEntry.getKey();
             String entryPath = path + key;
-            Object oldValueRaw = oldSource.get(key);
             ChangeHandler<Object> handler = pathToHandler.get(entryPath);
             if (handler == null) {
-                if (newEntry.getValue() instanceof Map) {
+                Object newValueRaw = newEntry.getValue();
+                if (newValueRaw instanceof Map) {
+                    // Apply this::update recursively when provided a map as the value to
+                    // update to and no handler is defined. Boldly assume (i.e. fail if not)
+                    // that if the update is a map, the source document must be either empty
+                    // or a json map.
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> oldValue = (Map<String, Object>) oldValueRaw;
-                    if (oldValue == null) {
-                        oldValue = new LinkedHashMap<>();
-                        oldSource.put(key, oldValue);
-                    }
-                    // recursive merge maps
+                    Map<String, Object> oldValue = (Map<String, Object>)oldSource.computeIfAbsent(
+                            key, x -> new LinkedHashMap<String, Object>());
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> newValue = (Map<String, Object>) newEntry.getValue();
-                    UpdateStatus nextModified = update(oldValue, newValue, entryPath + ".");
-                    if (nextModified == UpdateStatus.NOOP_DOCUMENT) {
-                        return nextModified;
-                    } else if (nextModified == UpdateStatus.UPDATED) {
-                        modified = nextModified;
+                    Map<String, Object> newValue = (Map<String, Object>)newValueRaw;
+                    modified = modified.merge(update(oldValue, newValue, entryPath + "."));
+                    if (modified == UpdateStatus.NOOP_DOCUMENT) {
+                        return modified;
                     }
                     continue;
+                } else {
+                    handler = ChangeHandler.Equal.INSTANCE;
                 }
-                handler = ChangeHandler.Equal.INSTANCE;
             }
-            ChangeHandler.Result result = handler.handle(oldValueRaw, newEntry.getValue());
+            ChangeHandler.Result result = handler.handle(oldSource.get(key), newEntry.getValue());
             if (result.isDocumentNooped()) {
                 return UpdateStatus.NOOP_DOCUMENT;
             }
             if (result.isCloseEnough()) {
                 continue;
             }
-            if (result.newValue() == null) {
-                oldSource.remove(key);
-            } else {
-                oldSource.put(key, result.newValue());
-            }
+            applyUpdate(oldSource, key, result.newValue());
             modified = UpdateStatus.UPDATED;
         }
         /*
