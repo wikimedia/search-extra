@@ -61,6 +61,7 @@ import org.wikimedia.search.extra.router.SystemLoad;
 import org.wikimedia.search.extra.router.TokenCountRouterQueryBuilder;
 import org.wikimedia.search.extra.simswitcher.SimSwitcherQueryBuilder;
 import org.wikimedia.search.extra.superdetectnoop.ChangeHandler;
+import org.wikimedia.search.extra.superdetectnoop.MultiListHandler;
 import org.wikimedia.search.extra.superdetectnoop.SetHandler;
 import org.wikimedia.search.extra.superdetectnoop.SuperDetectNoopScript;
 import org.wikimedia.search.extra.superdetectnoop.VersionedDocumentHandler;
@@ -91,7 +92,8 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
                     new WithinPercentageHandler.Recognizer(),
                     new WithinAbsoluteHandler.Recognizer(),
                     new SetHandler.Recognizer(),
-                    new VersionedDocumentHandler.Recognizer())
+                    new VersionedDocumentHandler.Recognizer(),
+                    MultiListHandler.recognizer)
         )));
     }
 
