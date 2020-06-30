@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
  *
  * Only works properly with whole numbers up to 2^63-1
  */
-public final class VersionedDocumentHandler implements ChangeHandler<Number> {
+public final class VersionedDocumentHandler implements ChangeHandler.NonnullChangeHandler<Number> {
     public static class Recognizer implements ChangeHandler.Recognizer {
         private static final String DESCRIPTION = "documentVersion";
 
@@ -44,6 +44,6 @@ public final class VersionedDocumentHandler implements ChangeHandler<Number> {
         } else if (oldVersion.longValue() > newVersion.longValue()) {
             return ChangeHandler.NoopDocument.INSTANCE;
         }
-        return new Changed(newVersion);
+        return new ChangeHandler.Changed(newVersion);
     }
 }

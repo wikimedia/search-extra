@@ -3,10 +3,12 @@ package org.wikimedia.search.extra.superdetectnoop;
 import static java.lang.Math.abs;
 import static org.wikimedia.search.extra.superdetectnoop.ChangeHandler.TypeSafe.nullAndTypeSafe;
 
+import javax.annotation.Nonnull;
+
 /**
  * Checks if a number is different by some percentage.
  */
-public class WithinPercentageHandler implements ChangeHandler<Number> {
+public class WithinPercentageHandler implements ChangeHandler.NonnullChangeHandler<Number> {
     public static class Recognizer implements ChangeHandler.Recognizer {
         private static final String PREFIX = "within ";
         private static final String SUFFIX = "%";
@@ -36,7 +38,7 @@ public class WithinPercentageHandler implements ChangeHandler<Number> {
     }
 
     @Override
-    public ChangeHandler.Result handle(Number oldValue, Number newValue) {
+    public ChangeHandler.Result handle(@Nonnull Number oldValue, @Nonnull Number newValue) {
         if (oldValue.doubleValue() == 0) {
             return ChangeHandler.Changed.forBoolean(newValue.doubleValue() == 0, newValue);
         }

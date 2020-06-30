@@ -2,10 +2,12 @@ package org.wikimedia.search.extra.superdetectnoop;
 
 import static org.wikimedia.search.extra.superdetectnoop.ChangeHandler.TypeSafe.nullAndTypeSafe;
 
+import javax.annotation.Nonnull;
+
 /**
  * Checks if a number is different by some absolute amount.
  */
-public class WithinAbsoluteHandler implements ChangeHandler<Number> {
+public class WithinAbsoluteHandler implements ChangeHandler.NonnullChangeHandler<Number> {
     public static class Recognizer implements ChangeHandler.Recognizer {
         private static final String PREFIX = "within ";
 
@@ -30,7 +32,7 @@ public class WithinAbsoluteHandler implements ChangeHandler<Number> {
     }
 
     @Override
-    public ChangeHandler.Result handle(Number oldValue, Number newValue) {
+    public ChangeHandler.Result handle(@Nonnull Number oldValue, @Nonnull Number newValue) {
         return ChangeHandler.Changed.forBoolean(Math.abs(newValue.doubleValue() - oldValue.doubleValue()) < absoluteDifference,
                 newValue);
     }

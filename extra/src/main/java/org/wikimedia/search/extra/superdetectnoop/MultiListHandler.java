@@ -13,7 +13,7 @@ import javax.annotation.Nonnull;
  * updated in their entirety, while unreferenced lists in the source are maintained.
  * Lists can be removed by providing a single tombstone value, __DELETE_GROUPING__.
  */
-public class MultiListHandler implements ChangeHandler<List<String>> {
+public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List<String>> {
     static final String DELETE = "__DELETE_GROUPING__";
     static final ChangeHandler<Object> INSTANCE =
             ChangeHandler.TypeSafeList.nullAndTypeSafe(String.class, new MultiListHandler());
@@ -22,16 +22,16 @@ public class MultiListHandler implements ChangeHandler<List<String>> {
             desc.equals("multilist") ? INSTANCE : null;
 
     @Override
-    public Result handle(@Nonnull List<String> oldValue, @Nonnull List<String> newValue) {
+    public ChangeHandler.Result handle(@Nonnull List<String> oldValue, @Nonnull List<String> newValue) {
         if (newValue.isEmpty()) {
             throw new IllegalArgumentException("Empty update provided to MultiListHandler");
         }
         MultiList original = MultiList.parse(oldValue);
         MultiList update = MultiList.parse(newValue);
-        if (original.updateFrom(update)) {
-            return new Changed(original.flatten());
+        if (original.replaceFrom(update)) {
+            return new ChangeHandler.Changed(original.flatten());
         } else {
-            return CloseEnough.INSTANCE;
+            return ChangeHandler.CloseEnough.INSTANCE;
         }
     }
 
@@ -67,7 +67,7 @@ public class MultiListHandler implements ChangeHandler<List<String>> {
             return value.length() == expectedLength && value.endsWith(DELETE);
         }
 
-        boolean updateFrom(MultiList other) {
+        boolean replaceFrom(MultiList other) {
             boolean changed = false;
             for (Map.Entry<String, List<String>> entry : other.lists.entrySet()) {
                 List<String> current = lists.get(entry.getKey());

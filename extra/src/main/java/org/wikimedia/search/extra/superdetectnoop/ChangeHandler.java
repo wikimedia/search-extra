@@ -21,6 +21,14 @@ public interface ChangeHandler<T> {
     Result handle(@Nullable T oldValue, @Nullable T newValue);
 
     /**
+     * Handler that must be wrapped with the NullSafe handler.
+     * @param <T> type on which the implementation operates
+     */
+    interface NonnullChangeHandler<T> {
+        Result handle(@Nonnull T oldValue, @Nonnull T newValue);
+    }
+
+    /**
      * Builds CloseEnoughDetectors from the string description sent in the
      * script parameters. Returning null from build just means that this recognizer
      * doesn't recognize that parameter.
@@ -62,9 +70,9 @@ public interface ChangeHandler<T> {
      * @param <T> type on which the wrapped detector operates
      */
     class NullSafe<T> implements ChangeHandler<T> {
-        private final ChangeHandler<T> delegate;
+        private final NonnullChangeHandler<T> delegate;
 
-        public NullSafe(ChangeHandler<T> delegate) {
+        public NullSafe(NonnullChangeHandler<T> delegate) {
             this.delegate = delegate;
         }
 
@@ -101,7 +109,7 @@ public interface ChangeHandler<T> {
         }
 
         @Override
-        public Result handle(Object oldValue, Object newValue) {
+        public Result handle(@Nullable Object oldValue, @Nullable Object newValue) {
             return Changed.forBoolean(Objects.equals(oldValue, newValue), newValue);
         }
     }
@@ -114,24 +122,24 @@ public interface ChangeHandler<T> {
      *
      * @param <T> type on which the wrapped detector operates
      */
-    class TypeSafe<T> implements ChangeHandler<Object> {
+    class TypeSafe<T> implements NonnullChangeHandler<Object> {
         /**
          * Wraps a ChangeHandler in a null-safe, type-safe way.
          */
-        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, ChangeHandler<T> delegate) {
+        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, NonnullChangeHandler<T> delegate) {
             return new ChangeHandler.NullSafe<>(new ChangeHandler.TypeSafe<>(type, delegate));
         }
 
         private final Class<T> type;
-        private final ChangeHandler<T> delegate;
+        private final NonnullChangeHandler<T> delegate;
 
-        public TypeSafe(Class<T> type, ChangeHandler<T> delegate) {
+        public TypeSafe(Class<T> type, NonnullChangeHandler<T> delegate) {
             this.type = type;
             this.delegate = delegate;
         }
 
         @Override
-        public Result handle(@Nullable Object oldValue, @Nullable Object newValue) {
+        public Result handle(@Nonnull Object oldValue, @Nonnull Object newValue) {
             T oldValueCast;
             T newValueCast;
             try {
@@ -144,15 +152,15 @@ public interface ChangeHandler<T> {
         }
     }
 
-    class TypeSafeList<T> implements ChangeHandler<Object> {
-        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, ChangeHandler<List<T>> delegate) {
+    class TypeSafeList<T> implements NonnullChangeHandler<Object> {
+        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, NonnullChangeHandler<List<T>> delegate) {
             return new NullSafe<>(new TypeSafeList<>(type, delegate));
         }
 
         private final Class<T> type;
-        private final ChangeHandler<List<T>> delegate;
+        private final NonnullChangeHandler<List<T>> delegate;
 
-        public TypeSafeList(Class<T> type, ChangeHandler<List<T>> delegate) {
+        public TypeSafeList(Class<T> type, NonnullChangeHandler<List<T>> delegate) {
             this.type = type;
             this.delegate = delegate;
         }
