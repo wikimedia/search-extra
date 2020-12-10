@@ -30,15 +30,28 @@
             <id>manybubbles</id>
             <name>Nik Everett</name>
             <email>nik9000+extra@gmail.com</email>
-            <timezone>America/New York</timezone>
+            <timezone>America/New_York</timezone>
+        </developer>
+        <developer>
+            <id>Trey314159</id>
+            <name>Trey Jones</name>
+            <email>tjones@wikimedia.org</email>
+            <timezone>America/New_York</timezone>
+        </developer>
+        <developer>
+            <id>maryum</id>
+            <name>Maryum Styles</name>
+            <email>mstyles@wikimedia.org</email>
+            <timezone>America/Los_Angeles</timezone>
         </developer>
     </developers>
 
     <modules>
-        <module>extra</module>
+        <module>extra-analysis-homoglyph</module>
+        <module>extra-analysis-khmer</module>
         <module>extra-analysis-slovak</module>
         <module>extra-common</module>
-        <module>extra-analysis-homoglyph</module>
+        <module>extra</module>
     </modules>
 
     <scm>
@@ -101,6 +114,11 @@
                 <groupId>org.elasticsearch</groupId>
                 <artifactId>elasticsearch</artifactId>
                 <version>${elasticsearch.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wikimedia.search</groupId>
+                <artifactId>extra-analysis-khmer</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
@@ -303,6 +321,7 @@
                                 is fixed, let's manually ignore all package-info
                             -->
                             <toIgnore>org.wikimedia.search.extra.analysis.filters.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.analysis.khmer.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.slovak.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.fuzzylike.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.latency.package-info</toIgnore>

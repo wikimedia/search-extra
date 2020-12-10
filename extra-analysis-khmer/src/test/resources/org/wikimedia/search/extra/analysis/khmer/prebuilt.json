@@ -1,0 +1,14 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "khmer_prebuilt": {
+          "tokenizer": "standard",
+          "charfilter": [
+            "khmer_syll_reorder"
+          ]
+        }
+      }
+    }
+  }
+}

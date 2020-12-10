@@ -1,9 +1,9 @@
-Extra Queries and Filters [![Build Status](https://integration.wikimedia.org/ci/buildStatus/icon?job=search-extra)](https://integration.wikimedia.org/ci/job/search-extra)
+Extra Queries and Filters [![Build Status](https://integration.wikimedia.org/ci/buildStatus/icon?job=search-extra-maven-java8-docker)](https://integration.wikimedia.org/ci/job/search-extra-maven-java8-docker/)
 =========================
 
 The plan is for this to include any extra queries, filters, native scripts,
 score functions, and anything else we think we end up creating to make search
-nice for Wikimedia. It contains 2 diffferent plugins:
+nice for Wikimedia. It contains four diffferent plugins:
 
 
 ### extra
@@ -18,7 +18,8 @@ all documents.
 evaluates some conditions based on the number of tokens of the input query.
 * [simswitcher](docs/simswitcher.md) - Simple query wrapper that allows to override
 similarity settings at query time (expert: use with caution).
-* [term_freq](docs/term_freq_filter_query.md) - Simple term query with filtering based on term frequency.
+* [term_freq](docs/term_freq_filter_query.md) - Simple term query with filtering based on
+term frequency.
 
 Native Scripts:
 * [super_detect_noop](docs/super_detect_noop.md) - Like ```detect_noop``` but
@@ -28,7 +29,20 @@ Analysis:
 * [preserve_original](docs/preserve_original.md) - A token filter that wraps a
 filter chain to keep and emit the original term at the same position. New in
 2.3.4.
-* [term_freq](docs/term_freq_token_filter.md) - A token filter to populate the term frequency from the input string. New in 5.5.2.6.
+* [term_freq](docs/term_freq_token_filter.md) - A token filter to populate the term
+frequency from the input string. New in 5.5.2.6.
+
+### extra-analysis-homoglyph
+
+Analysis:
+* homoglyph_norm - A token filter that will provide additional single-script tokens for
+multi-script tokens that contain [homoglyphs](https://en.wikipedia.org/wiki/Homoglyph).
+
+### extra-analysis-khmer
+
+Analysis:
+* [khmer_syll_reorder](docs/khmer_syll_reorder.md) - A character filter that will replace
+deprecated Khmer characters and attempt to canonically reorder Khmer orthographic syllables.
 
 ### extra-analysis-slovak
 

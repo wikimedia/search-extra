@@ -17,6 +17,11 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
         </dependency>
