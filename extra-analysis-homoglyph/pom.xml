@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.wikimedia.search</groupId>
         <artifactId>extra-parent</artifactId>
-        <version>6.5.4-wmf12</version>
+        <version>6.5.4-wmf13-SNAPSHOT</version>
     </parent>
 
     <artifactId>extra-analysis-homoglyph</artifactId>
