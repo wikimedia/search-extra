@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.wikimedia.search</groupId>
         <artifactId>extra-parent</artifactId>
-        <version>6.5.4-wmf12-SNAPSHOT</version>
+        <version>6.5.4-wmf12</version>
     </parent>
 
     <artifactId>extra</artifactId>
@@ -56,8 +56,8 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-core</artifactId>
-           <version>${elasticsearch.version}</version>
-         </dependency>
+            <version>${elasticsearch.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-x-content</artifactId>
