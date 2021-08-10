@@ -12,7 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.search.internal.SearchContext;
 import org.junit.Test;
@@ -134,7 +133,7 @@ public class SearchLatencyListenerTest extends RandomizedTest {
     }
 
     private SearchLatencyListener newListener() {
-        return new SearchLatencyListener(Settings.EMPTY, new MutableSupplier<>());
+        return new SearchLatencyListener(new MutableSupplier<>());
     }
 
     private SearchContext mockSearchContext(List<String> buckets) {

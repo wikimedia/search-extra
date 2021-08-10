@@ -55,7 +55,16 @@ public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyS
 
     @Override
     public LatencyStatsNodesResponse newResponse() {
-        return new LatencyStatsNodesResponse();
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Writeable.Reader<LatencyStatsNodesResponse> getResponseReader() {
+        return in -> {
+            LatencyStatsNodesResponse response = new LatencyStatsNodesResponse();
+            response.readFrom(in);
+            return response;
+        };
     }
 
     static class LatencyStatsRequestBuilder extends ActionRequestBuilder<LatencyStatsNodesRequest,

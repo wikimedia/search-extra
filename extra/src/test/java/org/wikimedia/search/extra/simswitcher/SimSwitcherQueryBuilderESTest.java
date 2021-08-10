@@ -60,7 +60,7 @@ public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwit
     }
 
     @Override
-    protected boolean isCachable(SimSwitcherQueryBuilder queryBuilder) {
+    protected boolean isCacheable(SimSwitcherQueryBuilder queryBuilder) {
         return false;
     }
 

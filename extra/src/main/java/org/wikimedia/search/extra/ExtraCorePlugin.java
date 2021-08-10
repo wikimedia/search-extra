@@ -6,6 +6,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.function.Function.identity;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -84,8 +85,12 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
 
     public ExtraCorePlugin(Settings settings) {
         threadPoolSupplier = new MutableSupplier<>();
-        latencyListener = new SearchLatencyListener(settings, threadPoolSupplier);
-        loadStats = new SystemLoad(latencyListener, new OsService(settings));
+        latencyListener = new SearchLatencyListener(threadPoolSupplier);
+        try {
+            loadStats = new SystemLoad(latencyListener, new OsService(settings));
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't init OsService", e);
+        }
         superDetectNoopService = new SuperDetectNoopScript.SuperNoopScriptEngineService(
                 unmodifiableSet(new HashSet<>(asList(
                     new ChangeHandler.Equal.Recognizer(),

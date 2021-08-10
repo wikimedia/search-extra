@@ -44,7 +44,12 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
     }
 
     @Override
-    protected boolean supportsBoostAndQueryName() {
+    protected boolean supportsBoost() {
+        return false;
+    }
+
+    @Override
+    protected boolean supportsQueryName() {
         // we supports query names and boost in theory
         // problem is that it does not work well in the test
         // because
