@@ -92,7 +92,7 @@ public class LevenshteinDistanceScoreBuilder extends ScoreFunctionBuilder<Levens
 
     @Override
     protected ScoreFunction doToFunction(QueryShardContext context) {
-        MappedFieldType fieldType = context.getMapperService().fullName(field);
+        MappedFieldType fieldType = context.getMapperService().fieldType(field);
 
         if (fieldType == null) {
             throw new QueryShardException(context, "Unable to load field type for field {}", field);

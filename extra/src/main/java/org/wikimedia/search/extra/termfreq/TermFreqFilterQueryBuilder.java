@@ -8,7 +8,6 @@ import static org.wikimedia.search.extra.util.ConcreteIntPredicate.lte;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParseField;
@@ -151,7 +150,7 @@ public class TermFreqFilterQueryBuilder extends AbstractQueryBuilder<TermFreqFil
     protected Query doToQuery(QueryShardContext queryShardContext) throws IOException {
         MappedFieldType mapper = queryShardContext.fieldMapper(field);
         if (mapper != null) {
-            if (mapper.indexOptions() == IndexOptions.NONE) {
+            if (!mapper.isSearchable()) {
                 throw new IllegalArgumentException("Cannot search on field [" + field + "] since it is not indexed.");
             }
             return new TermFreqFilterQuery(new Term(mapper.name(), term), buildPredicate());

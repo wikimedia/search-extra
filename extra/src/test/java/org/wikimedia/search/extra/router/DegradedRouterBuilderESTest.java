@@ -6,8 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gt;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.lucene.index.Term;
@@ -17,15 +17,18 @@ import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.compress.CompressedXContent;
+import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.MatchNoneQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.monitor.os.OsService;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.junit.runner.RunWith;
 import org.wikimedia.search.extra.ExtraCorePlugin;
 import org.wikimedia.search.extra.latency.SearchLatencyProbe;
@@ -34,8 +37,17 @@ import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCond
 
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedRouterQueryBuilder> {
+    private static final String MY_FIELD = "my_test_field";
+
+    @Override
+    protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
+        mapperService.merge("_doc",
+                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }}}"),
+                MapperService.MergeReason.MAPPING_UPDATE);
+    }
+
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraCorePlugin.class);
+        return Arrays.asList(ExtraCorePlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     @Override
@@ -75,7 +87,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
     }
 
     @Override
-    protected void doAssertLuceneQuery(DegradedRouterQueryBuilder builder, Query query, SearchContext context) throws IOException {
+    protected void doAssertLuceneQuery(DegradedRouterQueryBuilder builder, Query query, QueryShardContext context) throws IOException {
         SystemLoad stats = builder.systemLoad();
 
         Optional<DegradedRouterQueryBuilder.DegradedCondition> cond = builder.conditionStream()
@@ -88,7 +100,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
             assertThat(query, instanceOf(TermQuery.class));
             TermQuery tq = (TermQuery) query;
             String expect = cond.get().type().name() + ":" + cond.get().definition().name();
-            assertEquals(new Term(expect, String.valueOf(cond.get().value())), tq.getTerm());
+            assertEquals(new Term(MY_FIELD, expect + ':' + cond.get().value()), tq.getTerm());
         } else {
             assertThat(query, instanceOf(MatchNoDocsQuery.class));
         }
@@ -110,7 +122,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
     @Override
     public void testMustRewrite() throws IOException {
         DegradedRouterQueryBuilder builder = newBuilder();
-        QueryBuilder toRewrite = new TermQueryBuilder("fallback", "fallback");
+        QueryBuilder toRewrite = new TermQueryBuilder(MY_FIELD, "fallback");
         builder.fallback(new WrapperQueryBuilder(toRewrite.toString()));
         for (int i = randomIntBetween(1, 10); i > 0; i--) {
             addCondition(builder, new WrapperQueryBuilder(toRewrite.toString()));
@@ -181,7 +193,7 @@ public class DegradedRouterBuilderESTest extends AbstractQueryTestCase<DegradedR
             percentile = randomDoubleBetween(0D, 100D, false);
         }
         if (query == null) {
-            query = new TermQueryBuilder(type.name() + ":" + cond.name(), String.valueOf(value));
+            query = new TermQueryBuilder(MY_FIELD, type.name() + ":" + cond.name() + ":" + value);
         }
         builder.condition(cond, type, bucket, percentile, value, query);
     }

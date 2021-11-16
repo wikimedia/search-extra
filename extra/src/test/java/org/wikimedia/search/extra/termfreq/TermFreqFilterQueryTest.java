@@ -131,7 +131,7 @@ public class TermFreqFilterQueryTest extends LuceneTestCase {
         TermFreqFilterQuery tQuery = new TermFreqFilterQuery(word1,
                 gte(5).and(lte(nbDocs)));
         TopDocs docs = searcherUnderTest.search(tQuery, random().nextInt(10) + 10);
-        assertEquals(nbDocs - 4, docs.totalHits);
+        assertEquals(nbDocs - 4, docs.totalHits.value);
         int freq = Integer.MAX_VALUE;
         for (ScoreDoc doc : docs.scoreDocs) {
             int nfreq = searcherUnderTest.doc(doc.doc).getField("freq").numericValue().intValue();
@@ -150,7 +150,7 @@ public class TermFreqFilterQueryTest extends LuceneTestCase {
         bq.add(new BooleanClause(tQuery1, BooleanClause.Occur.FILTER));
         bq.add(new BooleanClause(tQuery2, BooleanClause.Occur.MUST));
         docs = searcherUnderTest.search(bq.build(), random().nextInt(10) + 10);
-        assertEquals(nbDocs - 4, docs.totalHits);
+        assertEquals(nbDocs - 4, docs.totalHits.value);
         freq = Integer.MIN_VALUE;
         for (ScoreDoc doc : docs.scoreDocs) {
             int nfreq = searcherUnderTest.doc(doc.doc).getField("freq").numericValue().intValue();
@@ -172,7 +172,7 @@ public class TermFreqFilterQueryTest extends LuceneTestCase {
         Term word1 = new Term("main_field", "word1");
         TermFreqFilterQuery tQuery = new TermFreqFilterQuery(word1, eq(1));
         TopDocs docs = searcherUnderTest.search(tQuery, 1);
-        assertEquals(1, docs.totalHits);
+        assertEquals(1, docs.totalHits.value);
         Explanation exp = searcherUnderTest.explain(tQuery, docs.scoreDocs[0].doc);
         assertTrue(exp.isMatch());
         assertThat(exp.getDescription(), containsString("1 = 1 (main_field:word1)"));

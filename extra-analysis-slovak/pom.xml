@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.wikimedia.search</groupId>
         <artifactId>extra-parent</artifactId>
-        <version>6.8.23-wmf2-SNAPSHOT</version>
+        <version>7.10.2-wmf1-SNAPSHOT</version>
     </parent>
 
     <artifactId>extra-analysis-slovak</artifactId>

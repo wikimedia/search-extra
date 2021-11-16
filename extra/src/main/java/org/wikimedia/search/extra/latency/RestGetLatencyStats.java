@@ -1,16 +1,21 @@
 package org.wikimedia.search.extra.latency;
 
+import static java.util.Collections.singletonList;
+
+import java.util.List;
+
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestActions;
 
 public class RestGetLatencyStats extends BaseRestHandler {
-    public RestGetLatencyStats(Settings settings, RestController controller) {
-        super(settings);
-        controller.registerHandler(RestRequest.Method.GET, "/_nodes/latencyStats", this);
+
+    @Override
+    public List<Route> routes() {
+        return singletonList(
+                new Route(RestRequest.Method.GET, "/_nodes/latencyStats")
+        );
     }
 
     @Override
@@ -20,6 +25,9 @@ public class RestGetLatencyStats extends BaseRestHandler {
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
-        return channel -> LatencyStatsAction.INSTANCE.newRequestBuilder(client).execute(new RestActions.NodesResponseRestListener<>(channel));
+        return channel -> client.execute(
+                LatencyStatsAction.INSTANCE,
+                new LatencyStatsAction.LatencyStatsNodesRequest(),
+                new RestActions.NodesResponseRestListener<>(channel));
     }
 }

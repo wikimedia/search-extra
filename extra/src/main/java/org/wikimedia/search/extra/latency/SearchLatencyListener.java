@@ -88,7 +88,7 @@ public class SearchLatencyListener extends AbstractLifecycleComponent implements
                 .collect(toList());
     }
 
-    @SuppressFBWarnings("PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
+    @SuppressFBWarnings({"PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS", "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"})
     @Override
     public void onQueryPhase(SearchContext searchContext, long tookInNanos) {
         if (searchContext.groupStats() == null) {

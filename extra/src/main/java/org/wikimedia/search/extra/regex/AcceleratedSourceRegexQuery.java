@@ -10,6 +10,7 @@ import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
@@ -40,10 +41,10 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         // Build the approximation based on trigrams
         // Creating the Weight from the Searcher with needScore:false allows the searcher to cache our approximation.
-        final Weight approxWeight = searcher.createWeight(approximation, false, boost);
+        final Weight approxWeight = searcher.createWeight(approximation, ScoreMode.COMPLETE_NO_SCORES, boost);
         return new ConstantScoreWeight(this, 1F) {
             @Override
             public boolean isCacheable(LeafReaderContext leafReaderContext) {
@@ -57,7 +58,7 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
                 if (approxScorer == null) {
                     return null;
                 }
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approxScorer.iterator(), context));
+                return new ConstantScoreScorer(this, 1f, scoreMode, new RegexTwoPhaseIterator(approxScorer.iterator(), context));
             }
         };
     }

@@ -130,15 +130,12 @@ public class TokenCountRouterQueryBuilder extends AbstractRouterQueryBuilder<Con
                 throw new IllegalArgumentException("Unknown analyzer [" + analyzer + "]");
             }
         } else if (field != null) {
-            MappedFieldType fieldMapper = mapper.fullName(field);
+            MappedFieldType fieldMapper = mapper.fieldType(field);
             if (fieldMapper == null) {
                 throw new IllegalArgumentException("Unknown field [" + field + "]");
             }
-            if (fieldMapper.searchQuoteAnalyzer() != null) {
-                luceneAnalyzer = fieldMapper.searchAnalyzer();
-            } else {
-                luceneAnalyzer = mapper.searchAnalyzer();
-            }
+
+            luceneAnalyzer = context.getSearchAnalyzer(fieldMapper);
         } else {
             throw new IllegalArgumentException("field or analyzer must be set");
         }

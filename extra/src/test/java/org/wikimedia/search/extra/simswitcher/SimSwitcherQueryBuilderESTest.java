@@ -19,30 +19,32 @@ package org.wikimedia.search.extra.simswitcher;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarity.LegacyBM25Similarity;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.compress.CompressedXContent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.wikimedia.search.extra.ExtraCorePlugin;
 
 public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwitcherQueryBuilder> {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraCorePlugin.class);
+        return Arrays.asList(ExtraCorePlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     @Override
@@ -51,7 +53,7 @@ public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwit
                 new CompressedXContent("{\"properties\":{" +
                         "\"test\":{\"type\":\"text\" }" +
                         "}}"),
-                MapperService.MergeReason.MAPPING_UPDATE, false);
+                MapperService.MergeReason.MAPPING_UPDATE);
     }
 
     @Override
@@ -60,7 +62,7 @@ public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwit
     }
 
     @Override
-    protected boolean isCacheable(SimSwitcherQueryBuilder queryBuilder) {
+    protected boolean builderGeneratesCacheableQueries() {
         return false;
     }
 
@@ -104,12 +106,12 @@ public class SimSwitcherQueryBuilderESTest extends AbstractQueryTestCase<SimSwit
     }
 
     @Override
-    protected void doAssertLuceneQuery(SimSwitcherQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
+    protected void doAssertLuceneQuery(SimSwitcherQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         assertThat(query, instanceOf(SimSwitcherQuery.class));
         SimSwitcherQuery q = (SimSwitcherQuery) query;
-        assertThat(q.getSimilarity(), instanceOf(BM25Similarity.class));
+        assertThat(q.getSimilarity(), instanceOf(LegacyBM25Similarity.class));
         assertThat(q.getSubQuery(), instanceOf(TermQuery.class));
-        assertEquals(((BM25Similarity)q.getSimilarity()).getB(), 0.8F, Math.ulp(0.8F));
-        assertEquals(((BM25Similarity)q.getSimilarity()).getK1(), 1.5F, Math.ulp(1.5F));
+        assertEquals(0.8F, ((LegacyBM25Similarity)q.getSimilarity()).getB(), Math.ulp(0.8F));
+        assertEquals(1.5F, ((LegacyBM25Similarity)q.getSimilarity()).getK1(), Math.ulp(1.5F));
     }
 }

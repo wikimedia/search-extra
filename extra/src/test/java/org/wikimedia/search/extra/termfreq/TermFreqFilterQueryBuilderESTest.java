@@ -4,27 +4,39 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.common.ParsingException;
+import org.elasticsearch.common.compress.CompressedXContent;
+import org.elasticsearch.index.mapper.MapperService;
+import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.wikimedia.search.extra.ExtraCorePlugin;
 
 public class TermFreqFilterQueryBuilderESTest extends AbstractQueryTestCase<TermFreqFilterQueryBuilder> {
 
+    private static final String MY_FIELD = "test_field";
+
+    @Override
+    protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
+        mapperService.merge("_doc",
+                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }}}"),
+                MapperService.MergeReason.MAPPING_UPDATE);
+    }
+
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraCorePlugin.class);
+        return Arrays.asList(ExtraCorePlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     @Override
     protected TermFreqFilterQueryBuilder doCreateTestQueryBuilder() {
-        TermFreqFilterQueryBuilder builder = new TermFreqFilterQueryBuilder("test_field", "test_term");
+        TermFreqFilterQueryBuilder builder = new TermFreqFilterQueryBuilder(MY_FIELD, "test_term");
         if (random().nextBoolean()) {
             builder.setEqual(random().nextInt(100));
         } else {
@@ -52,7 +64,7 @@ public class TermFreqFilterQueryBuilderESTest extends AbstractQueryTestCase<Term
     }
 
     @Override
-    protected void doAssertLuceneQuery(TermFreqFilterQueryBuilder termFreqQueryBuilder, Query query, SearchContext searchContext) throws IOException {
+    protected void doAssertLuceneQuery(TermFreqFilterQueryBuilder termFreqQueryBuilder, Query query, QueryShardContext searchContext) throws IOException {
         assertThat(query, instanceOf(TermFreqFilterQuery.class));
         TermFreqFilterQuery tquery = (TermFreqFilterQuery) query;
         assertEquals(new Term(termFreqQueryBuilder.getField(), termFreqQueryBuilder.getTerm()), tquery.getTerm());

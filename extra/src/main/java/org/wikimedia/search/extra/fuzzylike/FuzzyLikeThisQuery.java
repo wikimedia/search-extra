@@ -28,7 +28,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.MultiTerms;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.search.BooleanClause;
@@ -43,7 +43,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
-import org.apache.lucene.util.AttributeSource;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.PriorityQueue;
@@ -124,7 +123,7 @@ public class FuzzyLikeThisQuery extends Query {
     @SuppressWarnings("CyclomaticComplexity")
     private void addTerms(IndexReader reader, FieldVals f) throws IOException {
         if (f.queryString == null) return;
-        final Terms terms = MultiFields.getTerms(reader, f.fieldName);
+        final Terms terms = MultiTerms.getTerms(reader, f.fieldName);
         if (terms == null) {
             return;
         }
@@ -142,10 +141,8 @@ public class FuzzyLikeThisQuery extends Query {
                     ScoreTermQueue variantsQ = new ScoreTermQueue(MAX_VARIANTS_PER_TERM); //maxNum variants considered for any one term
                     float minScore = 0;
                     Term startTerm = new Term(f.fieldName, term);
-                    AttributeSource atts = new AttributeSource();
-                    MaxNonCompetitiveBoostAttribute maxBoostAtt =
-                            atts.addAttribute(MaxNonCompetitiveBoostAttribute.class);
-                    FuzzyTermsEnum fe = new FuzzyTermsEnum(terms, atts, startTerm, f.maxDist, f.prefixLength, true);
+                    FuzzyTermsEnum fe = new FuzzyTermsEnum(terms, startTerm, f.maxDist, f.prefixLength, true);
+                    MaxNonCompetitiveBoostAttribute maxBoostAtt = fe.attributes().addAttribute(MaxNonCompetitiveBoostAttribute.class);
                     //store the df so all variants use same idf
                     int df = reader.docFreq(startTerm);
                     int numVariants = 0;

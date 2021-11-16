@@ -47,6 +47,11 @@ public class SuperDetectNoopScript extends UpdateScript {
         public void close() throws IOException {
         }
 
+        @Override
+        public Set<ScriptContext<?>> getSupportedContexts() {
+            return Collections.singleton(UpdateScript.CONTEXT);
+        }
+
         protected Map<String, ChangeHandler<Object>> handlers(Map<String, Object> params) {
             @SuppressWarnings("unchecked")
             Map<String, String> detectorConfigs = (Map<String, String>) params.get("handlers");

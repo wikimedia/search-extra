@@ -1,15 +1,16 @@
 package org.wikimedia.search.extra.latency;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.nodes.BaseNodeRequest;
 import org.elasticsearch.action.support.nodes.TransportNodesAction;
-import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.io.stream.StreamInput;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportService;
 import org.wikimedia.search.extra.latency.LatencyStatsAction.LatencyStatsNodeResponse;
@@ -22,11 +23,11 @@ public class TransportLatencyStatsAction extends TransportNodesAction<LatencySta
     private final SearchLatencyProbe latencyProbe;
 
     @Inject
-    public TransportLatencyStatsAction(Settings settings, ThreadPool threadPool,
-                                       ClusterService clusterService, TransportService transportService,
-                                       ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
-                                       SearchLatencyListener latencyProbe) {
-        super(settings, LatencyStatsAction.NAME, threadPool, clusterService, transportService, actionFilters, indexNameExpressionResolver,
+    public TransportLatencyStatsAction(ThreadPool threadPool,
+                ClusterService clusterService, TransportService transportService,
+                ActionFilters actionFilters,
+                SearchLatencyListener latencyProbe) {
+        super(LatencyStatsAction.NAME, threadPool, clusterService, transportService, actionFilters,
                 LatencyStatsNodesRequest::new, LatencyStatsNodeRequest::new, ThreadPool.Names.MANAGEMENT,
                 LatencyStatsNodeResponse.class);
         this.latencyProbe = latencyProbe;
@@ -39,13 +40,13 @@ public class TransportLatencyStatsAction extends TransportNodesAction<LatencySta
     }
 
     @Override
-    protected LatencyStatsNodeRequest newNodeRequest(String nodeId, LatencyStatsNodesRequest request) {
-        return new LatencyStatsNodeRequest(nodeId);
+    protected LatencyStatsNodeRequest newNodeRequest(LatencyStatsNodesRequest nodesRequest) {
+        return new LatencyStatsNodeRequest(nodesRequest);
     }
 
     @Override
-    protected LatencyStatsNodeResponse newNodeResponse() {
-        return new LatencyStatsNodeResponse();
+    protected LatencyStatsNodeResponse newNodeResponse(StreamInput streamInput) throws IOException {
+        return new LatencyStatsNodeResponse(streamInput);
     }
 
     @Override
@@ -54,12 +55,22 @@ public class TransportLatencyStatsAction extends TransportNodesAction<LatencySta
     }
 
     static class LatencyStatsNodeRequest extends BaseNodeRequest {
-        LatencyStatsNodeRequest() {
+        private final LatencyStatsNodesRequest request;
 
+        LatencyStatsNodeRequest(StreamInput in) throws IOException {
+            super(in);
+            request = new LatencyStatsNodesRequest(in);
         }
 
-        LatencyStatsNodeRequest(String nodeId) {
-            super(nodeId);
+
+        LatencyStatsNodeRequest(LatencyStatsNodesRequest request) {
+            this.request = request;
+        }
+
+        @Override
+        public void writeTo(StreamOutput out) throws IOException {
+            super.writeTo(out);
+            request.writeTo(out);
         }
     }
 }

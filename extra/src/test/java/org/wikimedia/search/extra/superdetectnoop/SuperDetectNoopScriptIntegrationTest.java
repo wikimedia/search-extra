@@ -2,7 +2,7 @@ package org.wikimedia.search.extra.superdetectnoop;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
-import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertThrows;
+import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertRequestBuilderThrows;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -253,7 +253,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
     public void garbageDetector() throws IOException {
         indexSeedData();
         XContentBuilder b = x("int", "cat", "not a valid detector");
-        assertThrows(toUpdateRequest(b), IllegalArgumentException.class, RestStatus.BAD_REQUEST);
+        assertRequestBuilderThrows(toUpdateRequest(b), IllegalArgumentException.class, RestStatus.BAD_REQUEST);
     }
 
     @Test

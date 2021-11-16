@@ -9,6 +9,7 @@ import org.apache.lucene.search.ConstantScoreWeight;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
@@ -52,7 +53,7 @@ class UnacceleratedSourceRegexQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new ConstantScoreWeight(this, 1F) {
             @Override
             public boolean isCacheable(LeafReaderContext leafReaderContext) {
@@ -62,7 +63,7 @@ class UnacceleratedSourceRegexQuery extends Query {
             @Override
             public Scorer scorer(final LeafReaderContext context) throws IOException {
                 final DocIdSetIterator approximation = DocIdSetIterator.all(context.reader().maxDoc());
-                return new ConstantScoreScorer(this, 1f, new RegexTwoPhaseIterator(approximation, context));
+                return new ConstantScoreScorer(this, 1f, scoreMode, new RegexTwoPhaseIterator(approximation, context));
             }
         };
     }

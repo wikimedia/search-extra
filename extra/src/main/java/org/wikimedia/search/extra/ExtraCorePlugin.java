@@ -2,9 +2,7 @@ package org.wikimedia.search.extra;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
-import static java.util.function.Function.identity;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -15,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.client.Client;
@@ -40,6 +37,7 @@ import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.ScriptPlugin;
 import org.elasticsearch.plugins.SearchPlugin;
+import org.elasticsearch.repositories.RepositoriesService;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
 import org.elasticsearch.script.ScriptContext;
@@ -106,7 +104,9 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
                                                NamedXContentRegistry xContentRegistry, Environment environment,
-                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry
+                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry,
+                                               IndexNameExpressionResolver indexNameExpressionResolver,
+                                               Supplier<RepositoriesService> repositoriesServiceSupplier
     ) {
         threadPoolSupplier.set(threadPool);
         return singletonList(latencyListener);
@@ -140,16 +140,8 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
         return Arrays.asList(
             PreConfiguredTokenFilter.singleton("preserve_original", true, PreserveOriginalFilter::new),
             PreConfiguredTokenFilter.singleton("preserve_original_recorder", true, PreserveOriginalFilter.Recorder::new),
-            PreConfiguredTokenFilter.singleton("term_freq", true, TermFreqTokenFilter::new),
-            getSurrogateMergerBCFilter()
+            PreConfiguredTokenFilter.singleton("term_freq", true, TermFreqTokenFilter::new)
         );
-    }
-
-    private PreConfiguredTokenFilter getSurrogateMergerBCFilter() {
-        // Remove this BC code with ES7
-        assert Version.CURRENT.major == 6;
-        // noop BC token filter for WMF indices created using the 5.5.2.8 version of the extra plugin
-        return PreConfiguredTokenFilter.singleton("surrogate_merger", true, identity());
     }
 
     @Override
@@ -175,9 +167,9 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
 
     @Override
     public List<ActionHandler<? extends ActionRequest, ? extends ActionResponse>> getActions() {
-        return unmodifiableList(singletonList(
+        return singletonList(
                 new ActionHandler<>(LatencyStatsAction.INSTANCE, TransportLatencyStatsAction.class)
-        ));
+        );
     }
 
     @Override
@@ -185,6 +177,6 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
                                              ClusterSettings clusterSettings, IndexScopedSettings indexScopedSettings,
                                              SettingsFilter settingsFilter, IndexNameExpressionResolver indexNameExpressionResolver,
                                              Supplier<DiscoveryNodes> nodesInCluster) {
-        return singletonList(new RestGetLatencyStats(settings, restController));
+        return singletonList(new RestGetLatencyStats());
     }
 }

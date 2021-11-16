@@ -192,6 +192,7 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
         private final int value;
         private final QueryBuilder query;
 
+        @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
         Condition(StreamInput in) throws IOException {
             definition = ConditionDefinition.readFrom(in);
             value = in.readVInt();

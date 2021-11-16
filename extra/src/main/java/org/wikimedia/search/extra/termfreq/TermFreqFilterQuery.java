@@ -12,6 +12,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
@@ -64,7 +65,7 @@ public class TermFreqFilterQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new TermFreqFilterWeight(this, term, predicate);
     }
 
@@ -135,6 +136,11 @@ public class TermFreqFilterQuery extends Query {
                 @Override
                 public TwoPhaseIterator twoPhaseIterator() {
                     return iter;
+                }
+
+                @Override
+                public float getMaxScore(int upTo) {
+                    return Float.MAX_VALUE;
                 }
             };
         }

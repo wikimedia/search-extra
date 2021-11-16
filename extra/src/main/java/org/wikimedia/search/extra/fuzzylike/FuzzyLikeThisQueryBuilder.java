@@ -272,7 +272,7 @@ public class FuzzyLikeThisQueryBuilder extends AbstractQueryBuilder<FuzzyLikeThi
         } else {
             fields = Arrays.stream(this.fields)
                         .filter(x -> context.fieldMapper(x) != null)
-                        .filter(x -> context.fieldMapper(x).tokenized())
+                        .filter(x -> context.fieldMapper(x).isSearchable())
                         .filter(x -> SUPPORTED_TYPES.contains(context.fieldMapper(x).typeName()))
                         .map(x -> context.fieldMapper(x).name())
                         .collect(Collectors.toList());

@@ -18,6 +18,7 @@ import org.wikimedia.search.extra.router.DegradedRouterQueryBuilder.DegradedCond
 
 import com.google.common.annotations.VisibleForTesting;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -97,6 +98,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
         private final Double percentile;
         private final DegradedConditionType type;
 
+        @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
         DegradedCondition(StreamInput in) throws IOException {
             super(in);
             bucket = in.readOptionalString();

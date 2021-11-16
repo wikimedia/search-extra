@@ -49,7 +49,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
      */
     private String loadValue(LeafSearchLookup leafLookup) {
         Object value = null;
-        if (!fieldType.stored()) {
+        if (!fieldType.isStored()) {
             value = leafLookup.source().get(fieldType.name());
         } else {
             FieldLookup fl = (FieldLookup) leafLookup.fields().get(fieldType.name());
@@ -83,7 +83,7 @@ public class LevenshteinDistanceScore extends ScoreFunction {
 
             @Override
             public Explanation explainScore(int docId, Explanation subQueryScore) {
-                double score = score(docId, subQueryScore.getValue());
+                double score = score(docId, subQueryScore.getValue().floatValue());
                 String explanation = "LevenshteinDistanceScore";
                 explanation += " with parameters:\n text:" + value;
                 explanation += "\n field value : " + loadValue(leafLookup);

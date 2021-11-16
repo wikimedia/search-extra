@@ -14,13 +14,11 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.elasticsearch.action.Action;
-import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.action.ActionType;
 import org.elasticsearch.action.FailedNodeException;
 import org.elasticsearch.action.support.nodes.BaseNodeResponse;
 import org.elasticsearch.action.support.nodes.BaseNodesRequest;
 import org.elasticsearch.action.support.nodes.BaseNodesResponse;
-import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -38,43 +36,18 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.AccessLevel;
 import lombok.Getter;
 
-public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyStatsNodesRequest,
-        LatencyStatsAction.LatencyStatsNodesResponse, LatencyStatsAction.LatencyStatsRequestBuilder> {
+public final class LatencyStatsAction extends ActionType<LatencyStatsAction.LatencyStatsNodesResponse> {
 
     static final String NAME = "cluster:monitor/extra-latency-stats";
     public static final LatencyStatsAction INSTANCE = new LatencyStatsAction();
 
     private LatencyStatsAction() {
-        super(NAME);
-    }
-
-    @Override
-    public LatencyStatsRequestBuilder newRequestBuilder(ElasticsearchClient client) {
-        return new LatencyStatsRequestBuilder(client);
-    }
-
-    @Override
-    public LatencyStatsNodesResponse newResponse() {
-        throw new UnsupportedOperationException();
+        super(NAME, LatencyStatsNodesResponse::new);
     }
 
     @Override
     public Writeable.Reader<LatencyStatsNodesResponse> getResponseReader() {
-        return in -> {
-            LatencyStatsNodesResponse response = new LatencyStatsNodesResponse();
-            response.readFrom(in);
-            return response;
-        };
-    }
-
-    static class LatencyStatsRequestBuilder extends ActionRequestBuilder<LatencyStatsNodesRequest,
-            LatencyStatsNodesResponse, LatencyStatsRequestBuilder> {
-        LatencyStatsRequestBuilder(ElasticsearchClient client) {
-            super(client, INSTANCE, new LatencyStatsNodesRequest());
-        }
-    }
-
-    static class LatencyStatsNodesRequest extends BaseNodesRequest<LatencyStatsNodesRequest> {
+        return LatencyStatsNodesResponse::new;
     }
 
     public static class LatencyStatsNodesResponse extends BaseNodesResponse<LatencyStatsNodeResponse>
@@ -85,7 +58,9 @@ public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyS
         @Getter(AccessLevel.PACKAGE)
         private StatDetails allNodes;
 
-        LatencyStatsNodesResponse(){
+        LatencyStatsNodesResponse(StreamInput in) throws IOException {
+            super(in);
+            allNodes = new StatDetails(in);
         }
 
         LatencyStatsNodesResponse(ClusterName clusterName, List<LatencyStatsNodeResponse> nodes, List<FailedNodeException> failures) {
@@ -100,13 +75,7 @@ public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyS
 
         @Override
         protected void writeNodesTo(StreamOutput out, List<LatencyStatsNodeResponse> nodes) throws IOException {
-            out.writeStreamableList(nodes);
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            allNodes = new StatDetails(in);
+            out.writeList(nodes);
         }
 
         @Override
@@ -132,11 +101,19 @@ public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyS
 
     }
 
+    static class LatencyStatsNodesRequest extends BaseNodesRequest<LatencyStatsNodesRequest> {
+        LatencyStatsNodesRequest(StreamInput in) throws IOException {
+            super(in);
+        }
+
+        LatencyStatsNodesRequest(String... nodesIds) {
+            super(nodesIds);
+        }
+    }
+
     public static class LatencyStatsNodeResponse extends BaseNodeResponse {
         StatDetails statDetails = new StatDetails();
 
-        LatencyStatsNodeResponse() {
-        }
         LatencyStatsNodeResponse(DiscoveryNode node) {
             super(node);
         }
@@ -144,19 +121,14 @@ public final class LatencyStatsAction extends Action<LatencyStatsAction.LatencyS
                 value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
                 justification = "readFrom has a well understood contract")
         LatencyStatsNodeResponse(StreamInput in) throws IOException {
-            readFrom(in);
+            super(in);
+            statDetails.readFrom(in);
         }
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             statDetails.writeTo(out);
-        }
-
-        @Override
-        public void readFrom(StreamInput in) throws IOException {
-            super.readFrom(in);
-            statDetails.readFrom(in);
         }
 
         LatencyStatsNodeResponse initFromProbe(SearchLatencyProbe latencyProbe) {

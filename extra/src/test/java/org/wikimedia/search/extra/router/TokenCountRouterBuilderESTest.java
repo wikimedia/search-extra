@@ -7,8 +7,8 @@ import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condi
 import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -31,26 +31,32 @@ import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.wikimedia.search.extra.ExtraCorePlugin;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
 public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCountRouterQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraCorePlugin.class);
+        return Arrays.asList(ExtraCorePlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
     private static final String MY_FIELD = "tok_count_field";
 
     @Override
     protected void initializeAdditionalMappings(MapperService mapperService) throws IOException {
         mapperService.merge("_doc",
-                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }}}"),
-                MapperService.MergeReason.MAPPING_UPDATE, false);
+                new CompressedXContent("{\"properties\":{\"" + MY_FIELD + "\":{\"type\":\"text\" }," +
+                        "\"fallback\":{\"type\":\"text\"}}}"),
+                MapperService.MergeReason.MAPPING_UPDATE);
     }
 
     @Override
     protected boolean supportsBoost() {
+        return false;
+    }
+
+    @Override
+    protected boolean builderGeneratesCacheableQueries() {
         return false;
     }
 
@@ -84,7 +90,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         for (int i = randomIntBetween(1, 10); i > 0; i--) {
             AbstractRouterQueryBuilder.ConditionDefinition cond = randomFrom(AbstractRouterQueryBuilder.ConditionDefinition.values());
             int value = randomInt(10);
-            builder.condition(cond, value, new TermQueryBuilder(cond.name(), String.valueOf(value)));
+            builder.condition(cond, value, new TermQueryBuilder(MY_FIELD, value + ':' + cond.name()));
         }
 
         if (randomBoolean()) {
@@ -94,13 +100,13 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
     }
 
     @Override
-    protected void doAssertLuceneQuery(TokenCountRouterQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
+    protected void doAssertLuceneQuery(TokenCountRouterQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         Analyzer analyzer;
         if (queryBuilder.field() != null) {
-            analyzer = context.getQueryShardContext().getSearchAnalyzer(context.smartNameFieldType(queryBuilder.field()));
+            analyzer = context.getSearchAnalyzer(context.fieldMapper(queryBuilder.field()));
         } else {
             assertNotNull("field or analyzer must be set", queryBuilder.analyzer());
-            analyzer = context.getQueryShardContext().getIndexAnalyzers().get(queryBuilder.analyzer());
+            analyzer = context.getIndexAnalyzers().get(queryBuilder.analyzer());
         }
 
         int tokCount = TokenCountRouterQueryBuilder.countToken(analyzer, queryBuilder.text(), queryBuilder.discountOverlaps());
@@ -114,7 +120,7 @@ public class TokenCountRouterBuilderESTest extends AbstractQueryTestCase<TokenCo
         if (qb.isPresent()) {
             assertThat(query, instanceOf(TermQuery.class));
             TermQuery tq = (TermQuery) query;
-            assertEquals(new Term(qb.get().definition().name(), String.valueOf(qb.get().value())), tq.getTerm());
+            assertEquals(new Term(MY_FIELD, qb.get().value() + ':' + qb.get().definition().name()), tq.getTerm());
         } else {
             if (queryBuilder.field() != null) {
                 assertThat(query, instanceOf(MatchNoDocsQuery.class));

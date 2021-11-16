@@ -36,11 +36,10 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.similarities.AfterEffectB;
 import org.apache.lucene.search.similarities.AxiomaticF3LOG;
 import org.apache.lucene.search.similarities.BM25Similarity;
-import org.apache.lucene.search.similarities.BasicModelBE;
+import org.apache.lucene.search.similarities.BasicModelIF;
 import org.apache.lucene.search.similarities.BooleanSimilarity;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.DFISimilarity;
@@ -91,7 +90,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
                 new LMJelinekMercerSimilarity(0.2F),
                 new AxiomaticF3LOG(0.5F, 10),
                 new DFISimilarity(new IndependenceChiSquared()),
-                new DFRSimilarity(new BasicModelBE(), new AfterEffectB(), new NormalizationH1()),
+                new DFRSimilarity(new BasicModelIF(), new AfterEffectB(), new NormalizationH1()),
                 new IBSimilarity(new DistributionLL(), new LambdaDF(), new NormalizationH3())
         ).collect(Collectors.toMap((s) -> s.getClass().getSimpleName(), (s) -> s));
         // choose one
@@ -135,7 +134,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
             Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(), q);
             Query hacked = new QueryBuilder(analyzer).createBooleanQuery("main_field", q);
             TopDocs docs = searcherUnderTest.search(query, 10);
-            assertThat(docs.totalHits, greaterThan(0L));
+            assertThat(docs.totalHits.value, greaterThan(0L));
             TopDocs hackedDocs = searcherUnderTest.search(new SimSwitcherQuery(entry.getValue(), hacked), 10);
             assertEquals(msg, docs.totalHits, hackedDocs.totalHits);
             IntStream.range(0, docs.scoreDocs.length).forEach((i) -> {
@@ -155,11 +154,11 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
             Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(), q);
             Query hacked = new SimSwitcherQuery(entry.getValue(), new QueryBuilder(analyzer).createBooleanQuery("main_field", q));
             TopDocs docs = searcherUnderTest.search(query, 10);
-            Weight weight = searcherUnderTest.createWeight(searcherUnderTest.rewrite(query), true, 1F);
-            Weight hackedWeight = searcherUnderTest.createWeight(searcherUnderTest.rewrite(hacked), true, 1F);
             Explanation exp = searcherUnderTest.explain(query, docs.scoreDocs[0].doc);
             Explanation hackExp = searcherUnderTest.explain(hacked, docs.scoreDocs[0].doc);
-            assertEquals(msg, exp.getValue(), hackExp.getValue(), Math.ulp(exp.getValue()));
+
+            double expectedDoubleValue = exp.getValue().doubleValue();
+            assertEquals(msg, expectedDoubleValue, hackExp.getValue().doubleValue(), Math.ulp(expectedDoubleValue));
         }
     }
 

@@ -144,8 +144,13 @@ public class SimSwitcherQueryBuilder extends AbstractQueryBuilder<SimSwitcherQue
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
+        if (similarityType.equals("scripted")) {
+            // TODO: To support the "scripted" similarity we might find ways to inject the ScriptService here
+            throw new IllegalArgumentException("The similarity [scripted] is not supported by simswitcher");
+        }
+
         TriFunction<Settings, Version, ScriptService, Similarity> provider = SimilarityService.BUILT_IN.get(similarityType);
-        Similarity sim = provider.apply(params != null ? params : Settings.EMPTY, Version.CURRENT, context.getScriptService());
+        Similarity sim = provider.apply(params != null ? params : Settings.EMPTY, Version.CURRENT, null);
         return new SimSwitcherQuery(sim, subQuery.toQuery(context));
     }
 

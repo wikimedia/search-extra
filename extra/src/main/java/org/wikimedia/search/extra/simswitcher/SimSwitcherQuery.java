@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.similarities.Similarity;
 
@@ -68,18 +69,18 @@ public class SimSwitcherQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-        if (!needsScores) {
-            return searcher.createWeight(subQuery, false, boost);
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        if (!scoreMode.needsScores()) {
+            return searcher.createWeight(subQuery, scoreMode, boost);
         }
-        final Similarity oldSim = searcher.getSimilarity(true);
+        final Similarity oldSim = searcher.getSimilarity();
         try {
             // XXX: hackish, this only works because a searcher
             // is created per SearchContext (multiple queries does not share the
             // same ContextIndexSearcher)
             // and that setSimilarity is delegated to super not the real IndexSearcher
             searcher.setSimilarity(similarity);
-            return searcher.createWeight(subQuery, true, boost);
+            return searcher.createWeight(subQuery, scoreMode, boost);
         } finally {
             searcher.setSimilarity(oldSim);
         }

@@ -9,10 +9,10 @@ public class GetLatencyStatsIntegrationTest extends AbstractPluginIntegrationTes
     @Test
     public void testReportingBuckets() throws Exception {
         createIndex("test");
-
         // This is pretty fragile and depends on nothing else using stat buckets
         LatencyStatsAction.LatencyStatsNodesResponse statsResponse =
-                client().prepareExecute(LatencyStatsAction.INSTANCE).execute().get();
+                client()
+                        .execute(LatencyStatsAction.INSTANCE, new LatencyStatsAction.LatencyStatsNodesRequest()).get();
         statsResponse.getNodes().stream()
                 .map(n -> n.statDetails)
                 .forEach(stat -> assertEquals(0, stat.getLatencies().size()));
@@ -27,7 +27,7 @@ public class GetLatencyStatsIntegrationTest extends AbstractPluginIntegrationTes
         client().search(builder.request()).get();
         Thread.sleep(5200);
 
-        statsResponse = client().prepareExecute(LatencyStatsAction.INSTANCE).execute().get();
+        statsResponse = client().execute(LatencyStatsAction.INSTANCE, new LatencyStatsAction.LatencyStatsNodesRequest()).get();
         // 4 default latencies reported
         assertEquals(4, statsResponse.getAllNodes().getLatencies().size());
         statsResponse.getAllNodes().getLatencies()

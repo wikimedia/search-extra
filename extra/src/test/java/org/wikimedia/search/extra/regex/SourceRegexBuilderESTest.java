@@ -5,7 +5,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Locale;
 
 import org.apache.lucene.index.IndexReader;
@@ -17,14 +16,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.Rewriteable;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.test.AbstractQueryTestCase;
+import org.elasticsearch.test.TestGeoShapeFieldMapperPlugin;
 import org.wikimedia.search.extra.ExtraCorePlugin;
 import org.wikimedia.search.extra.util.FieldValues;
 
 public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQueryBuilder> {
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Collections.singleton(ExtraCorePlugin.class);
+        return Arrays.asList(ExtraCorePlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
     private static final String MY_FIELD = "regex_field";
     private static final String MY_FIELD_NGRAM = "regex_field_ngram";
@@ -36,7 +35,7 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
                         "\"" + MY_FIELD + "\":{\"type\":\"text\" }," +
                         "\"" + MY_FIELD_NGRAM + "\":{\"type\":\"text\" }" +
                         "}}"),
-                MapperService.MergeReason.MAPPING_UPDATE, false);
+                MapperService.MergeReason.MAPPING_UPDATE);
     }
 
     @Override
@@ -65,15 +64,15 @@ public class SourceRegexBuilderESTest extends AbstractQueryTestCase<SourceRegexQ
     }
 
     @Override
-    protected void doAssertLuceneQuery(SourceRegexQueryBuilder queryBuilder, Query query, SearchContext context) throws IOException {
+    protected void doAssertLuceneQuery(SourceRegexQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         assertThat(query, instanceOf(SourceRegexQuery.class));
         SourceRegexQuery rquery = (SourceRegexQuery) query;
         assertEquals(queryBuilder.field(), rquery.getFieldPath());
         assertEquals(queryBuilder.ngramField(), rquery.getNgramFieldPath());
         if (queryBuilder.loadFromSource()) {
-            assertSame(FieldValues.loadFromSource(), ((SourceRegexQuery) query).getLoader());
+            assertSame(FieldValues.loadFromSource(), rquery.getLoader());
         } else {
-            assertSame(FieldValues.loadFromStoredField(), ((SourceRegexQuery) query).getLoader());
+            assertSame(FieldValues.loadFromStoredField(), rquery.getLoader());
         }
 
         assertEquals(queryBuilder.settings(), rquery.getSettings());

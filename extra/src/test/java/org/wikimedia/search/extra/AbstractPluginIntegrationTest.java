@@ -92,9 +92,11 @@ public class AbstractPluginIntegrationTest extends ESIntegTestCase {
         @Override
         public Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> getTokenizers() {
             Map<String, AnalysisModule.AnalysisProvider<TokenizerFactory>> map = new HashMap<>();
-            map.put("whitespace", (isettings, env, name, settings) -> WhitespaceTokenizer::new);
-            map.put("nGram", (isettings, env, name, settings) -> () ->
-                    new NGramTokenizer(settings.getAsInt("min_gram", 3), settings.getAsInt("max_gram", 3)));
+            map.put("whitespace", (isettings, env, name, settings) -> TokenizerFactory.newFactory("whitespace", WhitespaceTokenizer::new));
+            map.put("nGram", (isettings, env, name, settings) ->
+                    TokenizerFactory.newFactory("nGram", () ->
+                            new NGramTokenizer(settings.getAsInt("min_gram", 3), settings.getAsInt("max_gram", 3))));
+
             return Collections.unmodifiableMap(map);
         }
 
@@ -105,7 +107,7 @@ public class AbstractPluginIntegrationTest extends ESIntegTestCase {
                     @Override
                     public Analyzer get() {
                         return new EnglishAnalyzer(
-                                Analysis.parseStopWords(env, isettings.getIndexVersionCreated(), settings, EnglishAnalyzer.getDefaultStopSet()),
+                                Analysis.parseStopWords(env, settings, EnglishAnalyzer.getDefaultStopSet()),
                                 Analysis.parseStemExclusion(settings, CharArraySet.EMPTY_SET));
                     }
             });
