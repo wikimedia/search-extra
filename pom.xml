@@ -10,7 +10,7 @@
 
     <groupId>org.wikimedia.search</groupId>
     <artifactId>extra-parent</artifactId>
-    <version>6.8.18-wmf1-SNAPSHOT</version>
+    <version>6.8.18-wmf1</version>
     <packaging>pom</packaging>
     <name>Elasticsearch extra plugins</name>
     <description>Extra queries and filters for Elasticsearch.</description>
