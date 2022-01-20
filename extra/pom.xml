@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.wikimedia.search</groupId>
         <artifactId>extra-parent</artifactId>
-        <version>6.8.23-wmf1-SNAPSHOT</version>
+        <version>6.8.23-wmf1</version>
     </parent>
 
     <artifactId>extra</artifactId>
