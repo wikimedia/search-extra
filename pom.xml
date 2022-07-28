@@ -10,7 +10,7 @@
 
     <groupId>org.wikimedia.search</groupId>
     <artifactId>extra-parent</artifactId>
-    <version>6.8.23-wmf2-SNAPSHOT</version>
+    <version>6.8.23-wmf2</version>
     <packaging>pom</packaging>
     <name>Elasticsearch extra plugins</name>
     <description>Extra queries and filters for Elasticsearch.</description>
@@ -57,7 +57,7 @@
     <scm>
         <connection>scm:git:https://gerrit.wikimedia.org/r/search/extra</connection>
         <developerConnection>scm:git:ssh://gerrit.wikimedia.org:29418/search/extra</developerConnection>
-        <tag>HEAD</tag>
+        <tag>extra-parent-6.8.23-wmf2</tag>
         <url>https://gerrit.wikimedia.org/r/#/admin/projects/search/extra</url>
     </scm>
 
