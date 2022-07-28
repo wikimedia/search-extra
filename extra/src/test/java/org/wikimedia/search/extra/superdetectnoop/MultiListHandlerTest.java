@@ -1,11 +1,12 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -87,7 +88,17 @@ public class MultiListHandlerTest {
         testFailureCase(77, A);
         testFailureCase(ImmutableList.of("Words", 5), B1);
         testFailureCase(A, Collections.emptyList());
+    }
 
+    // Test takes ~100ms, give 10x margin for slower machine / over-busy CI
+    @Test(timeout = 1000)
+    public void testOversizedInputs() {
+        List<String> C = IntStream.range(0, 100000)
+            .mapToObj(i -> "B/" + i)
+            .collect(toList());
+        // Comparing the list to itself gives us the worst-case performance, all
+        // values must be compared with no opportunity for early-exit.
+        testCaseCloseEnough(C, C);
     }
 
     private void testCaseCloseEnough(@Nullable List<String> oldValue, @Nullable List<String> newValue) {
@@ -125,6 +136,6 @@ public class MultiListHandlerTest {
 
     @SafeVarargs
     private final <T> List<T> concat(List<T>... lists) {
-        return Stream.of(lists).flatMap(List::stream).collect(Collectors.toList());
+        return Stream.of(lists).flatMap(List::stream).collect(toList());
     }
 }
