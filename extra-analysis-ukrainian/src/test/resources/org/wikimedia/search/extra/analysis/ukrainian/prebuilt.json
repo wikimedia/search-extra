@@ -1,0 +1,15 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "ukrainian_prebuilt": {
+          "tokenizer": "standard",
+          "filter": [
+            "ukrainian_stop",
+            "ukrainian_stemmer"
+          ]
+        }
+      }
+    }
+  }
+}

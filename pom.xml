@@ -50,6 +50,7 @@
         <module>extra-analysis-homoglyph</module>
         <module>extra-analysis-khmer</module>
         <module>extra-analysis-slovak</module>
+        <module>extra-analysis-ukrainian</module>
         <module>extra-common</module>
         <module>extra</module>
     </modules>
@@ -111,6 +112,11 @@
                 <version>${lucene.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.carrot2</groupId>
+                <artifactId>morfologik-stemming</artifactId>
+                <version>2.1.9</version>
+            </dependency>
+            <dependency>
                 <groupId>org.elasticsearch</groupId>
                 <artifactId>elasticsearch</artifactId>
                 <version>${elasticsearch.version}</version>
@@ -127,6 +133,11 @@
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
+                <artifactId>extra-analysis-ukrainian</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wikimedia.search</groupId>
                 <artifactId>extra-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -134,6 +145,11 @@
                 <groupId>org.wikimedia.search</groupId>
                 <artifactId>extra-core</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ua.net.nlp</groupId>
+                <artifactId>morfologik-ukrainian-search</artifactId>
+                <version>4.9.1</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -323,6 +339,7 @@
                             <toIgnore>org.wikimedia.search.extra.analysis.filters.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.khmer.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.slovak.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.analysis.ukrainian.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.fuzzylike.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.latency.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.levenshtein.package-info</toIgnore>

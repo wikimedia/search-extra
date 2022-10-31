@@ -15,6 +15,14 @@
                 <exclude>org.apache.lucene:*</exclude>
             </excludes>
         </dependencySet>
+        <dependencySet>
+            <outputDirectory></outputDirectory>
+            <useProjectArtifact>true</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <includes>
+                <include>org.apache.lucene:lucene-analyzers-morfologik</include>
+            </includes>
+        </dependencySet>
     </dependencySets>
     <fileSets>
         <fileSet>

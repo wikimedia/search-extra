@@ -1,0 +1,23 @@
+{
+  "index": {
+    "analysis": {
+      "filter": {
+        "ukstemmer": {
+          "type": "ukrainian_stemmer"
+        },
+        "ukstop": {
+          "type": "ukrainian_stop"
+        }
+      },
+      "analyzer": {
+        "ukrainian_redefined": {
+          "tokenizer": "standard",
+          "filter": [
+            "ukstop",
+            "ukstemmer"
+          ]
+        }
+      }
+    }
+  }
+}
