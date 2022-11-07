@@ -25,7 +25,7 @@ public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List
     static final ChangeHandler<Object> INSTANCE =
             ChangeHandler.TypeSafeList.nullAndTypeSafe(String.class, new MultiListHandler());
 
-    public static final ChangeHandler.Recognizer recognizer = desc ->
+    public static final ChangeHandler.Recognizer RECOGNIZER = desc ->
             desc.equals("multilist") ? INSTANCE : null;
 
     @Override
@@ -54,9 +54,9 @@ public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List
         static MultiSet parse(Collection<String> strings) {
             return new MultiSet(strings.stream()
                     .collect(groupingBy(val -> {
-                            int pos = val.indexOf(DELIMITER);
-                            return pos == -1 ? UNNAMED : val.substring(0, pos);
-                        }, toSet())));
+                        int pos = val.indexOf(DELIMITER);
+                        return pos == -1 ? UNNAMED : val.substring(0, pos);
+                    }, toSet())));
         }
 
         private <T> Optional<T> onlyElement(Collection<T> foo) {

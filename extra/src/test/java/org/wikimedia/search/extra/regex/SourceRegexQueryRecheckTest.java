@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 
 public class SourceRegexQueryRecheckTest {
-    private static final Logger log = LogManager.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());
+    private static final Logger LOG = LogManager.getLogger(SourceRegexQueryRecheckTest.class.getPackage().getName());
 
     private final String rashidun;
     private final String obama;
@@ -105,7 +105,7 @@ public class SourceRegexQueryRecheckTest {
             }
         }
         long took = System.currentTimeMillis() - start;
-        log.info("{} took {} millis to match /{}/", String.format(Locale.ROOT, "%20s %10s", recheckerName, name), took, regex);
+        LOG.info("{} took {} millis to match /{}/", String.format(Locale.ROOT, "%20s %10s", recheckerName, name), took, regex);
         return took;
     }
 }

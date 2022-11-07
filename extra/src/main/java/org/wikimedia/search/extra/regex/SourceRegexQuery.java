@@ -48,7 +48,7 @@ public class SourceRegexQuery extends Query {
         this.ngramFieldPath = ngramFieldPath;
         this.regex = Objects.requireNonNull(regex);
         if (regex.isEmpty()) {
-           throw new IllegalArgumentException("regex must be set");
+            throw new IllegalArgumentException("regex must be set");
         }
         this.loader = loader;
         this.settings = settings;

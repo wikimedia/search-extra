@@ -73,10 +73,12 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
     private Map<String, Similarity> similarityMap;
 
     // docs with doc ids array index
-    private final String[] docs = new String[] {"how now brown cow",
-            "brown is the color of cows",
-            "brown cow",
-            "banana cows are yummy"};
+    private final String[] docs = new String[] {
+        "how now brown cow",
+        "brown is the color of cows",
+        "brown cow",
+        "banana cows are yummy"
+    };
 
     @Before
     public void setupIndex() throws IOException {

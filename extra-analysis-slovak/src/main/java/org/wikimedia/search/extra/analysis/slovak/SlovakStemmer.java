@@ -156,19 +156,19 @@ public class SlovakStemmer {
 
         if (len > 3) {
             switch (s[len - 1]) {
-                case 'e':
-                case 'i':
-                case 'í':
-                    return palatalize(s, len);
-                case 'ú':
-                case 'y':
-                case 'a':
-                case 'o':
-                case 'á':
-                case 'é':
-                case 'ý':
-                    return len - 1;
-                default:
+            case 'e':
+            case 'i':
+            case 'í':
+                return palatalize(s, len);
+            case 'ú':
+            case 'y':
+            case 'a':
+            case 'o':
+            case 'á':
+            case 'é':
+            case 'ý':
+                return len - 1;
+            default:
             }
         }
 

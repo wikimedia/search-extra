@@ -93,12 +93,12 @@ public class MultiListHandlerTest {
     // Test takes ~100ms, give 10x margin for slower machine / over-busy CI
     @Test(timeout = 1000)
     public void testOversizedInputs() {
-        List<String> C = IntStream.range(0, 100000)
+        List<String> c = IntStream.range(0, 100000)
             .mapToObj(i -> "B/" + i)
             .collect(toList());
         // Comparing the list to itself gives us the worst-case performance, all
         // values must be compared with no opportunity for early-exit.
-        testCaseCloseEnough(C, C);
+        testCaseCloseEnough(c, c);
     }
 
     private void testCaseCloseEnough(@Nullable List<String> oldValue, @Nullable List<String> newValue) {

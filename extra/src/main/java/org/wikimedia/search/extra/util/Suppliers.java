@@ -9,16 +9,16 @@ public final class Suppliers {
     }
 
     public static class MutableSupplier<T> implements Supplier<T> {
-       @Nullable T obj;
+        @Nullable T obj;
 
-       @Override
-       @Nullable
-       public T get() {
-           return obj;
-       }
+        @Override
+        @Nullable
+        public T get() {
+            return obj;
+        }
 
-       public void set(T obj) {
-           this.obj = obj;
-       }
+        public void set(T obj) {
+            this.obj = obj;
+        }
     }
 }

@@ -75,7 +75,7 @@ public class FuzzyLikeThisQuery extends Query {
     // a better way might be to convert this into multitermquery rewrite methods.
     // the rewrite method can 'average' the TermContext's term statistics (docfreq,totalTermFreq)
     // provided to TermQuery, so that the general idea is agnostic to any scoring system...
-    static final TFIDFSimilarity sim = new ClassicSimilarity();
+    static final TFIDFSimilarity SIM = new ClassicSimilarity();
     ArrayList<FieldVals> fieldVals = new ArrayList<>();
     Analyzer analyzer;
 
@@ -175,7 +175,7 @@ public class FuzzyLikeThisQuery extends Query {
                         int size = variantsQ.size();
                         for (int i = 0; i < size; i++) {
                             ScoreTerm st = variantsQ.pop();
-                            st.score = (st.score * st.score) * sim.idf(df, corpusNumDocs);
+                            st.score = (st.score * st.score) * SIM.idf(df, corpusNumDocs);
                             q.insertWithOverflow(st);
                         }
                     }

@@ -12,8 +12,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 
 public class TranslationTable {
-    private static final Comparator<GlyphPair> sortByLength = Comparator.comparingInt(gp -> gp.getOriginal().length());
-    private static final Comparator<GlyphPair> sortByNaturalOrder = Comparator.comparing(GlyphPair::getOriginal);
+    private static final Comparator<GlyphPair> SORT_BY_LENGTH = Comparator.comparingInt(gp -> gp.getOriginal().length());
+    private static final Comparator<GlyphPair> SORT_BY_NATURAL_ORDER = Comparator.comparing(GlyphPair::getOriginal);
 
     private final List<GlyphPair> scriptOneToScriptTwo;
     private final List<GlyphPair> scriptTwoToScriptOne;
@@ -31,7 +31,7 @@ public class TranslationTable {
     @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER", justification = "glyph order is semantically important")
     public final List<GlyphPair> scriptOneToScriptTwoList(List<GlyphPair> homoglyphPairs) {
         return homoglyphPairs.stream()
-                .sorted(sortByLength.reversed().thenComparing(sortByNaturalOrder))
+                .sorted(SORT_BY_LENGTH.reversed().thenComparing(SORT_BY_NATURAL_ORDER))
                 .collect(toList());
     }
 
@@ -40,7 +40,7 @@ public class TranslationTable {
     public final List<GlyphPair> scriptTwoToScriptOneList(List<GlyphPair> homoglyphPairs) {
         return homoglyphPairs.stream()
                 .map(GlyphPair::swap)
-                .sorted(sortByLength.reversed().thenComparing(sortByNaturalOrder))
+                .sorted(SORT_BY_LENGTH.reversed().thenComparing(SORT_BY_NATURAL_ORDER))
                 .collect((toList()));
     }
 

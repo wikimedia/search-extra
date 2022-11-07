@@ -25,7 +25,7 @@ import com.google.common.collect.ListMultimap;
  */
 @RunWith(RandomizedRunner.class)
 public class SetHandlerMonteCarlo extends RandomizedTest {
-    private static final Logger log = Loggers.getLogger(SetHandlerMonteCarlo.class, "monte carlo");
+    private static final Logger LOG = Loggers.getLogger(SetHandlerMonteCarlo.class, "monte carlo");
     private static final int MAX_LIST = 10000;
     private static final Comparator<List<Integer>> COMPARATOR = Comparator.comparingInt(l -> l.get(0));
 
@@ -46,13 +46,13 @@ public class SetHandlerMonteCarlo extends RandomizedTest {
         }
         CollectionUtil.timSort(times, COMPARATOR);
         for (Object t : times) {
-            log.info("{}", t);
+            LOG.info("{}", t);
         }
     }
 
     private long printTime(int minConvert, int maxConvert, int maxKeepAsList) {
         long time = time(minConvert, maxConvert, maxKeepAsList);
-        log.info(String.format(Locale.ROOT, "%5d  %6d  %6d  %5d", time, minConvert, maxConvert, maxKeepAsList));
+        LOG.info(String.format(Locale.ROOT, "%5d  %6d  %6d  %5d", time, minConvert, maxConvert, maxKeepAsList));
         return time;
     }
 

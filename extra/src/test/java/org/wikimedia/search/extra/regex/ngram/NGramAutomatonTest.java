@@ -114,10 +114,15 @@ public class NGramAutomatonTest extends RandomizedTest {
 
     @Test
     public void pgTrgmExample2() {
-        assertTrigramExpression("(abc|cba)def", new And<>(
+        assertTrigramExpression(
+            "(abc|cba)def",
+            new And<>(
                 new Leaf<>("def"), new Or<>(
-                new And<>(leaves("abc", "bcd", "cde")),
-                new And<>(leaves("cba", "bad", "ade")))));
+                    new And<>(leaves("abc", "bcd", "cde")),
+                    new And<>(leaves("cba", "bad", "ade"))
+                )
+            )
+        );
     }
 
     @Test

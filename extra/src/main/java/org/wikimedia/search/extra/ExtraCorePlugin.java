@@ -96,7 +96,7 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
                     new WithinAbsoluteHandler.Recognizer(),
                     new SetHandler.Recognizer(),
                     new VersionedDocumentHandler.Recognizer(),
-                    MultiListHandler.recognizer)
+                    MultiListHandler.RECOGNIZER)
         )));
     }
 

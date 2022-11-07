@@ -107,10 +107,11 @@ public class AbstractPluginIntegrationTest extends ESIntegTestCase {
                     @Override
                     public Analyzer get() {
                         return new EnglishAnalyzer(
-                                Analysis.parseStopWords(env, settings, EnglishAnalyzer.getDefaultStopSet()),
-                                Analysis.parseStemExclusion(settings, CharArraySet.EMPTY_SET));
+                            Analysis.parseStopWords(env, settings, EnglishAnalyzer.getDefaultStopSet()),
+                            Analysis.parseStemExclusion(settings, CharArraySet.EMPTY_SET));
                     }
-            });
+                }
+            );
         }
     }
 }

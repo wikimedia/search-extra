@@ -130,7 +130,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
                 builder.field(BUCKET.getPreferredName(), bucket);
             }
             if (percentile != null) {
-                    builder.field(PERCENTILE.getPreferredName(), percentile);
+                builder.field(PERCENTILE.getPreferredName(), percentile);
             }
             builder.field(TYPE.getPreferredName(), type);
         }

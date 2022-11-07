@@ -109,13 +109,13 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void testBadSetup() throws IOException {
         try (Analyzer a = new Analyzer() {
-             @Override
-             protected TokenStreamComponents createComponents(String fieldName) {
-                 Tokenizer tok =  new StandardTokenizer();
-                 TokenStream ts = new StopFilter(tok, FrenchAnalyzer.getDefaultStopSet());
-                 ts = new ASCIIFoldingFilter(ts, false);
-                 ts = new PreserveOriginalFilter(ts); // should fail here
-                 return new TokenStreamComponents(tok, ts);
+            @Override
+            protected TokenStreamComponents createComponents(String fieldName) {
+                Tokenizer tok = new StandardTokenizer();
+                TokenStream ts = new StopFilter(tok, FrenchAnalyzer.getDefaultStopSet());
+                ts = new ASCIIFoldingFilter(ts, false);
+                ts = new PreserveOriginalFilter(ts); // should fail here
+                return new TokenStreamComponents(tok, ts);
             }
         }) {
             a.tokenStream("", "");
@@ -131,15 +131,15 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     @Test
     public void longTextTest() throws IOException {
         String textRes = "/Prise de possession.txt";
-        try (Analyzer expected = stopAndASCIIFoldingPreserve();
-             Analyzer actual = stopGenericPreserveASCIIFolding()) {
+        try (Analyzer expected = stopAndAsciiFoldingPreserve();
+             Analyzer actual = stopGenericPreserveAsciiFolding()) {
             assertSameOutput(expected, actual, textRes);
             // test reuse
             assertSameOutput(expected, actual, textRes);
         }
         // Let's retry with a shingle filter which stores/restores states
-        try (Analyzer expected = stopAndASCIIFoldingAndShingle();
-             Analyzer actual = stopGenericPreserveASCIIFoldingShingles()) {
+        try (Analyzer expected = stopAndAsciiFoldingAndShingle();
+             Analyzer actual = stopGenericPreserveAsciiFoldingShingles()) {
             assertSameOutput(expected, actual, textRes);
             // test reuse
             assertSameOutput(expected, actual, textRes);
@@ -206,7 +206,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
         };
     }
 
-    private Analyzer stopGenericPreserveASCIIFoldingShingles() {
+    private Analyzer stopGenericPreserveAsciiFoldingShingles() {
         return new Analyzer() {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
@@ -221,7 +221,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
         };
     }
 
-    private Analyzer stopAndASCIIFoldingAndShingle() {
+    private Analyzer stopAndAsciiFoldingAndShingle() {
         return new Analyzer() {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
@@ -234,7 +234,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
         };
     }
 
-    private Analyzer stopGenericPreserveASCIIFolding() {
+    private Analyzer stopGenericPreserveAsciiFolding() {
         return new Analyzer() {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
@@ -248,7 +248,7 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
         };
     }
 
-    private Analyzer stopAndASCIIFoldingPreserve() {
+    private Analyzer stopAndAsciiFoldingPreserve() {
         return new Analyzer() {
             @Override
             protected TokenStreamComponents createComponents(String fieldName) {
