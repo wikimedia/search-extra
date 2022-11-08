@@ -10,16 +10,16 @@ import com.google.common.collect.ImmutableSet;
 public final class Or<T> extends AbstractCompositeExpression<T> {
     public static <T> Expression<T> fromExpressionSources(List<? extends ExpressionSource<T>> sources) {
         switch (sources.size()) {
-        case 0:
-            return True.instance();
-        case 1:
-            return sources.get(0).expression();
-        default:
-            ImmutableSet.Builder<Expression<T>> or = ImmutableSet.builder();
-            for (ExpressionSource<T> source : sources) {
-                or.add(source.expression());
-            }
-            return new Or<>(or.build()).simplify();
+            case 0:
+                return True.instance();
+            case 1:
+                return sources.get(0).expression();
+            default:
+                ImmutableSet.Builder<Expression<T>> or = ImmutableSet.builder();
+                for (ExpressionSource<T> source : sources) {
+                    or.add(source.expression());
+                }
+                return new Or<>(or.build()).simplify();
         }
     }
 

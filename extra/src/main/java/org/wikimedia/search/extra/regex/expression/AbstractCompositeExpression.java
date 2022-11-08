@@ -112,11 +112,11 @@ public abstract class AbstractCompositeExpression<T> implements Expression<T>, I
             return True.instance();
         }
         switch (newComponentsBuilder.size()) {
-        case 0:
-            return True.instance();
-        case 1:
-            return newComponentsBuilder.get(0);
-        default:
+            case 0:
+                return True.instance();
+            case 1:
+                return newComponentsBuilder.get(0);
+            default:
         }
         Expression<T> commonExtracted = extractCommon(changed ? newComponentsBuilder : components);
         if (commonExtracted != null) {

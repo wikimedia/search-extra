@@ -15,8 +15,8 @@ import morfologik.stemming.Dictionary;
 
 public class UkrainianAnalysisTest extends BaseTokenStreamTestCase {
 
-    private static final Dictionary ukDict = UkrainianStemmerFilterFactory.UK_DICT;
-    private static final CharArraySet ukStop = UkrainianStopFilterFactory.UK_STOP;
+    private static final Dictionary UK_DICT = UkrainianStemmerFilterFactory.UK_DICT;
+    private static final CharArraySet UK_STOP = UkrainianStopFilterFactory.UK_STOP;
 
     @Test
     public void simpleTest() throws IOException {
@@ -42,7 +42,7 @@ public class UkrainianAnalysisTest extends BaseTokenStreamTestCase {
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new WhitespaceTokenizer();
                 TokenStream ts = new LowerCaseFilter(tok);
-                ts = new UkrainianStemmerFilter(ts, ukDict);
+                ts = new UkrainianStemmerFilter(ts, UK_DICT);
                 return new TokenStreamComponents(tok, ts);
             }
         };
@@ -74,8 +74,8 @@ public class UkrainianAnalysisTest extends BaseTokenStreamTestCase {
             protected TokenStreamComponents createComponents(String fieldName) {
                 Tokenizer tok = new WhitespaceTokenizer();
                 TokenStream ts = new LowerCaseFilter(tok);
-                ts = new UkrainianStopFilter(ts, ukStop);
-                ts = new UkrainianStemmerFilter(ts, ukDict);
+                ts = new UkrainianStopFilter(ts, UK_STOP);
+                ts = new UkrainianStemmerFilter(ts, UK_DICT);
                 return new TokenStreamComponents(tok, ts);
             }
         };

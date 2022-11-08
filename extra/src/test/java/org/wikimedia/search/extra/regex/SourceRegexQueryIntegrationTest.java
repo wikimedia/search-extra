@@ -426,14 +426,14 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
 
     private String lowercaseForLocale(String locale) {
         switch (locale) {
-        case "el":
-            return "greek_lowercase";
-        case "ga":
-            return "irish_lowercase";
-        case "tr":
-            return "turkish_lowercase";
-        default:
-            return "lowercase";
+            case "el":
+                return "greek_lowercase";
+            case "ga":
+                return "irish_lowercase";
+            case "tr":
+                return "turkish_lowercase";
+            default:
+                return "lowercase";
         }
     }
 
