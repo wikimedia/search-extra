@@ -42,7 +42,8 @@ multi-script tokens that contain [homoglyphs](https://en.wikipedia.org/wiki/Homo
 
 Analysis:
 * [khmer_syll_reorder](docs/khmer_syll_reorder.md) - A character filter that will replace
-deprecated Khmer characters and attempt to canonically reorder Khmer orthographic syllables.
+deprecated Khmer characters and attempt to canonically reorder Khmer orthographic
+syllables.
 
 ### extra-analysis-slovak
 
@@ -51,6 +52,29 @@ This plugin contains a Slovak stemmer.
 Analysis:
 * [slovak_stemmer](docs/slovak_stemmer.md) - A token filter that provides
 stemming for the Slovak language. New in 5.5.2.4.
+
+### extra-analysis-ukrainian
+
+These filters are provided to allow for unpacking the monolithic
+[Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/plugins/7.10/analysis-ukrainian.html)
+Ukrainian analyzer, which is a wrapper around the monolithic
+[Lucene](https://github.com/apache/lucene/blob/releases/lucene-solr/8.7.0/lucene/analysis/morfologik/src/java/org/apache/lucene/analysis/uk/UkrainianMorfologikAnalyzer.java#L140)
+Ukrainian analyzer. This version of the Urkainian stemmer uses slightly a newer version of
+the Morfologik Ukrainian stemming dictionary than the parallel version in Elastic/Lucene.
+
+Analysis:
+* ukrainian_stop - A stopword token filter for Ukrainian.
+
+* ukrainian_stemmer - A token filter than provides stemming for the Ukrainian language.
+
+### extra-analysis-turkish
+
+Analysis:
+* [better_apostrophe](docs/better_apostrophe.md) - A smarter version of the Elastic/Lucene [`apostrophe`
+token filter](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis-apostrophe-tokenfilter.html)
+for Turkish, which is much too aggressive for multilingual data. See the linked docs for
+more details.
+
 
 Installation
 ------------

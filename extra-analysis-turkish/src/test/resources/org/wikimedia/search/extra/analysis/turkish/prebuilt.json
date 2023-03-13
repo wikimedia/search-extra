@@ -1,0 +1,14 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "turkish_prebuilt": {
+          "tokenizer": "standard",
+          "filter": [
+            "better_apostrophe"
+          ]
+        }
+      }
+    }
+  }
+}

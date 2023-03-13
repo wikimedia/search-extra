@@ -1,0 +1,19 @@
+{
+  "index": {
+    "analysis": {
+      "filter": {
+        "better_apos": {
+          "type": "better_apostrophe"
+        }
+      },
+      "analyzer": {
+        "turkish_redefined": {
+          "tokenizer": "standard",
+          "filter": [
+            "better_apos"
+          ]
+        }
+      }
+    }
+  }
+}
