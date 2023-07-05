@@ -35,6 +35,9 @@ public class SetHandlerTest {
         old = (List<String>) handler.handle(old, map("add", ImmutableList.of("clock"), "remove", ImmutableList.of("cat", "blunder")))
                 .newValue();
         assertEquals(ImmutableList.of("clock"), old);
+        old = (List<String>) handler.handle(old, map("add", ImmutableList.of("clock",  "blunder", "other"), "remove", ImmutableList.of("clock"), "max_size", 1))
+            .newValue();
+        assertEquals(ImmutableList.of("blunder"), old);
     }
 
     private Map<String, Object> map(String key, Object value) {
@@ -46,6 +49,13 @@ public class SetHandlerTest {
     private Map<String, Object> map(String key, Object value, String key2, Object value2) {
         Map<String, Object> map = map(key, value);
         map.put(key2, value2);
+        return map;
+    }
+
+    private Map<String, Object> map(String key, Object value, String key2, Object value2, String key3, Object value3) {
+        Map<String, Object> map = map(key, value);
+        map.put(key2, value2);
+        map.put(key3, value3);
         return map;
     }
 }

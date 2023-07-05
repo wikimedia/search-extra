@@ -2,22 +2,36 @@ package org.wikimedia.search.extra.superdetectnoop;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Implements Set-like behavior for lists.
  */
 public class SetHandler implements ChangeHandler<Object> {
+
     /**
      * Singleton used by recognizer. The parameter values came from running
      * SetHandlerMonteCarlo on a laptop so they aren't really theoretically
      * sound, just reasonable guesses.
      */
     private static final ChangeHandler<Object> INSTANCE = new SetHandler(150, Integer.MAX_VALUE, 20);
+
+    private static final String PARAM_ADD = "add";
+    private static final String PARAM_REMOVE = "remove";
+    private static final String PARAM_MAX_SIZE = "max_size";
+
+    private  static final Set<String> VALID_PARAMS = ImmutableSet.of(PARAM_ADD, PARAM_REMOVE, PARAM_MAX_SIZE);
+
     public static class Recognizer implements ChangeHandler.Recognizer {
         @Override
         public ChangeHandler<Object> build(String description) {
@@ -49,44 +63,47 @@ public class SetHandler implements ChangeHandler<Object> {
          * That's _probably_ the right thing to do here.
          */
         Collection<Object> value = listify(oldValue);
-        Map<String, Object> commands;
+        Map<String, Object> params;
         try {
-            commands = (Map<String, Object>) newValue;
+            params = ((Map<String, Object>) newValue);
+            final String excessiveParams = params.keySet().stream()
+                .filter(key -> !VALID_PARAMS.contains(key)).collect(Collectors.joining(", "));
+            if (!excessiveParams.isEmpty()) {
+                throw new IllegalArgumentException("Unexpected parameter(s) "
+                    + excessiveParams + "; expected "
+                    + String.join(", ", VALID_PARAMS));
+            }
         } catch (ClassCastException e) {
-            throw new IllegalArgumentException("Expected new value to be an object containing \"add\" and/or \"remove\"", e);
+            throw new IllegalArgumentException("Expected parameters to be a map containing "
+                + String.join(", ", VALID_PARAMS), e);
         }
-        List<Object> add = listify(commands.remove("add"));
-        List<Object> remove = listify(commands.remove("remove"));
-        if (!commands.isEmpty()) {
-            throw new IllegalArgumentException("Expected new value to be an object containing \"add\" and/or \"remove\"");
-        }
+        List<Object> remove = listify(params.get(PARAM_REMOVE));
+        List<Object> add = listify(params.get(PARAM_ADD))
+            .stream().filter(toAdd -> !remove.contains(toAdd))
+            .collect(Collectors.toList());
+
+        int maxSize = Optional.ofNullable((Number) params.get(PARAM_MAX_SIZE)).map(Number::intValue)
+            .orElse(Integer.MAX_VALUE);
 
         if (add.size() + remove.size() > maxKeepAsList && minConvert < value.size() && value.size() < maxConvert) {
-            // Theoretically this is O(commands + values)
-//            System.err.printf("Convert %s > %s && %s < %s < %s\n", add.size() + remove.size(), maxKeepAsList, minConvert, value.size(), maxConvert);
             value = new LinkedHashSet<>(value);
-            // Note the bitwise boolean or - we don't want short circuiting.
-            boolean changed = value.addAll(add) | value.removeAll(remove);
-            if (!changed) {
-                return CloseEnough.INSTANCE;
-            }
-            value = new ArrayList<>(value);
-            return new Changed(value);
         }
-        // Theoretically this is O(commands * values)
-//        System.err.printf("NoConvert %s > %s && %s < %s < %s\n", add.size() + remove.size(), maxKeepAsList, minConvert, value.size(), maxConvert);
-        boolean changed = false;
-        for (Object toAdd: add) {
+        boolean changed = value.removeAll(remove);
+        long remainingAddCount = Math.min(Math.max(0, maxSize - value.size()), add.size());
+
+        final Iterator<Object> adderator = add.iterator();
+        while (remainingAddCount > 0 && adderator.hasNext()) {
+            final Object toAdd = adderator.next();
             if (!value.contains(toAdd)) {
                 value.add(toAdd);
                 changed = true;
+                --remainingAddCount;
             }
         }
-        changed |= value.removeAll(remove);
         if (!changed) {
             return CloseEnough.INSTANCE;
         }
-        return new Changed(value);
+        return new Changed(value instanceof List ? value : new ArrayList<>(value));
     }
 
     /**
