@@ -59,7 +59,9 @@ This plugin contains miscellaneous text mungers.
 
 Analysis:
 * [acronym_fixer](docs/acronym_fixer.md) - A character filter that removes periods
-from acronym-like contexts.
+  from acronym-like contexts.
+* [camelCase_splitter](docs/camelCase_splitter.md) - A character filter that splits
+  camelCase words.
 
 ### extra-analysis-turkish
 

@@ -1,0 +1,14 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "camelcase_prebuilt": {
+          "tokenizer": "standard",
+          "char_filter": [
+            "camelCase_splitter"
+          ]
+        }
+      }
+    }
+  }
+}
