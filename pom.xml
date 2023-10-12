@@ -50,6 +50,7 @@
         <module>extra-analysis-homoglyph</module>
         <module>extra-analysis-khmer</module>
         <module>extra-analysis-slovak</module>
+        <module>extra-analysis-textify</module>
         <module>extra-analysis-turkish</module>
         <module>extra-analysis-ukrainian</module>
         <module>extra-common</module>
@@ -130,6 +131,11 @@
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
                 <artifactId>extra-analysis-slovak</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wikimedia.search</groupId>
+                <artifactId>extra-analysis-textify</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -345,6 +351,7 @@
                             <toIgnore>org.wikimedia.search.extra.analysis.filters.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.khmer.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.slovak.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.analysis.textify.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.turkish.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.analysis.ukrainian.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.fuzzylike.package-info</toIgnore>

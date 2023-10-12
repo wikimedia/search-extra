@@ -1,0 +1,14 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "acronym_fixer_prebuilt": {
+          "tokenizer": "standard",
+          "char_filter": [
+            "acronym_fixer"
+          ]
+        }
+      }
+    }
+  }
+}

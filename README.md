@@ -53,6 +53,23 @@ Analysis:
 * [slovak_stemmer](docs/slovak_stemmer.md) - A token filter that provides
 stemming for the Slovak language. New in 5.5.2.4.
 
+### extra-analysis-textify
+
+This plugin contains miscellaneous text mungers.
+
+Analysis:
+* [acronym_fixer](docs/acronym_fixer.md) - A character filter that removes periods
+from acronym-like contexts.
+
+### extra-analysis-turkish
+
+Analysis:
+* [better_apostrophe](docs/better_apostrophe.md) - A smarter version of the Elastic/Lucene
+[`apostrophe` token
+filter](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis-apostrophe-tokenfilter.html)
+for Turkish, which is much too aggressive for multilingual data. See the linked docs for
+more details.
+
 ### extra-analysis-ukrainian
 
 These filters are provided to allow for unpacking the monolithic
@@ -66,14 +83,6 @@ Analysis:
 * ukrainian_stop - A stopword token filter for Ukrainian.
 
 * ukrainian_stemmer - A token filter than provides stemming for the Ukrainian language.
-
-### extra-analysis-turkish
-
-Analysis:
-* [better_apostrophe](docs/better_apostrophe.md) - A smarter version of the Elastic/Lucene [`apostrophe`
-token filter](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis-apostrophe-tokenfilter.html)
-for Turkish, which is much too aggressive for multilingual data. See the linked docs for
-more details.
 
 
 Installation
