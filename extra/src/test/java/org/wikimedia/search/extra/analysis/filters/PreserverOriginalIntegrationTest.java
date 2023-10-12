@@ -56,18 +56,17 @@ public class PreserverOriginalIntegrationTest extends AbstractPluginIntegrationT
     @Test
     public void testSimpleMatchPrefersExact() {
         SearchResponse sr = client().prepareSearch("test")
-                .setTypes("test")
                 .setQuery(QueryBuilders.matchQuery("test", "hello"))
                 .get();
         assertOrderedSearchHits(sr, "all_lower", "mixed");
 
         // Prefers exact over folded
-        sr = client().prepareSearch("test").setTypes("test").setQuery(QueryBuilders.matchQuery("test", "Hello")).get();
+        sr = client().prepareSearch("test").setQuery(QueryBuilders.matchQuery("test", "Hello")).get();
         assertOrderedSearchHits(sr, "mixed", "all_lower");
     }
 
     public void testTermPositions() {
-        SearchResponse sr = client().prepareSearch("test").setTypes("test").setQuery(QueryBuilders.matchPhraseQuery("test", "hello world")).get();
+        SearchResponse sr = client().prepareSearch("test").setQuery(QueryBuilders.matchPhraseQuery("test", "hello world")).get();
         assertSearchHits(sr, "all_lower", "mixed");
 
         // Just to make sure that positions are kept
@@ -75,12 +74,12 @@ public class PreserverOriginalIntegrationTest extends AbstractPluginIntegrationT
         // We can't really test that phrase prefers original terms here, this is
         // probably because the phrase scorer uses the phrase freq and does not
         // really care about the term freq.
-        sr = client().prepareSearch("test").setTypes("test")
+        sr = client().prepareSearch("test")
                 .setQuery(QueryBuilders.matchPhraseQuery("test", "Hello World").analyzer("whitespace"))
                 .get();
         assertOrderedSearchHits(sr, "mixed");
 
-        sr = client().prepareSearch("test").setTypes("test")
+        sr = client().prepareSearch("test")
                 .setQuery(QueryBuilders.matchPhraseQuery("test", "Hello hello"))
                 .get();
         assertNoSearchHits(sr);

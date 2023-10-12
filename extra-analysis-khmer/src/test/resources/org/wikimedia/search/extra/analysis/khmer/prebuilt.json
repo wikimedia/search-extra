@@ -4,7 +4,7 @@
       "analyzer": {
         "khmer_prebuilt": {
           "tokenizer": "standard",
-          "charfilter": [
+          "char_filter": [
             "khmer_syll_reorder"
           ]
         }

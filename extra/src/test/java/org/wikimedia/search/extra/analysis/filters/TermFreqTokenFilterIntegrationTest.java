@@ -74,19 +74,16 @@ public class TermFreqTokenFilterIntegrationTest extends AbstractPluginIntegratio
     @Test
     public void testSimple() {
         SearchResponse sr = client().prepareSearch("test")
-                .setTypes("test")
                 .setQuery(QueryBuilders.matchQuery("test", "Q1"))
                 .get();
         assertOrderedSearchHits(sr, "docB", "docA");
 
         // make sure that tf has been properly set by using BM25 which will use tf in its ranking formula
         sr = client().prepareSearch("test")
-                .setTypes("test")
                 .setQuery(QueryBuilders.matchQuery("test", "Q2")).get();
         assertOrderedSearchHits(sr, "docA", "docB");
 
         sr = client().prepareSearch("test")
-                .setTypes("test")
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.matchQuery("another", "Q1"))
                         .must(QueryBuilders.matchQuery("another", "Q2")))

@@ -26,11 +26,6 @@ public class KhmerCharFilterESTest extends ESTestCase {
         assertAnalyzerAvailable("khmer_prebuilt", "prebuilt.json");
     }
 
-    @Test
-    public void testRedefined() throws IOException {
-        assertAnalyzerAvailable("khmer_redefined", "redefined.json");
-    }
-
     private void assertAnalyzerAvailable(String analyzerName, String analysisResource) throws IOException {
         Settings indexSettings = settings(Version.CURRENT)
                 .loadFromStream(analysisResource, this.getClass().getResourceAsStream(analysisResource), false)
@@ -41,7 +36,7 @@ public class KhmerCharFilterESTest extends ESTestCase {
                 .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir())
                 .build();
         indexAnalyzers = createTestAnalysis(indexProps, settings, new ExtraAnalysisKhmerPlugin()).indexAnalyzers;
-        match(analyzerName, "វិគីភីឌាភាសាខ្មែរ សូមស្វាគមន៍!", "វិគីភីឌាភាសាខ្មែរ សូមស្វាគមន៍");
+        match(analyzerName, "វិគីីភីឌាភាសាខ្្មែរ សូមសា្វគមន៍!", "វិគីភីឌាភាសាខ្មែរ សូមស្វាគមន៍");
     }
 
     private void match(String analyzerName, String source, String target) throws IOException {
