@@ -62,6 +62,8 @@ Analysis:
   from acronym-like contexts.
 * [camelCase_splitter](docs/camelCase_splitter.md) - A character filter that splits
   camelCase words.
+* [limited_mapping](docs/limited_mapping.md) - A character filter that is limited to
+  changing or deleting single characters.
 
 ### extra-analysis-turkish
 

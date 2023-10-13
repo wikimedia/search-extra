@@ -5,7 +5,7 @@ camelCase_splitter
 alternative to Elasticsearch's `word_delimiter` and `word_delimiter_graph`, which can
 be too aggressive about splitting text.
 
-The [Elasticsearch 
+The [Elasticsearch
 docs](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis-pattern-replace-charfilter.html)
 provide an example `pattern_replace` filter for splitting camelCase words, but it
 doesn't handle certain corner cases.

@@ -36,7 +36,7 @@ formatting characters (Unicode regex `\p{Cf}`) within the acronym.
 
 That certainly wasn't the *point* of the filter, but it does work. `acronym_fixer` can handle up to 25 invisisble or modifier characters between letters in an acronym. In practice, other than in extreme Zalgo text, that is more than sufficient.
 
-`acronym_fixer` also removes full-width periods `．` (U+FF0E) from acronym-like contexts. 
+`acronym_fixer` also removes full-width periods `．` (U+FF0E) from acronym-like contexts.
 
 * Armenian text (at least on Armenian Wikipedia) sometimes uses `․` (U+2024, one-dot
   leader) in place of periods, including in acronyms. Adding a filter to convert
