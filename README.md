@@ -62,6 +62,8 @@ Analysis:
   from acronym-like contexts.
 * [camelCase_splitter](docs/camelCase_splitter.md) - A character filter that splits
   camelCase words.
+* [icu_token_repair](docs/icu_token_repair.md) - A token filter that rejoins tokens split
+  asunder by the ICU tokenizer.
 * [limited_mapping](docs/limited_mapping.md) - A character filter that is limited to
   changing or deleting single characters.
 

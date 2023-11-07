@@ -20,7 +20,10 @@
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <includes>
+                <include>com.ibm.icu:icu4j</include>
                 <include>org.apache.lucene:lucene-analyzers-morfologik</include>
+                <include>org.apache.lucene:lucene-analyzers-icu</include>
+                <include>org.elasticsearch.plugin:analysis-icu-client</include>
             </includes>
         </dependencySet>
     </dependencySets>

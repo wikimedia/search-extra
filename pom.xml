@@ -89,8 +89,18 @@
                 <version>21.0</version>
             </dependency>
             <dependency>
+                <groupId>com.ibm.icu</groupId>
+                <artifactId>icu4j</artifactId>
+                <version>62.1</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-analyzers-common</artifactId>
+                <version>${lucene.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analyzers-icu</artifactId>
                 <version>${lucene.version}</version>
             </dependency>
             <dependency>
@@ -121,6 +131,11 @@
             <dependency>
                 <groupId>org.elasticsearch</groupId>
                 <artifactId>elasticsearch</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsearch.plugin</groupId>
+                <artifactId>analysis-icu-client</artifactId>
                 <version>${elasticsearch.version}</version>
             </dependency>
             <dependency>

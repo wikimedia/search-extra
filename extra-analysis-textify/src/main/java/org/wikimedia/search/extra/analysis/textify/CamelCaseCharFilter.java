@@ -62,9 +62,9 @@ public class CamelCaseCharFilter extends BaseCharFilter {
         // (uppercase or titlecase)
         if (type == Character.LOWERCASE_LETTER) {
             seenLowercaseish = true;
-        } else if (TextifyUtils.isMarkOrFormat(type)) {
+        } else if (TextifyUtils.isMarkOrFormatType(type)) {
             // do nothing -- maintain seenLowercaseish state for combining and invisible characters
-        } else if (TextifyUtils.isUppercaseish(type)) {
+        } else if (TextifyUtils.isLeadingUppercaseishType(type)) {
             if (seenLowercaseish) {
                 // add a space, store the current character for later,
                 // and update the offset correction table
@@ -74,7 +74,7 @@ public class CamelCaseCharFilter extends BaseCharFilter {
                 addOffCorrectMap(outputCharCount, cumulativeOffset);
             }
             // Titlecase (e.g., ǈ) is upper on the front side and lower on the backside!
-            seenLowercaseish = (type == Character.TITLECASE_LETTER);
+            seenLowercaseish = TextifyUtils.isTrailingLowercaseishType(type);
         } else {
             seenLowercaseish = false;
         }

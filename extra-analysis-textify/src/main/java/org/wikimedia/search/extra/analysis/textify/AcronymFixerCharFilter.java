@@ -46,7 +46,7 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
     private BuffState updateBState(int type, BuffState bState) {
         if (TextifyUtils.isLetterType(type)) {
             bState = (bState == BuffState.BUFF_START) ? BuffState.ONE_LETTER : BuffState.BUFF_STOP;
-        } else if (TextifyUtils.isMarkOrFormat(type)) {
+        } else if (TextifyUtils.isMarkOrFormatType(type)) {
             // do nothing (maintain post-period buffering state)
         } else {
             bState = (bState == BuffState.ONE_LETTER) ? BuffState.NUKE_DOT : BuffState.BUFF_STOP;
@@ -154,7 +154,7 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
 
         if (TextifyUtils.isLetterType(type)) {
             aState = (aState == AcroState.NON_LETTER) ? AcroState.ONE_LETTER : AcroState.MULTI_LETTER;
-        } else if (TextifyUtils.isPeriodlike(c)) {
+        } else if (TextifyUtils.isPeriodlikeChar(c)) {
             if (aState == AcroState.ONE_LETTER) {
                 // if only one letter before period, check after period to see if it looks
                 // like an acronym, walks like and acronym, and quacks like an acronym
@@ -170,7 +170,7 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
                 }
             }
             aState = AcroState.NON_LETTER;
-        } else if (TextifyUtils.isMarkOrFormat(type)) {
+        } else if (TextifyUtils.isMarkOrFormatType(type)) {
             // do nothing (maintain acronym letter count state)
         } else {
             aState = AcroState.NON_LETTER;

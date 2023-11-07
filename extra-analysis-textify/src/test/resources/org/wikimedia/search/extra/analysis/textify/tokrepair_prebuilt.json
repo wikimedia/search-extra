@@ -1,0 +1,14 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "tokrepair_prebuilt": {
+          "tokenizer": "textify_icu_tokenizer",
+          "filter": [
+            "icu_token_repair"
+          ]
+        }
+      }
+    }
+  }
+}
