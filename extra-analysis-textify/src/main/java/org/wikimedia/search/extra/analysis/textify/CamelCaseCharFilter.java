@@ -13,25 +13,12 @@
  */
 package org.wikimedia.search.extra.analysis.textify;
 
-import static java.util.Collections.unmodifiableSet;
-
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.lucene.analysis.charfilter.BaseCharFilter;
 
 public class CamelCaseCharFilter extends BaseCharFilter {
-
-    private static final Set<Integer> MARK_AND_FORMAT_TYPES = unmodifiableSet(
-        new HashSet<>(Arrays.asList(
-            (int)Character.FORMAT,
-            (int)Character.COMBINING_SPACING_MARK,
-            (int)Character.NON_SPACING_MARK,
-            (int)Character.ENCLOSING_MARK
-        )));
 
     private int outputCharCount;
     private int cumulativeOffset;
@@ -46,14 +33,6 @@ public class CamelCaseCharFilter extends BaseCharFilter {
         super(in);
     }
 
-    private static boolean isMarkOrFormat(int type) {
-        return MARK_AND_FORMAT_TYPES.contains(type);
-    }
-
-    private static boolean isUppercaseish(int type) {
-        return type == Character.UPPERCASE_LETTER || type == Character.TITLECASE_LETTER;
-    }
-
     private int getComplexCharType(int c) throws IOException {
         int type;
 
@@ -61,13 +40,10 @@ public class CamelCaseCharFilter extends BaseCharFilter {
             inputEnd = true;
             return Character.UNASSIGNED;
         } else {
-            type = Character.getType(c);
-            if (c == 0x2069) { // treat POP DIRECTIONAL ISOLATE (U+2069) as formatting
-                type = Character.FORMAT;
-            }
+            type = TextifyUtils.getCustomCharType(c);
         }
 
-        if (type == Character.SURROGATE && Character.isHighSurrogate((char) c)) {
+        if (Character.isHighSurrogate((char) c)) {
             lowSurrogate = inputEnd ? -1 : input.read();
             if (lowSurrogate == -1) {
                 inputEnd = true;
@@ -86,9 +62,9 @@ public class CamelCaseCharFilter extends BaseCharFilter {
         // (uppercase or titlecase)
         if (type == Character.LOWERCASE_LETTER) {
             seenLowercaseish = true;
-        } else if (isMarkOrFormat(type)) {
+        } else if (TextifyUtils.isMarkOrFormat(type)) {
             // do nothing -- maintain seenLowercaseish state for combining and invisible characters
-        } else if (isUppercaseish(type)) {
+        } else if (TextifyUtils.isUppercaseish(type)) {
             if (seenLowercaseish) {
                 // add a space, store the current character for later,
                 // and update the offset correction table

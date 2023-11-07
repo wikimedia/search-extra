@@ -1,5 +1,5 @@
 /**
- * Khmer analyzer.
+ * Textify.
  */
 @javax.annotation.ParametersAreNonnullByDefault
 @org.wikimedia.search.extra.util.FieldsAreNonNullByDefault

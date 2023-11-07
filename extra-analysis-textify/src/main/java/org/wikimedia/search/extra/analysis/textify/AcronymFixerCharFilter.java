@@ -13,35 +13,13 @@
  */
 package org.wikimedia.search.extra.analysis.textify;
 
-import static java.util.Collections.unmodifiableSet;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.BufferOverflowException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.lucene.analysis.charfilter.BaseCharFilter;
 
 public class AcronymFixerCharFilter extends BaseCharFilter {
-    private static final Set<Integer> LETTER_TYPES = unmodifiableSet(
-        new HashSet<>(Arrays.asList(
-            (int) Character.LOWERCASE_LETTER,
-            (int) Character.UPPERCASE_LETTER,
-            (int) Character.TITLECASE_LETTER,
-            (int) Character.OTHER_LETTER,
-            (int) Character.MODIFIER_LETTER
-        )));
-
-    private static final Set<Integer> MARK_AND_FORMAT_TYPES = unmodifiableSet(
-        new HashSet<>(Arrays.asList(
-            (int) Character.FORMAT,
-            (int) Character.COMBINING_SPACING_MARK,
-            (int) Character.NON_SPACING_MARK,
-            (int) Character.ENCLOSING_MARK
-        )));
-
     // possible states of current char-by-char pre-period acronym detection
     private enum AcroState { NON_LETTER, ONE_LETTER, MULTI_LETTER }
     private AcroState aState = AcroState.NON_LETTER;
@@ -65,22 +43,10 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
         super(in);
     }
 
-    private static boolean isLetterType(int type) {
-        return LETTER_TYPES.contains(type);
-    }
-
-    private static boolean isMarkOrFormat(int type) {
-        return MARK_AND_FORMAT_TYPES.contains(type);
-    }
-
-    private static boolean isPeriodlike(int c) {
-        return c == '.' || c == '．';
-    }
-
     private BuffState updateBState(int type, BuffState bState) {
-        if (isLetterType(type)) {
+        if (TextifyUtils.isLetterType(type)) {
             bState = (bState == BuffState.BUFF_START) ? BuffState.ONE_LETTER : BuffState.BUFF_STOP;
-        } else if (isMarkOrFormat(type)) {
+        } else if (TextifyUtils.isMarkOrFormat(type)) {
             // do nothing (maintain post-period buffering state)
         } else {
             bState = (bState == BuffState.ONE_LETTER) ? BuffState.NUKE_DOT : BuffState.BUFF_STOP;
@@ -110,8 +76,7 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
                 nextType = Character.getType(nextChar);
             }
 
-            if (nextType == Character.SURROGATE &&
-                    Character.isHighSurrogate((char) nextChar)) {
+            if (Character.isHighSurrogate((char) nextChar)) {
                 // if it's a low surrogate, it's out of order and everything is a
                 // mess, so let it continue as a non-letter if it's a high surrogate,
                 // we need to look for a low surrogate, and we'll have to buffer it,
@@ -156,12 +121,9 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
     }
 
     private int getReadCharType(int c) throws IOException {
-        int type = Character.getType(c);
-        if (c == 0x2069) { // treat POP DIRECTIONAL ISOLATE (U+2069) as formatting
-            type = Character.FORMAT;
-        }
+        int type = TextifyUtils.getCustomCharType(c);
 
-        if (type == Character.SURROGATE && Character.isHighSurrogate((char) c)) {
+        if (Character.isHighSurrogate((char) c)) {
             lowSurrogate = readBuffOrInput();
             if (lowSurrogate != -1 && Character.isLowSurrogate((char) lowSurrogate)) {
                 type = Character.getType(Character.toCodePoint((char) c,
@@ -190,9 +152,9 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
 
         int type = getReadCharType(c);
 
-        if (isLetterType(type)) {
+        if (TextifyUtils.isLetterType(type)) {
             aState = (aState == AcroState.NON_LETTER) ? AcroState.ONE_LETTER : AcroState.MULTI_LETTER;
-        } else if (isPeriodlike(c)) {
+        } else if (TextifyUtils.isPeriodlike(c)) {
             if (aState == AcroState.ONE_LETTER) {
                 // if only one letter before period, check after period to see if it looks
                 // like an acronym, walks like and acronym, and quacks like an acronym
@@ -208,7 +170,7 @@ public class AcronymFixerCharFilter extends BaseCharFilter {
                 }
             }
             aState = AcroState.NON_LETTER;
-        } else if (isMarkOrFormat(type)) {
+        } else if (TextifyUtils.isMarkOrFormat(type)) {
             // do nothing (maintain acronym letter count state)
         } else {
             aState = AcroState.NON_LETTER;

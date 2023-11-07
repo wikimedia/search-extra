@@ -70,7 +70,7 @@ public class LimitedMappingIntegrationTest extends ESIntegTestCase {
     }
 
     @Test
-    public void testSimpleMatchPrefersExact() {
+    public void testCurlyAndStraightQuotes() {
         SearchResponse sr = client().prepareSearch("test")
             .setQuery(QueryBuilders.matchQuery("test", "w‘orl’d"))
             .get();
