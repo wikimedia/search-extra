@@ -28,6 +28,7 @@ import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
@@ -35,7 +36,19 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrationTest {
+@Ignore("Apparently the JUnit4 maven plugin considers an abstract test class with tests worth running and fails")
+public abstract class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrationTest {
+
+    enum SourceLocation {
+        PARAM, CODE
+    }
+
+    final SourceLocation sourceLocation;
+
+    public SuperDetectNoopScriptIntegrationTest(SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
+    }
+
     @Test
     public void newField() throws IOException {
         indexSeedData();
@@ -535,7 +548,18 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
     private UpdateRequestBuilder toUpdateRequest(XContentBuilder b) {
         b.close();
         Map<String, Object> m = XContentHelper.convertToMap(BytesReference.bytes(b), true, XContentType.JSON).v2();
-        Script script = new Script(ScriptType.INLINE, "super_detect_noop", "", m);
+        final Script script;
+        if (sourceLocation == SourceLocation.CODE) {
+            try {
+                final String code = XContentHelper.convertToJson(
+                    BytesReference.bytes(jsonBuilder().value(m.remove("source"))), false, XContentType.JSON);
+                script = new Script(ScriptType.INLINE, "super_detect_noop", code, m);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to encode script code JSON", e);
+            }
+        } else {
+            script = new Script(ScriptType.INLINE, "super_detect_noop", "super_detect_noop", m);
+        }
         return client().prepareUpdate("test", "test", "1").setScript(script)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
     }

@@ -11,6 +11,10 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import org.elasticsearch.common.xcontent.LoggingDeprecationHandler;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.mapper.SourceFieldMapper;
 import org.elasticsearch.script.ScriptContext;
 import org.elasticsearch.script.ScriptEngine;
@@ -23,6 +27,8 @@ import org.elasticsearch.script.UpdateScript;
 public class SuperDetectNoopScript extends UpdateScript {
 
     public static class SuperNoopScriptEngineService implements ScriptEngine {
+
+        private static final String TYPE = "super_detect_noop";
         private final Set<ChangeHandler.Recognizer> changeHandlerRecognizers;
 
         public SuperNoopScriptEngineService(Set<ChangeHandler.Recognizer> changeHandlerRecognizers) {
@@ -31,7 +37,7 @@ public class SuperDetectNoopScript extends UpdateScript {
 
         @Override
         public String getType() {
-            return "super_detect_noop";
+            return TYPE;
         }
 
         @Override
@@ -40,7 +46,20 @@ public class SuperDetectNoopScript extends UpdateScript {
                 throw new IllegalArgumentException("Unsuppored context [" + context.name + "], " +
                         "super_detect_noop only supports the [update] context");
             }
-            return context.factoryClazz.cast((UpdateScript.Factory) (params, ctx) -> new SuperDetectNoopScript(params, ctx, this));
+            return context.factoryClazz.cast((Factory) (params, ctx) -> {
+                Map<String, Object> source = (Map<String, Object>) params.get("source");
+                if (source == null) {
+                    try (XContentParser parser = JsonXContent.jsonXContent.createParser(
+                        NamedXContentRegistry.EMPTY,
+                        LoggingDeprecationHandler.INSTANCE,
+                        scriptSource)) {
+                        source = parser.mapOrdered();
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException("Unable to parse script code as JSON: " + scriptSource, e);
+                    }
+                }
+                return new SuperDetectNoopScript(source, params, ctx, this);
+            });
         }
 
         @Override
@@ -79,11 +98,9 @@ public class SuperDetectNoopScript extends UpdateScript {
     private final Map<String, Object> source;
     private final Map<String, ChangeHandler<Object>> pathToHandler;
 
-    public SuperDetectNoopScript(Map<String, Object> params, Map<String, Object> ctx, SuperNoopScriptEngineService service) {
+    public SuperDetectNoopScript(Map<String, Object> source, Map<String, Object> params, Map<String, Object> ctx, SuperNoopScriptEngineService service) {
         super(params, ctx);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> source = (Map<String, Object>) Objects.requireNonNull(params.get("source"), "source must be specified");
-        this.source = source;
+        this.source = Objects.requireNonNull(source, "source must not be null");
         this.pathToHandler = service.handlers(params);
     }
 
