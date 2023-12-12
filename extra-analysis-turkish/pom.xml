@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.wikimedia.search</groupId>
         <artifactId>extra-parent</artifactId>
-        <version>7.10.2-wmf10</version>
+        <version>7.10.2-wmf11-SNAPSHOT</version>
     </parent>
 
     <artifactId>extra-analysis-turkish</artifactId>
