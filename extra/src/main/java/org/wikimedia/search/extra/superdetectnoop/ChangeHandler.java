@@ -92,7 +92,7 @@ public interface ChangeHandler<T> {
      * Objects are only close enough if they are {@link Object#equals(Object)}
      * to each other.
      */
-    class Equal implements ChangeHandler<Object> {
+    final class Equal implements ChangeHandler<Object> {
         public static final ChangeHandler<Object> INSTANCE = new Equal();
 
         public static class Recognizer implements ChangeHandler.Recognizer {
@@ -192,7 +192,7 @@ public interface ChangeHandler<T> {
      * Result that shows that the old and new value are close enough that it
      * isn't worth actually performing the update.
      */
-    class CloseEnough implements Result {
+    final class CloseEnough implements Result {
         public static final Result INSTANCE = new CloseEnough();
 
         private CloseEnough() {
@@ -219,7 +219,7 @@ public interface ChangeHandler<T> {
      * Result that shows that the entire document update should be
      * canceled and turned into a noop.
      */
-    class NoopDocument implements Result {
+    final class NoopDocument implements Result {
         public static final Result INSTANCE = new NoopDocument();
 
         public static Result forBoolean(boolean noop, Object newValue) {

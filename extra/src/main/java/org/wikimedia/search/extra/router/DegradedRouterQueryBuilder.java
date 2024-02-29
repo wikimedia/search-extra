@@ -194,7 +194,7 @@ public class DegradedRouterQueryBuilder extends AbstractRouterQueryBuilder<Degra
     }
 
     @Setter
-    private static class DegradedConditionParserState extends AbstractConditionParserState<DegradedCondition> {
+    private static final class DegradedConditionParserState extends AbstractConditionParserState<DegradedCondition> {
         @Nullable private DegradedConditionType type;
         @Nullable private String bucket;
         @Nullable private Double percentile;

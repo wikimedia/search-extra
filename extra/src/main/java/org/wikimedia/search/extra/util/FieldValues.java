@@ -50,7 +50,7 @@ public abstract class FieldValues {
         // Util class
     }
 
-    private static class Source implements FieldValues.Loader {
+    private static final class Source implements FieldValues.Loader {
         private static final FieldValues.Loader INSTANCE = new Source();
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
@@ -67,7 +67,7 @@ public abstract class FieldValues {
         }
     }
 
-    private static class Stored implements FieldValues.Loader {
+    private static final class Stored implements FieldValues.Loader {
         private static final FieldValues.Loader INSTANCE = new Stored();
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
