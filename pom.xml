@@ -9,11 +9,11 @@
     </parent>
 
     <groupId>org.wikimedia.search</groupId>
-    <artifactId>extra-parent</artifactId>
-    <version>7.10.2-wmf13-SNAPSHOT</version>
+    <artifactId>opensearch-extra-parent</artifactId>
+    <version>1.3.19-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Elasticsearch extra plugins</name>
-    <description>Extra queries and filters for Elasticsearch.</description>
+    <name>OpenSearch extra plugins</name>
+    <description>Extra queries and filters for Opensearch.</description>
 
     <url>https://doc.wikimedia.org/search-extra/extra/</url>
 
@@ -47,20 +47,20 @@
     </developers>
 
     <modules>
-        <module>extra-analysis-homoglyph</module>
-        <module>extra-analysis-khmer</module>
-        <module>extra-analysis-slovak</module>
-        <module>extra-analysis-textify</module>
-        <module>extra-analysis-turkish</module>
-        <module>extra-analysis-ukrainian</module>
-        <module>extra-common</module>
-        <module>extra</module>
+        <module>opensearch-extra-analysis-homoglyph</module>
+        <module>opensearch-extra-analysis-khmer</module>
+        <module>opensearch-extra-analysis-slovak</module>
+        <module>opensearch-extra-analysis-textify</module>
+        <module>opensearch-extra-analysis-turkish</module>
+        <module>opensearch-extra-analysis-ukrainian</module>
+        <module>opensearch-extra-common</module>
+        <module>opensearch-extra</module>
     </modules>
 
     <scm>
         <connection>scm:git:https://gerrit.wikimedia.org/r/search/extra</connection>
         <developerConnection>scm:git:ssh://gerrit.wikimedia.org:29418/search/extra</developerConnection>
-        <tag>extra-parent-7.10.2-wmf11</tag>
+        <tag>extra-parent-1.3.19</tag>
         <url>https://gerrit.wikimedia.org/r/#/admin/projects/search/extra</url>
     </scm>
 
@@ -70,13 +70,13 @@
     </issueManagement>
 
     <properties>
-        <elasticsearch.version>7.10.2</elasticsearch.version>
         <hamcrest.version>2.1</hamcrest.version>
         <log4j.version>2.17.1</log4j.version>
-        <lucene.version>8.7.0</lucene.version>
+        <lucene.version>8.10.1</lucene.version>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <opensearch.version>1.3.19</opensearch.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <randomizedtesting.version>2.7.1</randomizedtesting.version>
     </properties>
@@ -129,48 +129,48 @@
                 <version>2.1.9</version>
             </dependency>
             <dependency>
-                <groupId>org.elasticsearch</groupId>
-                <artifactId>elasticsearch</artifactId>
-                <version>${elasticsearch.version}</version>
+                <groupId>org.opensearch</groupId>
+                <artifactId>opensearch</artifactId>
+                <version>${opensearch.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.elasticsearch.plugin</groupId>
+                <groupId>org.opensearch.plugin</groupId>
                 <artifactId>analysis-icu-client</artifactId>
-                <version>${elasticsearch.version}</version>
+                <version>${opensearch.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-analysis-khmer</artifactId>
+                <artifactId>opensearch-extra-analysis-khmer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-analysis-slovak</artifactId>
+                <artifactId>opensearch-extra-analysis-slovak</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-analysis-textify</artifactId>
+                <artifactId>opensearch-extra-analysis-textify</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-analysis-turkish</artifactId>
+                <artifactId>opensearch-extra-analysis-turkish</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-analysis-ukrainian</artifactId>
+                <artifactId>opensearch-extra-analysis-ukrainian</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-common</artifactId>
+                <artifactId>opensearch-extra-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wikimedia.search</groupId>
-                <artifactId>extra-core</artifactId>
+                <artifactId>opensearch-extra-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -209,7 +209,7 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <!-- Must come before Elasticsearch dependency. -->
+                <!-- Must come before OpenSearch dependency. -->
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-test-framework</artifactId>
                 <version>${lucene.version}</version>
@@ -220,24 +220,6 @@
                 <artifactId>assertj-core</artifactId>
                 <version>3.11.1</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.elasticsearch</groupId>
-                <artifactId>securemock</artifactId>
-                <version>1.2</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.elasticsearch.test</groupId>
-                <artifactId>framework</artifactId>
-                <version>${elasticsearch.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>
@@ -251,19 +233,31 @@
                 <version>${hamcrest.version}</version>
                 <scope>test</scope>
             </dependency>
-            <!-- Needed by elastic test framework -->
+            <!-- Needed by opensearch test framework -->
             <dependency>
                 <groupId>org.locationtech.jts</groupId>
                 <artifactId>jts-core</artifactId>
                 <version>1.15.0</version>
                 <scope>test</scope>
             </dependency>
-            <!-- Needed by elastic test framework -->
+            <!-- Needed by opensearch test framework -->
             <dependency>
                 <groupId>org.locationtech.spatial4j</groupId>
                 <artifactId>spatial4j</artifactId>
                 <version>0.7</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.opensearch.test</groupId>
+                <artifactId>framework</artifactId>
+                <version>${opensearch.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-all</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -287,15 +281,15 @@
                     <configuration>
                         <skipTests>${skip.unit.tests}</skipTests>
                         <listeners>
-                            <report-text showNumFailures="30" showOutput="onerror" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="false" showSuiteSummary="true" showThrowable="true" timestamps="false" />
-                            <report-ant-xml dir="${project.build.directory}/surefire-reports" mavenExtensions="true" />
+                            <report-text showNumFailures="30" showOutput="onerror" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="false" showSuiteSummary="true" showThrowable="true" timestamps="false"/>
+                            <report-ant-xml dir="${project.build.directory}/surefire-reports" mavenExtensions="true"/>
                         </listeners>
                         <heartbeat>20</heartbeat>
                         <jvmOutputAction>warn</jvmOutputAction>
                         <leaveTemporary>true</leaveTemporary>
                         <sysouts>false</sysouts>
                         <assertions>
-                            <enable />
+                            <enable/>
                         </assertions>
                         <jvmArgs>
                             <param>-Xmx512m</param>
@@ -307,7 +301,7 @@
                     </configuration>
                     <executions>
                         <!-- Separate unit tests from integration tests
-                 The elastic security manager may cause issues
+                 The opensearch security manager may cause issues
                  with normal unit tests -->
                         <execution>
                             <id>tests-junit</id>
@@ -318,7 +312,7 @@
                             <configuration>
                                 <excludes>
                                     <exclude>**/*IntegrationTest.class</exclude>
-                                    <exclude>**/*ESTest.class</exclude>
+                                    <exclude>**/*OpenSearchTest.class</exclude>
                                 </excludes>
                             </configuration>
                         </execution>
@@ -336,15 +330,15 @@
                             </configuration>
                         </execution>
                         <execution>
-                            <!-- separate estest because of dirty context between ESIntegTest and ESTestCase -->
-                            <id>tests-estest</id>
+                            <!-- separate integration because of dirty context between OpenSearchIntegTest and OpenSearchTestCase -->
+                            <id>tests-osinteg</id>
                             <goals>
                                 <goal>junit4</goal>
                             </goals>
                             <phase>test</phase>
                             <configuration>
                                 <includes>
-                                    <include>**/*ESTest.class</include>
+                                    <include>**/*OpenSearchTest.class</include>
                                 </includes>
                                 <skipTests>${skip.unit.tests}</skipTests>
                             </configuration>
@@ -356,7 +350,7 @@
                     <artifactId>deadcode4j-maven-plugin</artifactId>
                     <configuration>
                         <superClassesMarkingLiveCode>
-                            <liveCode>org.elasticsearch.plugins.Plugin</liveCode>
+                            <liveCode>org.opensearch.plugins.Plugin</liveCode>
                         </superClassesMarkingLiveCode>
                         <classesToIgnore>
                             <!--
@@ -425,7 +419,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -439,7 +433,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

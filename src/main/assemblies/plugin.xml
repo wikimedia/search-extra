@@ -11,7 +11,7 @@
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <excludes>
-                <exclude>org.elasticsearch:elasticsearch</exclude>
+                <exclude>org.opensearch:opensearch</exclude>
                 <exclude>org.apache.lucene:*</exclude>
             </excludes>
         </dependencySet>
@@ -23,7 +23,7 @@
                 <include>com.ibm.icu:icu4j</include>
                 <include>org.apache.lucene:lucene-analyzers-morfologik</include>
                 <include>org.apache.lucene:lucene-analyzers-icu</include>
-                <include>org.elasticsearch.plugin:analysis-icu-client</include>
+                <include>org.opensearch.plugin:analysis-icu-client</include>
             </includes>
         </dependencySet>
     </dependencySets>

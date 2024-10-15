@@ -70,20 +70,20 @@ Analysis:
 ### extra-analysis-turkish
 
 Analysis:
-* [better_apostrophe](docs/better_apostrophe.md) - A smarter version of the Elastic/Lucene
+* [better_apostrophe](docs/better_apostrophe.md) - A smarter version of the OpenSearch/Lucene
 [`apostrophe` token
-filter](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis-apostrophe-tokenfilter.html)
+filter](https://opensearch.org/docs/latest/analyzers/token-filters/apostrophe/)
 for Turkish, which is much too aggressive for multilingual data. See the linked docs for
 more details.
 
 ### extra-analysis-ukrainian
 
 These filters are provided to allow for unpacking the monolithic
-[Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/plugins/7.10/analysis-ukrainian.html)
+[OpenSearch](https://www.elastic.co/guide/en/elasticsearch/plugins/7.10/analysis-ukrainian.html)
 Ukrainian analyzer, which is a wrapper around the monolithic
 [Lucene](https://github.com/apache/lucene/blob/releases/lucene-solr/8.7.0/lucene/analysis/morfologik/src/java/org/apache/lucene/analysis/uk/UkrainianMorfologikAnalyzer.java#L140)
 Ukrainian analyzer. This version of the Urkainian stemmer uses slightly a newer version of
-the Morfologik Ukrainian stemming dictionary than the parallel version in Elastic/Lucene.
+the Morfologik Ukrainian stemming dictionary than the parallel version in OpenSearch/Lucene.
 
 Analysis:
 * ukrainian_stop - A stopword token filter for Ukrainian.
@@ -94,33 +94,41 @@ Analysis:
 Installation
 ------------
 
-| Extra Queries and Filters Plugin |  ElasticSearch  |
-|----------------------------------|-----------------|
-| 6.3.1.2, master branch           | 6.3.1           |
-| 5.5.2.7                          | 5.5.2           |
-| 5.5.2                            | 5.5.2           |
-| 5.3.2                            | 5.3.2           |
-| 5.2.2                            | 5.2.2           |
-| 5.2.1                            | 5.2.1           |
-| 5.2.0                            | 5.2.0           |
-| 5.1.2                            | 5.1.2           |
-| 2.4.1, 2.4 branch                | 2.4.1           |
-| 2.4.0                            | 2.4.0           |
-| 2.3.5, 2.3 branch                | 2.3.5           |
-| 2.3.4                            | 2.3.4           |
+| Extra Queries and Filters Plugin |   ElasticSearch   |
+|----------------------------------|-------------------|
+| 1.3.19, master branch            | OpenSearch 1.3.19 |
+| 6.3.1.2                          | Elastic 6.3.1     |
+| 5.5.2.7                          | Elastic 5.5.2     |
+| 5.5.2                            | Elastic 5.5.2     |
+| 5.3.2                            | Elastic 5.3.2     |
+| 5.2.2                            | Elastic 5.2.2     |
+| 5.2.1                            | Elastic 5.2.1     |
+| 5.2.0                            | Elastic 5.2.0     |
+| 5.1.2                            | Elastic 5.1.2     |
+| 2.4.1, 2.4 branch                | Elastic 2.4.1     |
+| 2.4.0                            | Elastic 2.4.0     |
+| 2.3.5, 2.3 branch                | Elastic 2.3.5     |
+| 2.3.4                            | Elastic 2.3.4     |
 
 Install it like so for Elasticsearch x.y.z:
 
-\<= 2.4.1
+\<= Elastic 2.4.1
 ```bash
 ./bin/plugin --install org.wikimedia.search/extra/x.y.z
 ```
 
-\>= 5.1.2
+\>= Elastic 5.1.2
 
 ```bash
 ./bin/elasticsearch-plugin install org.wikimedia.search:extra:x.y.z
 ./bin/elasticsearch-plugin install org.wikimedia.search:extra-analysis-slovak:x.y.z
+```
+
+\>= OpenSearch 1.3.19
+
+```bash
+./bin/opensearch-plugin install org.wikimedia.search:extra:x.y.z
+./bin/opensearch-plugin install org.wikimedia.search:extra-analysis-slovak:x.y.z
 ```
 
 Build

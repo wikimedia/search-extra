@@ -262,7 +262,7 @@ because the _3_ is labelled as _Chinese/Japanese._
 The ICU Tokenizer generally uses IBM's
 [UScript](https://unicode-org.github.io/icu-docs/apidoc/dev/icu4j/com/ibm/icu/lang/UScript.html)
 library for ScriptAttribute label strings, and these are generally what is shown in the
-`explain` output of the Elasticsearch `_analyze` endpoint. Note that multi-word names have
+`explain` output of the OpenSearch `_analyze` endpoint. Note that multi-word names have
 underscores rather than spaces, as in `Canadian_Aboriginal`. Using invalid names with the
 `allow_scripts` parameter will cause an error.
 
@@ -277,7 +277,7 @@ Japanese. For some reason, the UScript long name for Japanese is not _Japanese,_
 rather the same as the short name, _Jpan,_ which is used by the ICU tokenizer for the
 ScriptAttribute label internally. For a possibly related reason, this label is rewritten
 by the ICU tokenizer as _Chinese/Japanese_ externally—for example, when it is included in
-Elasticsearch explain output.</font>
+OpenSearch explain output.</font>
 
 
 The three predefined `script_preset` options are:

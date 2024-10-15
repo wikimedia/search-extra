@@ -126,5 +126,5 @@ gram clauses is higher than the limit then a degraded boolean query may still
 be attempted.
 
 
-Also supports the standard Elasticsearch filter options:
+Also supports the standard OpenSearch filter options:
 * ```_name```

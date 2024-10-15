@@ -32,7 +32,7 @@ Example Response:
         "successful": 1,
         "failed": 0
     },
-    "cluster_name": "elasticsearch",
+    "cluster_name": "opensearch",
     "all": {
         "whiz": [
             { "percentile": 50", "latencyMs": 38 },

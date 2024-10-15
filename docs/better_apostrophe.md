@@ -1,11 +1,11 @@
 better_apostrophe
 ==============
 
-`better_apostrophe` is a smarter version of the Elastic/Lucene [`apostrophe` token
-filter](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/analysis-apostrophe-tokenfilter.html)
+`better_apostrophe` is a smarter version of the OpenSearch/Lucene [`apostrophe` token
+filter](https://opensearch.org/docs/latest/analyzers/token-filters/apostrophe/)
 for Turkish, which is much too aggressive for multilingual tokens in a mostly Turkish corpus.
 
-**This filter assumes its input is lowercase** (unlike Elastic/Lucene `apostrophe`), so it
+**This filter assumes its input is lowercase** (unlike OpenSearch/Lucene `apostrophe`), so it
 should follow a `lowercase` or other normalizing token filter, presumably one that properly
 lowercases Turkish text (in particular I/ı and İ/i).
 
@@ -18,9 +18,9 @@ i's,* and *u's*—which are the plurals of *a, i,* and *u*—to distinguish them
 is,* and *us,* or with other unusually spelled forms like *OK'd* which is used as the past
 tense of *to OK something.*
 
-### Elastic `apostrophe`
+### OpenSearch `apostrophe`
 
-The Elastic/Lucene `apostrophe` token filter removes the first apostrophe it finds in a word,
+The OpenSearch/Lucene `apostrophe` token filter removes the first apostrophe it finds in a word,
 plus everything after the apostrophe. This is disastrous for non-Turkish words and names, like
 *D'Artagnan, d'Ivoire,* and *d'Urbervilles* (which are all reduced to *d*) or *O'Connell,
 O'Keefe,* and *O'Sullivan* (which are all reduced to *o,* which is also a stopword!). It's even

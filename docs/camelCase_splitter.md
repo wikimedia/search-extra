@@ -2,7 +2,7 @@ camelCase_splitter
 ==============
 
 `camelCase_splitter` is a character filter that splits camelCase words. It is an
-alternative to Elasticsearch's `word_delimiter` and `word_delimiter_graph`, which can
+alternative to OpenSearch's `word_delimiter` and `word_delimiter_graph`, which can
 be too aggressive about splitting text.
 
 The [Elasticsearch

@@ -1,7 +1,7 @@
 limited_mapping
 ==============
 
-`limited_mapping` is a character filter similar to the Elasticsearch `mapping`
+`limited_mapping` is a character filter similar to the OpenSearch `mapping`
 character filter, but limited to mapping *from* single characters and *to* either
 single characters or nothing (i.e., changing or deleting single characters).
 

@@ -1,7 +1,7 @@
 super_detect_noop
 =================
 
-The ```super_detect_noop``` native script is just like Elasticsearch's
+The ```super_detect_noop``` native script is just like OpenSearch's
 ```detect_noop``` but it allows configurable sloppiness and set operations.
 
 Options
@@ -10,7 +10,7 @@ Options
 ```super_detect_noop``` supports only the following options:
 * ```source``` The source to merge into the existing source. Required.
 * ```handlers``` Object mapping path to change handler. Optional, defaults to
-behaving exactly as Elasticsearch's ```detect_noop```. Possible field values:
+behaving exactly as OpenSearch's ```detect_noop```. Possible field values:
     * ```equals``` If the new value isn't equal to the old value then the new
     value is written to the source. This is the default for leaves if no value
     is specified in the ```handlers``` object. When explicitly set on fields
@@ -31,7 +31,7 @@ behaving exactly as Elasticsearch's ```detect_noop```. Possible field values:
     only supported set operations are add and remove. They can be specified
     either as lists or as values. If they are values they thought of as a
     singleton list. Note also that this is implemented *as* *if* the source
-    contained a set. The set (usually) remains an ArrayList to Elasticsearch
+    contained a set. The set (usually) remains an ArrayList to OpenSearch
     because its faster that way. Thus if the set already contains duplicates
     then this won't remove them.
     * ```multilist``` Treats the old and new value as each containing multiple
