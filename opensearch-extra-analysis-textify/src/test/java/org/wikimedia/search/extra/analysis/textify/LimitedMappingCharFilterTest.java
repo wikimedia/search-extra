@@ -1,6 +1,5 @@
 package org.wikimedia.search.extra.analysis.textify;
 
-import static org.wikimedia.search.extra.analysis.textify.LimitedMappingCharFilterFactory.parse;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.wikimedia</groupId>
         <artifactId>wmf-jvm-parent-pom</artifactId>
-        <version>1.74</version>
+        <version>1.92</version>
     </parent>
 
     <groupId>org.wikimedia.search</groupId>
@@ -70,6 +70,10 @@
     </issueManagement>
 
     <properties>
+        <!-- For publishing to gitlab:repos/wmf-packages -->
+        <gitlab.projectId>2745</gitlab.projectId>
+        <gitlab.projectName>wmf-packages</gitlab.projectName>
+        <gitlab.projectPath>repos</gitlab.projectPath>
         <hamcrest.version>2.1</hamcrest.version>
         <log4j.version>2.17.1</log4j.version>
         <lucene.version>8.10.1</lucene.version>
