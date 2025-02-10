@@ -80,7 +80,7 @@
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <opensearch.version>1.3.19</opensearch.version>
+        <opensearch.version>1.3.20</opensearch.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <randomizedtesting.version>2.7.1</randomizedtesting.version>
     </properties>
