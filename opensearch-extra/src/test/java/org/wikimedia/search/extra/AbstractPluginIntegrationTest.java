@@ -1,5 +1,7 @@
 package org.wikimedia.search.extra;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,11 +19,16 @@ import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.ga.IrishLowerCaseFilter;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import org.apache.lucene.analysis.ngram.NGramTokenizer;
+import org.apache.lucene.analysis.pattern.PatternReplaceCharFilter;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
 import org.apache.lucene.analysis.tr.TurkishLowerCaseFilter;
+import org.opensearch.common.settings.Settings;
+import org.opensearch.env.Environment;
+import org.opensearch.index.IndexSettings;
 import org.opensearch.index.analysis.AbstractIndexAnalyzerProvider;
 import org.opensearch.index.analysis.Analysis;
 import org.opensearch.index.analysis.AnalyzerProvider;
+import org.opensearch.index.analysis.CharFilterFactory;
 import org.opensearch.index.analysis.TokenFilterFactory;
 import org.opensearch.index.analysis.TokenizerFactory;
 import org.opensearch.indices.analysis.AnalysisModule;
@@ -38,6 +45,36 @@ public class AbstractPluginIntegrationTest extends OpenSearchIntegTestCase {
     }
 
     public static class MockPlugin extends Plugin implements AnalysisPlugin {
+
+        @Override
+        public Map<String, AnalysisModule.AnalysisProvider<CharFilterFactory>> getCharFilters() {
+            Map<String, AnalysisModule.AnalysisProvider<CharFilterFactory>> map = new HashMap<>();
+            map.put("pattern_replace", new AnalysisModule.AnalysisProvider<CharFilterFactory>() {
+                @Override
+                public boolean requiresAnalysisSettings() {
+                    return true;
+                }
+
+                @Override
+                public CharFilterFactory get(IndexSettings indexSettings, Environment environment, String name, Settings settings) throws IOException {
+                    return new CharFilterFactory() {
+                        @Override
+                        public String name() {
+                            return name;
+                        }
+
+                        @Override
+                        public Reader create(Reader reader) {
+                            Pattern p = Pattern.compile(settings.get("pattern"));
+                            String repl = settings.get("replacement");
+                            return new PatternReplaceCharFilter(p, repl, reader);
+                        }
+                    };
+                }
+            });
+            return Collections.unmodifiableMap(map);
+        }
+
         @Override
         public Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
             Map<String, AnalysisModule.AnalysisProvider<TokenFilterFactory>> map = new HashMap<>();

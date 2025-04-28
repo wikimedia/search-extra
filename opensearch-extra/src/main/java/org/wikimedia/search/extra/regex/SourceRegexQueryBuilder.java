@@ -188,23 +188,26 @@ public class SourceRegexQueryBuilder extends AbstractQueryBuilder<SourceRegexQue
 
     @Override
     protected Query doToQuery(QueryShardContext context) throws IOException {
-        final Analyzer ngramAnalyzer;
+        final Analyzer indexingNgramAnalyzer;
+        final Analyzer searchNgramAnalyzer;
         if (ngramField != null) {
             MappedFieldType mapper = context.fieldMapper(ngramField);
             if (mapper == null) {
                 throw new IllegalArgumentException("ngramField [" + ngramField + "] is unknown.");
             }
-            ngramAnalyzer = context.getSearchAnalyzer(mapper);
-            if (ngramAnalyzer == null) {
+            indexingNgramAnalyzer = mapper.indexAnalyzer();
+            searchNgramAnalyzer = context.getSearchAnalyzer(mapper);
+            if (indexingNgramAnalyzer == null || searchNgramAnalyzer == null) {
                 throw new IllegalArgumentException("Cannot find an analyzer for ngramField [" + ngramField + "], is this field indexed?");
             }
         } else {
-            ngramAnalyzer = null;
+            indexingNgramAnalyzer = null;
+            searchNgramAnalyzer = null;
         }
         return new SourceRegexQuery(
                 field, ngramField, regex,
                 loadFromSource ? FieldValues.loadFromSource() : FieldValues.loadFromStoredField(),
-                settings, gramSize, ngramAnalyzer);
+                settings, gramSize, indexingNgramAnalyzer, searchNgramAnalyzer);
     }
 
     /**

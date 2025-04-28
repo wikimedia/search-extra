@@ -85,10 +85,11 @@ public class SourceRegexQueryRecheckTest {
     }
 
     private void many(String name, String regex, Settings settings, int times, boolean isMatching) {
-        long slow = manyTestCase(new SlowRechecker(regex, settings), "slow", name, settings, times, regex, isMatching);
-        long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings), "non backtracking", name, settings, times, regex, isMatching);
+        long slow = manyTestCase(new SlowRechecker(regex, settings, t -> t), "slow", name, settings, times, regex, isMatching);
+        long nonBacktracking = manyTestCase(new NonBacktrackingRechecker(regex, settings, t -> t),
+            "non backtracking", name, settings, times, regex, isMatching);
         if (!settings.caseSensitive()) {
-            long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings),
+            long nonBacktrackingCaseConverting = manyTestCase(new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings, t -> t),
                     "case converting", name, settings, times, regex, isMatching);
         }
     }

@@ -12,7 +12,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
+import org.apache.lucene.analysis.pattern.PatternReplaceCharFilter;
 import org.opensearch.action.ActionRequest;
 import org.opensearch.action.ActionResponse;
 import org.opensearch.client.Client;
@@ -28,6 +30,7 @@ import org.opensearch.common.xcontent.NamedXContentRegistry;
 import org.opensearch.env.Environment;
 import org.opensearch.env.NodeEnvironment;
 import org.opensearch.index.IndexModule;
+import org.opensearch.index.analysis.PreConfiguredCharFilter;
 import org.opensearch.index.analysis.PreConfiguredTokenFilter;
 import org.opensearch.index.analysis.TokenFilterFactory;
 import org.opensearch.indices.analysis.AnalysisModule.AnalysisProvider;
@@ -68,6 +71,7 @@ import org.wikimedia.search.extra.superdetectnoop.WithinAbsoluteHandler;
 import org.wikimedia.search.extra.superdetectnoop.WithinPercentageHandler;
 import org.wikimedia.search.extra.termfreq.TermFreqFilterQueryBuilder;
 import org.wikimedia.search.extra.util.Suppliers.MutableSupplier;
+import org.wikimedia.utils.regex.RegexRewriter;
 
 
 /**
@@ -142,6 +146,17 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
             PreConfiguredTokenFilter.singleton("preserve_original_recorder", true, PreserveOriginalFilter.Recorder::new),
             PreConfiguredTokenFilter.singleton("term_freq", true, TermFreqTokenFilter::new)
         );
+    }
+
+    @Override
+    public List<PreConfiguredCharFilter> getPreConfiguredCharFilters() {
+        return singletonList(
+            // Performs RegexRewriter::anchorTransformation at index time
+            PreConfiguredCharFilter.singleton("add_regex_start_end_anchors", true,
+                reader -> new PatternReplaceCharFilter(
+                    Pattern.compile("^(.*)$"),
+                    RegexRewriter.START_ANCHOR_MARKER + "$1" + RegexRewriter.END_ANCHOR_MARKER,
+                    reader)));
     }
 
     @Override

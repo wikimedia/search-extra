@@ -67,6 +67,10 @@
             <artifactId>opensearch-extra-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wikimedia.utils</groupId>
+            <artifactId>lucene-regex-rewriter</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.opensearch</groupId>
             <artifactId>opensearch-core</artifactId>
             <version>${opensearch.version}</version>

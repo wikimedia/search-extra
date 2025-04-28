@@ -14,10 +14,22 @@ This filter can also limit the execution cost of even regular expressions that
 can't be accelerated by that method by limiting the number of documents against
 which a match attempt is made.
 
+Extended Lucene Regex Syntax
+----------------------------
+
+The source_regex query offers a few minor extensions to the lucene provided
+regex syntax:
+
+* Shorthand character classes (\d, \s, and \w) are supported. Inverted character
+ classes (ex: \D) are not supported, but [^\d] works as expected.
+* Anchors (^/$) are supported if the trigram acceleration field applies the anchor
+ transformation, typically via the pre-configured add_regex_start_end_anchors
+ char_filter.
+
 Example
 -------
 
-Analyze a field with trigrams like so:
+Analyze a field with trigrams like so. Note that you should not have trigram and trigram_anchored both indexed, choose the one appropriate for your use case:
 ```bash
 curl -XDELETE http://localhost:9200/regex_test
 curl -XPOST http://localhost:9200/regex_test -d '{
@@ -29,7 +41,12 @@ curl -XPOST http://localhost:9200/regex_test -d '{
           "type":"custom",
           "tokenizer":"trigram",
           "filter":["lowercase"]
-        }
+        },
+        "trigram_anchored":{
+          "type":"custom",
+          "tokenizer":"trigram",
+          "filter":["lowercase"],
+          "char_filter":["add_regex_start_end_anchors"]
       },
       "tokenizer":{
         "trigram":{
@@ -50,7 +67,13 @@ curl -XPOST http://localhost:9200/regex_test/test/_mapping -d '{
           "trigrams":{
             "type":"string",
             "analyzer":"trigram",
-            "index_options": "docs"
+            "index_options": "docs",
+          },
+          "trigrams_anchored": {
+            "type":"string",
+            "analyzer":"trigram_anchored",
+            "search_analyzer": "trigram",
+            "index_options": "docs",
           }
         }
       }
@@ -79,6 +102,26 @@ curl -XPOST http://localhost:9200/regex_test/test/_search?pretty=true -d '{
   }
 }'
 ```
+
+Queries with anchor support are issued the same way as normal queries, the only
+difference is that the provided ngram_field must have the appropriate pre-configured
+char_filter applied at index time:
+```bash
+curl -XPOST http://localhost:9200/regex_test/test/_search?pretty=true -d '{
+  "query": {
+    "filtered": {
+      "filter": {
+        "source_regex": {
+          "field": "test",
+          "regex": "^i ca..has",
+          "ngram_field": "test.trigrams_anchored"
+        }
+      }
+    }
+  }
+}'
+```
+
 
 Options
 -------
@@ -124,7 +167,6 @@ accelerated ngram query from generating a too large boolean expression.
 Defaults to 1024 (same as BooleanQuery default). If the number of generated
 gram clauses is higher than the limit then a degraded boolean query may still
 be attempted.
-
 
 Also supports the standard OpenSearch filter options:
 * ```_name```

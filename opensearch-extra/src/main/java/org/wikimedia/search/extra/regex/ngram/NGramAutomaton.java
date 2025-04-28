@@ -222,22 +222,23 @@ public class NGramAutomaton {
         if (ngram == null) {
             return ngram;
         }
+        String result = ngram;
         try (TokenStream ts = ngramAnalyzer.tokenStream("", ngram)) {
             CharTermAttribute cattr = ts.addAttribute(CharTermAttribute.class);
             ts.reset();
             if (ts.incrementToken()) {
-                ngram = cattr.toString();
+                result = cattr.toString();
                 if (ts.incrementToken()) {
-                    throw new IllegalArgumentException("Analyzer provided generate more than one tokens, " +
+                    throw new IllegalArgumentException("Provided analyzer generated more than one token, " +
                             "if using 3grams make sure to use a 3grams analyzer, " +
-                            "for input [" + ngram + "] first is [" + ngram + "] " +
+                            "for input [" + ngram + "] first is [" + result + "] " +
                             "but [" + cattr + "] was generated.");
                 }
             }
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
-        return ngram;
+        return result;
     }
 
     private NGramState buildOrFind(LinkedList<NGramState> leftToProcess, int sourceState, String prefix) {

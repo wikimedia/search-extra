@@ -3,11 +3,14 @@ package org.wikimedia.search.extra.regex;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TwoPhaseIterator;
@@ -21,6 +24,7 @@ import org.wikimedia.search.extra.regex.expression.ExpressionRewriter;
 import org.wikimedia.search.extra.regex.ngram.AutomatonTooComplexException;
 import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
 import org.wikimedia.search.extra.util.FieldValues;
+import org.wikimedia.utils.regex.RegexRewriter;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -31,6 +35,7 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = false)
 @VisibleForTesting
 @Getter(AccessLevel.PACKAGE)
+@SuppressWarnings("checkstyle:classfanoutcomplexity")
 public class SourceRegexQuery extends Query {
     private final String fieldPath;
     @Nullable private final String ngramFieldPath;
@@ -43,24 +48,41 @@ public class SourceRegexQuery extends Query {
 
     public SourceRegexQuery(String fieldPath, @Nullable String ngramFieldPath, String regex,
                             FieldValues.Loader loader, Settings settings, int gramSize,
-                            @Nullable Analyzer ngramAnalyzer) {
+                            @Nullable Analyzer indexingNgramAnalyzer, @Nullable Analyzer searchNgramAnalyzer) {
         this.fieldPath = fieldPath;
         this.ngramFieldPath = ngramFieldPath;
-        this.regex = Objects.requireNonNull(regex);
+        boolean supportsAnchors = indexingNgramAnalyzer != null && determineAnchorSupport(indexingNgramAnalyzer);
+        this.regex = RegexRewriter.rewrite(Objects.requireNonNull(regex), supportsAnchors).toString();
         if (regex.isEmpty()) {
             throw new IllegalArgumentException("regex must be set");
         }
         this.loader = loader;
         this.settings = settings;
         this.gramSize = gramSize;
+        UnaryOperator<String> valueTransform = supportsAnchors ? RegexRewriter::anchorTransformation : UnaryOperator.identity();
         if (!settings.caseSensitive()
                 && !settings.locale().getLanguage().equals("ga")
                 && !settings.locale().getLanguage().equals("tr")) {
-            rechecker = new NonBacktrackingOnTheFlyCaseConvertingRechecker(regex, settings);
+            rechecker = new NonBacktrackingOnTheFlyCaseConvertingRechecker(this.regex, settings, valueTransform);
         } else {
-            rechecker = new NonBacktrackingRechecker(regex, settings);
+            rechecker = new NonBacktrackingRechecker(this.regex, settings, valueTransform);
         }
-        this.ngramAnalyzer = ngramAnalyzer;
+        this.ngramAnalyzer = searchNgramAnalyzer;
+    }
+
+    private boolean determineAnchorSupport(Analyzer indexingNgramAnalyzer) {
+        try (TokenStream ts = indexingNgramAnalyzer.tokenStream("", "a")) {
+            CharTermAttribute cattr = ts.addAttribute(CharTermAttribute.class);
+            ts.reset();
+            if (ts.incrementToken()) {
+                return cattr.charAt(0) == RegexRewriter.START_ANCHOR_MARKER;
+            } else {
+                // When does this occur? It means zero tokens were generated.
+                return false;
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
     }
 
     @Override
@@ -151,6 +173,7 @@ public class SourceRegexQuery extends Query {
         float getCost();
     }
 
+
     /**
      * Faster for case insensitive queries than the NonBacktrackingRechecker but
      * wrong for Irish and Turkish.
@@ -159,22 +182,21 @@ public class SourceRegexQuery extends Query {
     static class NonBacktrackingOnTheFlyCaseConvertingRechecker implements Rechecker {
         private final String regex;
         private final Settings settings;
+        private final UnaryOperator<String> valueTransform;
 
         @Nullable private ContainsCharacterRunAutomaton charRun;
 
-        NonBacktrackingOnTheFlyCaseConvertingRechecker(String regex, Settings settings) {
+        NonBacktrackingOnTheFlyCaseConvertingRechecker(String regex, Settings settings, UnaryOperator<String> valueTransform) {
             this.regex = regex;
             this.settings = settings;
+            this.valueTransform = valueTransform;
         }
 
         @Override
         public boolean recheck(Iterable<String> values) {
-            for (String value : values) {
-                if (getCharRun().contains(value)) {
-                    return true;
-                }
-            }
-            return false;
+            return StreamSupport.stream(values.spliterator(), false)
+                .map(valueTransform)
+                .anyMatch(s -> getCharRun().contains(s));
         }
 
         private ContainsCharacterRunAutomaton getCharRun() {
@@ -208,18 +230,21 @@ public class SourceRegexQuery extends Query {
     static class NonBacktrackingRechecker implements Rechecker {
         private final String regex;
         private final Settings settings;
+        private final UnaryOperator<String> valueTransform;
 
         @Nullable private ContainsCharacterRunAutomaton charRun;
 
-        NonBacktrackingRechecker(String regex, Settings settings) {
+        NonBacktrackingRechecker(String regex, Settings settings, UnaryOperator<String> valueTransform) {
             this.regex = regex;
             this.settings = settings;
+            this.valueTransform = valueTransform;
         }
 
         @Override
         public boolean recheck(Iterable<String> values) {
             return StreamSupport.stream(values.spliterator(), false)
                 .map(s -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
+                .map(valueTransform)
                 .anyMatch(s -> getCharRun().contains(s));
         }
 
@@ -250,12 +275,14 @@ public class SourceRegexQuery extends Query {
     static class SlowRechecker implements Rechecker {
         private final String regex;
         private final Settings settings;
+        private final UnaryOperator<String> valueTransform;
 
         @Nullable private CharacterRunAutomaton charRun;
 
-        SlowRechecker(String regex, Settings settings) {
+        SlowRechecker(String regex, Settings settings, UnaryOperator<String> valueTransform) {
             this.regex = regex;
             this.settings = settings;
+            this.valueTransform = valueTransform;
         }
 
         /**
@@ -266,6 +293,7 @@ public class SourceRegexQuery extends Query {
         public boolean recheck(Iterable<String> values) {
             return StreamSupport.stream(values.spliterator(), false)
                     .map(s -> settings.caseSensitive() ? s : s.toLowerCase(settings.locale()))
+                    .map(valueTransform)
                     .anyMatch(s -> getCharRun().run(s));
         }
 

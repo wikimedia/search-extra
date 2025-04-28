@@ -4,15 +4,22 @@ import static org.opensearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertAcked;
 import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertFailures;
 import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertHitCount;
+import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertNoSearchHits;
 import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertSearchHits;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
 
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchRequestBuilder;
@@ -21,6 +28,8 @@ import org.opensearch.common.xcontent.XContentBuilder;
 import org.opensearch.rest.RestStatus;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
+
+import com.google.common.collect.ImmutableMap;
 
 public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTest {
     @Test
@@ -191,6 +200,104 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
                 containsString("Unable to accelerate"));
         // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
         // I can't find any way from here to mark it otherwise.
+    }
+
+    private void assertPatternMatch(Map<String, String> docs, String regex, String... docids) {
+        // First run through java Pattern, to assert validity of the test case
+        Pattern pattern = Pattern.compile(regex);
+        for (Map.Entry<String, String> entry : docs.entrySet()) {
+            Matcher match = pattern.matcher(entry.getValue());
+            boolean expectMatch = Arrays.stream(docids).anyMatch(docid -> docid.equals(entry.getKey()));
+            assertEquals("key: " + entry.getKey(), match.find(), expectMatch);
+        }
+
+        // Then run through elastic to make sure we get the same result
+        SearchResponse response = search(filter(regex).ngramField("test.trigram_anchored")).get();
+        assertSearchHits(response, docids);
+    }
+
+    private void assertNoPatternMatch(Map<String, String> docs, String regex) {
+        assertPatternMatch(docs, regex);
+    }
+
+    /**
+     * These patterns are already tested in lucene-regex-rewriter, but we test them
+     * here again to evaluate the integration of the trigram acceleration.
+     */
+    @Test
+    public void anchors() throws InterruptedException, IOException {
+        setup();
+
+        Map<String, String> docs = ImmutableMap.of(
+            "findme", "abcdef",
+            "edgecase1", "Start^Middle$End",
+            "edgecase2", "^foobar$"
+        );
+        for (Map.Entry<String, String> entry : docs.entrySet()) {
+            indexRandom(true, doc(entry.getKey(), entry.getValue()));
+        }
+
+        // No match if using field without index time anchors
+        SearchResponse response = search(filter("^abc").ngramField("test.trigram")).get();
+        assertNoSearchHits(response);
+        // Basic start anchor
+        assertPatternMatch(docs, "^abc", "findme");
+        // No match if it's not the start of the string
+        assertNoPatternMatch(docs, "^bc");
+        // Basic end anchor
+        assertPatternMatch(docs, "ef$", "findme");
+        // No match if it's not the end of the string
+        assertNoPatternMatch(docs, "de$");
+        // We can match the plain ^ character with proper regex escaping
+        assertPatternMatch(docs, "Start\\^", "edgecase1");
+        // The unescaped ^ is still an anchor and fails to match
+        assertNoPatternMatch(docs, "Start^");
+        // Same for plain $
+        assertPatternMatch(docs, "Middle\\$", "edgecase1");
+        // And similarly no match when not escaped
+        assertNoPatternMatch(docs, "Middle$");
+        // Can match a starting ^ if escaped
+        assertNoPatternMatch(docs, "^foo");
+        assertPatternMatch(docs, "\\^foo", "edgecase2");
+        // or in a character class
+        assertPatternMatch(docs, "[a^]foo", "edgecase2");
+        // Similarly for $
+        assertNoPatternMatch(docs, "bar$");
+        assertPatternMatch(docs, "bar\\$", "edgecase2");
+        assertPatternMatch(docs, "bar\\$$", "edgecase2");
+        assertPatternMatch(docs, "bar[$]", "edgecase2");
+        assertPatternMatch(docs, "bar[$]$", "edgecase2");
+        // anchors can be used in parens
+        assertPatternMatch(docs, "(^|qqq)abc", "findme");
+    }
+
+    @Test
+    public void charClasses() throws InterruptedException, IOException {
+        setup();
+
+        Map<String, String> docs = ImmutableMap.of(
+            "alpha", "abcdef",
+            "alphanumeric", "abc123",
+            "numeric", "123456",
+            "space", " "
+        );
+        for (Map.Entry<String, String> entry : docs.entrySet()) {
+            indexRandom(true, doc(entry.getKey(), entry.getValue()));
+        }
+
+        assertPatternMatch(docs, "\\d", "alphanumeric", "numeric");
+        assertPatternMatch(docs, "^abc[\\d]+$", "alphanumeric");
+        assertPatternMatch(docs, "\\w", "alpha", "numeric", "alphanumeric");
+        assertPatternMatch(docs, "\\s", "space");
+        // negated char classes must not match the anchors
+        assertPatternMatch(docs, "[^\\w]", "space");
+        // Same, \d must not match the anchor
+        assertPatternMatch(docs, "[^\\d]", "alpha", "alphanumeric", "space");
+        // Doesn't have to be an expanded char class
+        assertPatternMatch(docs, "[^ ]", "alpha", "alphanumeric", "numeric");
+        // `.` must not match anchors
+        assertNoPatternMatch(docs, ".ab");
+        assertNoPatternMatch(docs, "ef.");
     }
 
     @Test
@@ -367,6 +474,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         buildSubfield(mapping, "trigram");
         buildSubfield(mapping, "quadgram");
         buildSubfield(mapping, "spectrigram");
+        buildSubfield(mapping, "trigram_anchored", "trigram");
         mapping.endObject()
             .endObject()
             .endObject()
@@ -380,47 +488,59 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         buildNgramAnalyzer(settings, "bigram", locale);
         buildNgramAnalyzer(settings, "trigram", locale);
         buildNgramAnalyzer(settings, "quadgram", locale);
-        buildNgramAnalyzer(settings, "spectrigram", locale, new String[]{"pattern"});
+        buildNgramAnalyzer(settings, "spectrigram", "spectrigram", locale, new String[]{"pattern"}, new String[]{});
+        buildNgramAnalyzer(settings, "trigram_anchored", "trigram", locale, new String[]{}, new String[]{"add_regex_start_end_anchors"});
+        settings.endObject(); // end analyzer
 
-        settings.endObject();
         settings.startObject("tokenizer");
         buildNgramTokenizer(settings, "bigram", 2);
         buildNgramTokenizer(settings, "trigram", 3);
         buildNgramTokenizer(settings, "spectrigram", 3);
         buildNgramTokenizer(settings, "quadgram", 4);
-        settings.endObject();
+        settings.endObject(); // end tokenizer
+
         settings.startObject("filter");
         buildLowercaseFilter(settings, "greek");
         buildLowercaseFilter(settings, "irish");
         buildLowercaseFilter(settings, "turkish");
         buildPatternFilter(settings);
-        settings.endObject();
+        settings.endObject(); // end filter
+
         settings.endObject().endObject().endObject();
-        // System.err.println(settings.string());
-        // System.err.println(mapping.string());
+        // System.err.println(Strings.toString(settings));
+        // System.err.println(Strings.toString(mapping));
         assertAcked(prepareCreate("test").setSettings(settings).addMapping("test", mapping));
         ensureYellow();
     }
 
-    private void buildSubfield(XContentBuilder mapping, String name) throws IOException {
-        mapping.startObject(name);
+    private void buildSubfield(XContentBuilder mapping, String analyzer) throws IOException {
+        buildSubfield(mapping, analyzer, null);
+    }
+
+    private void buildSubfield(XContentBuilder mapping, String analyzer, @Nullable String searchAnalyzer) throws IOException {
+        mapping.startObject(analyzer);
         mapping.field("type", "text");
-        mapping.field("analyzer", name);
+        mapping.field("analyzer", analyzer);
+        if (searchAnalyzer != null) {
+            mapping.field("search_analyzer", searchAnalyzer);
+        }
         mapping.endObject();
     }
 
     private void buildNgramAnalyzer(XContentBuilder settings, String name, String locale) throws IOException {
-        buildNgramAnalyzer(settings, name, locale, new String[]{});
+        buildNgramAnalyzer(settings, name, name, locale, new String[]{}, new String[]{});
     }
 
-    private void buildNgramAnalyzer(XContentBuilder settings, String name, String locale, String[] extraFilters) throws IOException {
+    private void buildNgramAnalyzer(XContentBuilder settings, String name, String tokenizer, String locale,
+                                    String[] extraFilters, String[] charFilters) throws IOException {
         settings.startObject(name);
         settings.field("type", "custom");
-        settings.field("tokenizer", name);
+        settings.field("tokenizer", tokenizer);
         String[] filters = new String[1 + extraFilters.length];
         filters[0] = lowercaseForLocale(locale);
         System.arraycopy(extraFilters, 0, filters, 1, extraFilters.length);
         settings.field("filter", filters);
+        settings.field("char_filter", charFilters);
         settings.endObject();
     }
 
