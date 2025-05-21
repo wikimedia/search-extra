@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.wikimedia</groupId>
         <artifactId>wmf-jvm-parent-pom</artifactId>
-        <version>1.92</version>
+        <version>1.97</version>
     </parent>
 
     <groupId>org.wikimedia.search</groupId>
@@ -83,6 +83,7 @@
         <opensearch.version>1.3.20</opensearch.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <randomizedtesting.version>2.7.1</randomizedtesting.version>
+        <spotless.ratchetFrom>origin/master</spotless.ratchetFrom>
     </properties>
 
     <dependencyManagement>
@@ -290,15 +291,15 @@
                     <configuration>
                         <skipTests>${skip.unit.tests}</skipTests>
                         <listeners>
-                            <report-text showNumFailures="30" showOutput="onerror" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="false" showSuiteSummary="true" showThrowable="true" timestamps="false" />
-                            <report-ant-xml dir="${project.build.directory}/surefire-reports" mavenExtensions="true" />
+                            <report-text showNumFailures="30" showOutput="onerror" showStackTraces="true" showStatusError="true" showStatusFailure="true" showStatusIgnored="true" showStatusOk="false" showSuiteSummary="true" showThrowable="true" timestamps="false"/>
+                            <report-ant-xml dir="${project.build.directory}/surefire-reports" mavenExtensions="true"/>
                         </listeners>
                         <heartbeat>20</heartbeat>
                         <jvmOutputAction>warn</jvmOutputAction>
                         <leaveTemporary>true</leaveTemporary>
                         <sysouts>false</sysouts>
                         <assertions>
-                            <enable />
+                            <enable/>
                         </assertions>
                         <jvmArgs>
                             <param>-Xmx512m</param>
@@ -428,7 +429,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -442,7 +443,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -455,6 +456,10 @@
             <plugin>
                 <groupId>com.carrotsearch.randomizedtesting</groupId>
                 <artifactId>junit4-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
