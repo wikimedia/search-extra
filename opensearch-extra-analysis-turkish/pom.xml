@@ -11,6 +11,10 @@
     <name>OpenSearch Turkish analyzer plugin</name>
     <description>Turkish analyzer.</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra-analysis-turkish</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.spotbugs</groupId>

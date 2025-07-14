@@ -11,6 +11,10 @@
     <name>OpenSearch Ukrainian analyzer plugin</name>
     <description>Ukrainian analyzer.</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra-analysis-ukrainian</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.spotbugs</groupId>

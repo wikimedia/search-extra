@@ -11,6 +11,10 @@
     <name>OpenSearch Homoglyph Normalizer Plugin</name>
     <description>Homoglyph Normalizer</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra-analysis-homoglyph</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.spotbugs</groupId>

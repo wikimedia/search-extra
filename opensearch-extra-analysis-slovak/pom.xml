@@ -11,6 +11,10 @@
     <name>OpenSearch Slovak analyzer plugin</name>
     <description>Slovak analyzer.</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra-analysis-slovak</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.spotbugs</groupId>

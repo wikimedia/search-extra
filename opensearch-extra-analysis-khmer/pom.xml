@@ -11,6 +11,10 @@
     <name>Opensearch Khmer analyzer plugin</name>
     <description>Khmer analyzer.</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra-analysis-khmer</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

@@ -11,6 +11,10 @@
     <name>OpenSearch Misc text mungers plugin</name>
     <description>Misc text mungers</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra-analysis-textify</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.spotbugs</groupId>

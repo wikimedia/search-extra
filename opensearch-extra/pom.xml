@@ -11,6 +11,10 @@
     <name>OpenSearch Extra Queries and Filters Plugin</name>
     <description>Extra queries and filters for OpenSearch.</description>
 
+    <properties>
+        <opensearch.plugin.name>opensearch-extra</opensearch.plugin.name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.spotbugs</groupId>
