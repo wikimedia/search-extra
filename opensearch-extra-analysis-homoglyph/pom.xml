@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra-analysis-homoglyph</artifactId>
+    <name>OpenSearch Homoglyph Normalizer Plugin</name>
     <description>Homoglyph Normalizer</description>
 
     <dependencies>

@@ -6,8 +6,9 @@
         <artifactId>opensearch-extra-parent</artifactId>
         <version>1.3.20-wmf3-SNAPSHOT</version>
     </parent>
-
     <artifactId>opensearch-extra-common</artifactId>
+
+    <name>OpenSearch Extra Plugin Common Utils</name>
 
     <dependencies>
         <dependency>

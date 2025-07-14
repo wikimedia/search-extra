@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra-analysis-textify</artifactId>
+    <name>OpenSearch Misc text mungers plugin</name>
     <description>Misc text mungers</description>
 
     <dependencies>

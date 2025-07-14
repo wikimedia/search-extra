@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra-analysis-turkish</artifactId>
+    <name>OpenSearch Turkish analyzer plugin</name>
     <description>Turkish analyzer.</description>
 
     <dependencies>

@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra-analysis-ukrainian</artifactId>
+    <name>OpenSearch Ukrainian analyzer plugin</name>
     <description>Ukrainian analyzer.</description>
 
     <dependencies>

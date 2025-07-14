@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra</artifactId>
+    <name>OpenSearch Extra Queries and Filters Plugin</name>
     <description>Extra queries and filters for OpenSearch.</description>
 
     <dependencies>

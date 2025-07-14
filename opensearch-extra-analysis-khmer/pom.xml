@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra-analysis-khmer</artifactId>
+    <name>Opensearch Khmer analyzer plugin</name>
     <description>Khmer analyzer.</description>
 
     <dependencies>

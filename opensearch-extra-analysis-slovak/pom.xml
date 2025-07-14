@@ -8,6 +8,7 @@
     </parent>
 
     <artifactId>opensearch-extra-analysis-slovak</artifactId>
+    <name>OpenSearch Slovak analyzer plugin</name>
     <description>Slovak analyzer.</description>
 
     <dependencies>
