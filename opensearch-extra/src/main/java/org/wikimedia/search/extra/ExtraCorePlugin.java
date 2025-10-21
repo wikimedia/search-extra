@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ import org.opensearch.watcher.ResourceWatcherService;
 import org.wikimedia.search.extra.analysis.filters.PreserveOriginalFilter;
 import org.wikimedia.search.extra.analysis.filters.TermFreqTokenFilter;
 import org.wikimedia.search.extra.analysis.filters.TermFreqTokenFilterFactory;
+import org.wikimedia.search.extra.analysis.filters.TruncateNormFilterFactory;
 import org.wikimedia.search.extra.fuzzylike.FuzzyLikeThisQueryBuilder;
 import org.wikimedia.search.extra.latency.LatencyStatsAction;
 import org.wikimedia.search.extra.latency.RestGetLatencyStats;
@@ -136,7 +138,10 @@ public class ExtraCorePlugin extends Plugin implements SearchPlugin, AnalysisPlu
 
     @Override
     public Map<String, AnalysisProvider<TokenFilterFactory>> getTokenFilters() {
-        return Collections.singletonMap("term_freq", AnalysisPlugin.requiresAnalysisSettings(TermFreqTokenFilterFactory::new));
+        Map<String, AnalysisProvider<TokenFilterFactory>> map = new HashMap<>();
+        map.put("term_freq", AnalysisPlugin.requiresAnalysisSettings(TermFreqTokenFilterFactory::new));
+        map.put("truncate_norm", AnalysisPlugin.requiresAnalysisSettings(TruncateNormFilterFactory::new));
+        return Collections.unmodifiableMap(map);
     }
 
     @Override
