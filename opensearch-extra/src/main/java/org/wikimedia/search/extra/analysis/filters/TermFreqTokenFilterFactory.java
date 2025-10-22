@@ -6,12 +6,13 @@ import org.opensearch.common.settings.SettingsException;
 import org.opensearch.env.Environment;
 import org.opensearch.index.IndexSettings;
 import org.opensearch.index.analysis.AbstractTokenFilterFactory;
+import org.opensearch.index.analysis.NormalizingTokenFilterFactory;
 
 
 /**
  * Factories for the term_frequency token filters.
  */
-public class TermFreqTokenFilterFactory extends AbstractTokenFilterFactory {
+public class TermFreqTokenFilterFactory extends AbstractTokenFilterFactory implements NormalizingTokenFilterFactory {
     private final char splitChar;
     private final int maxTF;
 
