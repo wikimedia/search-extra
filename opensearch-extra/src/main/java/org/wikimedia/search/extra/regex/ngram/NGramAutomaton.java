@@ -198,7 +198,9 @@ public class NGramAutomaton {
                 for (int c = min; c <= max; c++) {
                     codePoint[0] = c;
                     String ngram = from.prefix + new String(codePoint, 0, 1);
-                    NGramState next = buildOrFind(leftToProcess, transition.dest, ngram.substring(1));
+                    NGramState next = buildOrFind(leftToProcess, transition.dest,
+                        ngram.substring(Character.charCount(from.prefix.codePointAt(0))));
+
                     // Transitions containing an invalid character contain no
                     // prefix.
                     if (ngram.indexOf(0) >= 0) {

@@ -20,6 +20,7 @@ import com.carrotsearch.randomizedtesting.RandomizedRunner;
 import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.carrotsearch.randomizedtesting.annotations.Repeat;
 
+@SuppressWarnings("unchecked")
 @RunWith(RandomizedRunner.class)
 public class NGramAutomatonTest extends RandomizedTest {
     @Test
@@ -101,43 +102,89 @@ public class NGramAutomatonTest extends RandomizedTest {
                 new Leaf<>(" te")));
     }
 
+    @SuppressWarnings("checkstyle:MethodParamPad") // checkstyle can't parse 4-byte chars Gothic & Old Italic
+    @Test
+    public void simpleMultiByteMultiCodePoint() {
+        assertTrigramExpression("αбγдε", new And<>(leaves("αбγ", "бγд", "γдε"))); // Greek & Cyrillic (2 bytes)
+        assertTrigramExpression("ᴁᴃᴄᴆᴈ", new And<>(leaves("ᴁᴃᴄ", "ᴃᴄᴆ", "ᴄᴆᴈ"))); // Phonetic Ext (3 bytes)
+        assertTrigramExpression("𐌰𐌱𐌲𐌳𐌴", new And<>(leaves("𐌰𐌱𐌲", "𐌱𐌲𐌳", "𐌲𐌳𐌴"))); // Gothic (4 bytes)
+        assertTrigramExpression("𐌀𐌁𐌂𐌃𐌄", new And<>(leaves("𐌀𐌁𐌂", "𐌁𐌂𐌃", "𐌂𐌃𐌄"))); // Old Italic (4 bytes)
+        assertTrigramExpression("AБᴄ𐌃𐌴", new And<>(leaves("AБᴄ", "Бᴄ𐌃", "ᴄ𐌃𐌴"))); // Mix-n-match (1-2-3-4-4 bytes)
+        assertTrigramExpression("𐌰ᴃγde", new And<>(leaves("𐌰ᴃγ", "ᴃγd", "γde"))); // Mix-n-match (4-3-2-1-1 bytes)
+    }
+
+    @Test
+    public void charClassMultiCodePoint() {
+        // in bytes-per-character: [42][14]342 => ((413 or 213) and 134) or ((443 or 243) and 434) and 342
+        assertTrigramExpression("[𐌰α][b𐌱]ᴄ𐌃ε",
+            new And<>(
+                new Or<>(
+                    new And<>(new Or<>(leaves("𐌰bᴄ", "αbᴄ")), new Leaf<>("bᴄ𐌃")),
+                    new And<>(new Or<>(leaves("𐌰𐌱ᴄ", "α𐌱ᴄ")), new Leaf<>("𐌱ᴄ𐌃"))),
+                new Leaf<>("ᴄ𐌃ε")));
+    }
+
+
     // The pgTrgmExample methods below test examples from the slides at
     // http://www.pgcon.org/2012/schedule/attachments/248_Alexander%20Korotkov%20-%20Index%20support%20for%20regular%20expression%20search.pdf
+    // Plus multibyte / multi-codepoint variants
     @Test
     public void pgTrgmExample1() {
-        assertTrigramExpression("a(b+|c+)d", new Or<>(
+        assertTrigramExpression("a(b+|c+)d",
+            new Or<>(
                 new Leaf<>("abd"),
                 new And<>(leaves("abb", "bbd")),
                 new Leaf<>("acd"),
                 new And<>(leaves("acc", "ccd"))));
+        // again, with a mix of 2-, 3-, and 4-byte characters
+        assertTrigramExpression("𐌰(𐌱+|γ+)ᴆ",
+            new Or<>(
+                new Leaf<>("𐌰𐌱ᴆ"),
+                new And<>(leaves("𐌰𐌱𐌱", "𐌱𐌱ᴆ")),
+                new Leaf<>("𐌰γᴆ"),
+                new And<>(leaves("𐌰γγ", "γγᴆ"))));
     }
 
     @Test
     public void pgTrgmExample2() {
-        assertTrigramExpression(
-            "(abc|cba)def",
+        assertTrigramExpression("(abc|cba)def",
             new And<>(
-                new Leaf<>("def"), new Or<>(
+                new Leaf<>("def"),
+                new Or<>(
                     new And<>(leaves("abc", "bcd", "cde")),
-                    new And<>(leaves("cba", "bad", "ade"))
-                )
-            )
-        );
+                    new And<>(leaves("cba", "bad", "ade")))));
+        // again, with a mix of 2-, 3-, and 4-byte characters
+        assertTrigramExpression("(α𐌱𐌲|γб𐌀)𐌃𐌴f",
+            new And<>(
+                new Or<>(
+                    new And<>(leaves("α𐌱𐌲", "𐌱𐌲𐌃", "𐌲𐌃𐌴")),
+                    new And<>(leaves("γб𐌀", "б𐌀𐌃", "𐌀𐌃𐌴"))),
+                new Leaf<>("𐌃𐌴f")));
     }
 
     @Test
     public void pgTrgmExample3() {
-        assertTrigramExpression("abc+de", new And<>(
+        assertTrigramExpression("abc+de",
+            new And<>(
                 new Leaf<>("abc"),
                 new Leaf<>("cde"),
                 new Or<>(
                         new Leaf<>("bcd"),
                         new And<>(leaves("bcc", "ccd")))));
+        // again, with a mix of 2-, 3-, and 4-byte characters
+        assertTrigramExpression("𐌰Ᏸ𐌂+Đ𐌄",
+            new And<>(
+                new Leaf<>("𐌰Ᏸ𐌂"),
+                new Leaf<>("𐌂Đ𐌄"),
+                new Or<>(
+                        new Leaf<>("Ᏸ𐌂Đ"),
+                        new And<>(leaves("Ᏸ𐌂𐌂", "𐌂𐌂Đ")))));
     }
 
     @Test
     public void pgTrgmExample4() {
-        assertTrigramExpression("(abc*)+de", new Or<>(
+        assertTrigramExpression("(abc*)+de",
+            new Or<>(
                 new And<>(leaves("abd", "bde")),
                 new And<>(
                         new Leaf<>("abc"),
@@ -145,13 +192,29 @@ public class NGramAutomatonTest extends RandomizedTest {
                         new Or<>(
                                 new Leaf<>("bcd"),
                                 new And<>(leaves("bcc", "ccd"))))));
+        // again, with a mix of 2-, 3-, and 4-byte characters
+        assertTrigramExpression("(ᴁ𐌱Ć*)+д𐌄",
+            new Or<>(
+                new And<>(leaves("ᴁ𐌱д", "𐌱д𐌄")),
+                new And<>(
+                        new Leaf<>("ᴁ𐌱Ć"),
+                        new Leaf<>("Ćд𐌄"),
+                        new Or<>(
+                                new Leaf<>("𐌱Ćд"),
+                                new And<>(leaves("𐌱ĆĆ", "ĆĆд"))))));
     }
 
     @Test
     public void pgTrgmExample5() {
-        assertTrigramExpression("ab(cd)*ef", new Or<>(
+        assertTrigramExpression("ab(cd)*ef",
+            new Or<>(
                 new And<>(leaves("abe", "bef")),
                 new And<>(leaves("abc", "bcd", "cde", "def"))));
+        // again, with a mix of 2-, 3-, and 4-byte characters
+        assertTrigramExpression("Ꭿ𐌁(Ć𐌳)*e𐌅",
+            new Or<>(
+                new And<>(leaves("Ꭿ𐌁e", "𐌁e𐌅")),
+                new And<>(leaves("Ꭿ𐌁Ć", "𐌁Ć𐌳", "Ć𐌳e", "𐌳e𐌅"))));
     }
 
     /**
@@ -252,15 +315,10 @@ public class NGramAutomatonTest extends RandomizedTest {
      * pick something and 4 seemed pretty good.
      */
     private void assertExpression(String regex, int gramSize, Expression<String> expected) {
-//         System.err.println(regex);
         Automaton automaton = new RegExp(regex).toAutomaton(20000);
-//         System.err.println(automaton.toDot());
         NGramAutomaton ngramAutomaton = new NGramAutomaton(automaton, gramSize, 4, 10000, 500, new KeywordAnalyzer());
-//         System.err.println(ngramAutomaton.toDot());
         Expression<String> expression = ngramAutomaton.expression();
-//         System.err.println(expression);
         expression = expression.simplify();
-//         System.err.println(expression);
         if (expected != null) {
             // Null means skip the test here.
             Assert.assertEquals(expected, expression);
