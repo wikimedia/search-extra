@@ -61,15 +61,27 @@ public interface ChangeHandler<T> {
      */
     class NullSafe<T> implements ChangeHandler<T> {
         private final NonnullChangeHandler<T> delegate;
+        private final @Nullable T nullSourceValue;
 
         public NullSafe(NonnullChangeHandler<T> delegate) {
+            this(delegate, null);
+        }
+
+        public NullSafe(NonnullChangeHandler<T> delegate, @Nullable T nullSourceValue) {
             this.delegate = delegate;
+            this.nullSourceValue = nullSourceValue;
         }
 
         @Override
         public Result handle(@Nullable T oldValue, @Nullable T newValue) {
+            if (oldValue == null && newValue == null) {
+                return Changed.forBoolean(true, null);
+            }
             if (oldValue == null) {
-                return Changed.forBoolean(newValue == null, newValue);
+                oldValue = nullSourceValue;
+            }
+            if (oldValue == null) {
+                return Changed.forBoolean(false, newValue);
             }
             if (newValue == null) {
                 return new Changed(null);
@@ -140,6 +152,11 @@ public interface ChangeHandler<T> {
         static <T> ChangeHandler<Object> nullAndTypeSafe(
                 Class<T> type, NonnullChangeHandler<List<T>> delegate) {
             return new NullSafe<>(new TypeSafeList<>(type, delegate));
+        }
+
+        static <T> ChangeHandler<Object> nullAndTypeSafe(
+                Class<T> type, NonnullChangeHandler<List<T>> delegate, List<T> nullSourceValue) {
+            return new NullSafe<>(new TypeSafeList<>(type, delegate), nullSourceValue);
         }
 
         private final Class<T> type;

@@ -3,6 +3,7 @@ package org.wikimedia.search.extra.superdetectnoop;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.opensearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -12,8 +13,11 @@ import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertRequestBui
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+
+import javax.annotation.Nullable;
 
 import org.hamcrest.Matcher;
 import org.junit.Test;
@@ -465,6 +469,39 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         assertEquals(Arrays.asList("main", "poignet"), labels.get("fr"));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testAddToMultiList() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("multilist", ImmutableList.of("A/exists|1"), "multilist");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry(equalTo("multilist"), instanceOf(List.class)));
+        assertThat((List<String>) r.get("multilist"), hasItem("A/exists|1"));
+    }
+
+    @Test
+    public void testMultiListAddToNullField() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("doesnt_exist", ImmutableList.of("A/exists|1"), "multilist");
+        Map<String, Object> r = update(b, true);
+        assertThat(r, hasEntry(equalTo("doesnt_exist"), equalTo(ImmutableList.of("A/exists|1"))));
+    }
+
+    @Test
+    public void testMultiListDeleteFromNull() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("doesnt_exist", ImmutableList.of("A/__DELETE_GROUPING__"), "multilist");
+        Map<String, Object> r = update(b, false);
+        assertThat(r, not(hasEntry(equalTo("doesnt_exist"), anything())));
+    }
+
+    public void testMultiListNoChangeOnAllNull() throws IOException {
+        indexSeedData();
+        XContentBuilder b = x("doesnt_exist", null, "multilist");
+        Map<String, Object> r = update(b, false);
+        assertThat(r, not(hasEntry(equalTo("doesnt_exist"), anything())));
+    }
+
     /** Tests path matching. */
     @Test
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -480,7 +517,8 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
     }
 
     /** Builds the xcontent for the request parameters for a single field. */
-    private XContentBuilder x(String field, Object value, String detector) throws IOException {
+    private XContentBuilder x(String field, @Nullable Object value, @Nullable String detector)
+            throws IOException {
         XContentBuilder b = jsonBuilder().startObject();
         b.startObject("source");
         xInPath(Splitter.on('.').split(field).iterator(), b, value);
@@ -496,7 +534,8 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         return b;
     }
 
-    private void xInPath(Iterator<String> path, XContentBuilder b, Object value) throws IOException {
+    private void xInPath(Iterator<String> path, XContentBuilder b, @Nullable Object value)
+            throws IOException {
         b.field(path.next());
         if (path.hasNext()) {
             b.startObject();
@@ -530,6 +569,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
             b.array("set", "cat", "dog", "fish");
             b.startObject("o").field("bar", 10).array("set", "cow", "fish", "bat");
             b.endObject();
+            b.array("multilist", "X/exists|1", "Z/high|1000", "Z/low|0");
 
             b.startObject("labels").array("fr", "main", "poignet").array("en", "hand", "fist");
             b.endObject();

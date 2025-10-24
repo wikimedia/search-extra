@@ -14,6 +14,8 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.ImmutableList;
+
 /**
  * Implementation of {@link ChangeHandler} that allows for maintaining multiple sets inside a single
  * list stored within OpenSearch. The sub sets are updated in their entirety, while unreferenced
@@ -23,7 +25,8 @@ import javax.annotation.Nonnull;
 public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List<String>> {
     static final String DELETE = "__DELETE_GROUPING__";
     static final ChangeHandler<Object> INSTANCE =
-            ChangeHandler.TypeSafeList.nullAndTypeSafe(String.class, new MultiListHandler());
+            ChangeHandler.TypeSafeList.nullAndTypeSafe(
+                    String.class, new MultiListHandler(), ImmutableList.of());
 
     public static final ChangeHandler.Recognizer RECOGNIZER =
             desc -> desc.equals("multilist") ? INSTANCE : null;
