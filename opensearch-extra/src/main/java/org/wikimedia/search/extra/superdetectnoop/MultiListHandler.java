@@ -15,21 +15,22 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 /**
- * Implementation of {@link ChangeHandler} that allows for maintaining multiple
- * sets inside a single list stored within OpenSearch. The sub sets are
- * updated in their entirety, while unreferenced sets in the source are maintained.
- * Sets can be removed by providing a single tombstone value, __DELETE_GROUPING__.
+ * Implementation of {@link ChangeHandler} that allows for maintaining multiple sets inside a single
+ * list stored within OpenSearch. The sub sets are updated in their entirety, while unreferenced
+ * sets in the source are maintained. Sets can be removed by providing a single tombstone value,
+ * __DELETE_GROUPING__.
  */
 public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List<String>> {
     static final String DELETE = "__DELETE_GROUPING__";
     static final ChangeHandler<Object> INSTANCE =
             ChangeHandler.TypeSafeList.nullAndTypeSafe(String.class, new MultiListHandler());
 
-    public static final ChangeHandler.Recognizer RECOGNIZER = desc ->
-            desc.equals("multilist") ? INSTANCE : null;
+    public static final ChangeHandler.Recognizer RECOGNIZER =
+            desc -> desc.equals("multilist") ? INSTANCE : null;
 
     @Override
-    public ChangeHandler.Result handle(@Nonnull List<String> oldValue, @Nonnull List<String> newValue) {
+    public ChangeHandler.Result handle(
+            @Nonnull List<String> oldValue, @Nonnull List<String> newValue) {
         if (newValue.isEmpty()) {
             throw new IllegalArgumentException("Empty update provided to MultiListHandler");
         }
@@ -52,11 +53,15 @@ public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List
         }
 
         static MultiSet parse(Collection<String> strings) {
-            return new MultiSet(strings.stream()
-                    .collect(groupingBy(val -> {
-                        int pos = val.indexOf(DELIMITER);
-                        return pos == -1 ? UNNAMED : val.substring(0, pos);
-                    }, toSet())));
+            return new MultiSet(
+                    strings.stream()
+                            .collect(
+                                    groupingBy(
+                                            val -> {
+                                                int pos = val.indexOf(DELIMITER);
+                                                return pos == -1 ? UNNAMED : val.substring(0, pos);
+                                            },
+                                            toSet())));
         }
 
         private <T> Optional<T> onlyElement(Collection<T> foo) {
@@ -74,17 +79,18 @@ public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List
 
         private boolean isDeleteMarker(String group, Set<String> values) {
             return onlyElement(values)
-                .map(value -> {
-                    // We don't need to verify the group, by construction the prefix must match
-                    // the group. We only need to verify that there isn't additional content. Verify
-                    // by ensuring there is only enough room for the marker and the prefix.
-                    int expectedLength = DELETE.length();
-                    if (!UNNAMED.equals(group)) {
-                        expectedLength += 1 + group.length();
-                    }
-                    return value.length() == expectedLength && value.endsWith(DELETE);
-                })
-                .orElse(FALSE);
+                    .map(
+                            value -> {
+                                // We don't need to verify the group, by construction the prefix must match
+                                // the group. We only need to verify that there isn't additional content. Verify
+                                // by ensuring there is only enough room for the marker and the prefix.
+                                int expectedLength = DELETE.length();
+                                if (!UNNAMED.equals(group)) {
+                                    expectedLength += 1 + group.length();
+                                }
+                                return value.length() == expectedLength && value.endsWith(DELETE);
+                            })
+                    .orElse(FALSE);
         }
 
         boolean replaceFrom(MultiSet other) {
@@ -108,9 +114,7 @@ public class MultiListHandler implements ChangeHandler.NonnullChangeHandler<List
         }
 
         List<String> flatten() {
-            return sets.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream())
-                .collect(toList());
+            return sets.entrySet().stream().flatMap(entry -> entry.getValue().stream()).collect(toList());
         }
     }
 }

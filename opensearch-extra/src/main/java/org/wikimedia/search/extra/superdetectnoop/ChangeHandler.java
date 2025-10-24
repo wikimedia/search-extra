@@ -15,13 +15,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @param <T> type of the thin being checked
  */
 public interface ChangeHandler<T> {
-    /**
-     * Handle a proposed change.
-     */
+    /** Handle a proposed change. */
     Result handle(@Nullable T oldValue, @Nullable T newValue);
 
     /**
      * Handler that must be wrapped with the NullSafe handler.
+     *
      * @param <T> type on which the implementation operates
      */
     interface NonnullChangeHandler<T> {
@@ -29,43 +28,34 @@ public interface ChangeHandler<T> {
     }
 
     /**
-     * Builds CloseEnoughDetectors from the string description sent in the
-     * script parameters. Returning null from build just means that this recognizer
-     * doesn't recognize that parameter.
+     * Builds CloseEnoughDetectors from the string description sent in the script parameters.
+     * Returning null from build just means that this recognizer doesn't recognize that parameter.
      */
     interface Recognizer {
         @Nullable
         ChangeHandler<Object> build(String description);
     }
 
-    /**
-     * The result of the close enough check.
-     */
+    /** The result of the close enough check. */
     interface Result {
-        /**
-         * Were the two values close enough? Returning true will cause the
-         * values to be unchanged.
-         */
+        /** Were the two values close enough? Returning true will cause the values to be unchanged. */
         boolean isCloseEnough();
 
         /**
-         * If the two values weren't close enough what should we use as the new
-         * value? If the two values were close enough this is undefined. If this
-         * returns null then the value should be removed from the source.
+         * If the two values weren't close enough what should we use as the new value? If the two values
+         * were close enough this is undefined. If this returns null then the value should be removed
+         * from the source.
          */
         @Nullable
         Object newValue();
 
-        /**
-         * Should the entire document update be noop'd?
-         */
+        /** Should the entire document update be noop'd? */
         boolean isDocumentNooped();
     }
 
     /**
-     * Wraps another detector and only delegates to it if both values aren't
-     * null. If both values are null returns true, if only one is null then
-     * returns false.
+     * Wraps another detector and only delegates to it if both values aren't null. If both values are
+     * null returns true, if only one is null then returns false.
      *
      * @param <T> type on which the wrapped detector operates
      */
@@ -88,10 +78,7 @@ public interface ChangeHandler<T> {
         }
     }
 
-    /**
-     * Objects are only close enough if they are {@link Object#equals(Object)}
-     * to each other.
-     */
+    /** Objects are only close enough if they are {@link Object#equals(Object)} to each other. */
     final class Equal implements ChangeHandler<Object> {
         public static final ChangeHandler<Object> INSTANCE = new Equal();
 
@@ -105,8 +92,7 @@ public interface ChangeHandler<T> {
             }
         }
 
-        private Equal() {
-        }
+        private Equal() {}
 
         @Override
         public Result handle(@Nullable Object oldValue, @Nullable Object newValue) {
@@ -115,18 +101,16 @@ public interface ChangeHandler<T> {
     }
 
     /**
-     * Wraps another detector and only delegates to it if both values are of a
-     * certain type. If they aren't then it delegates to Equal. Doesn't perform
-     * null checking - wrap me in NullSafe or just use the nullAndTypeSafe
-     * static method to build me.
+     * Wraps another detector and only delegates to it if both values are of a certain type. If they
+     * aren't then it delegates to Equal. Doesn't perform null checking - wrap me in NullSafe or just
+     * use the nullAndTypeSafe static method to build me.
      *
      * @param <T> type on which the wrapped detector operates
      */
     class TypeSafe<T> implements NonnullChangeHandler<Object> {
-        /**
-         * Wraps a ChangeHandler in a null-safe, type-safe way.
-         */
-        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, NonnullChangeHandler<T> delegate) {
+        /** Wraps a ChangeHandler in a null-safe, type-safe way. */
+        static <T> ChangeHandler<Object> nullAndTypeSafe(
+                Class<T> type, NonnullChangeHandler<T> delegate) {
             return new ChangeHandler.NullSafe<>(new ChangeHandler.TypeSafe<>(type, delegate));
         }
 
@@ -153,7 +137,8 @@ public interface ChangeHandler<T> {
     }
 
     class TypeSafeList<T> implements NonnullChangeHandler<Object> {
-        static <T> ChangeHandler<Object> nullAndTypeSafe(Class<T> type, NonnullChangeHandler<List<T>> delegate) {
+        static <T> ChangeHandler<Object> nullAndTypeSafe(
+                Class<T> type, NonnullChangeHandler<List<T>> delegate) {
             return new NullSafe<>(new TypeSafeList<>(type, delegate));
         }
 
@@ -175,22 +160,25 @@ public interface ChangeHandler<T> {
         private List<T> toTypedList(Object value) {
             List<T> list;
             try {
-                list = (List<T>)value;
+                list = (List<T>) value;
             } catch (ClassCastException e) {
-                throw new IllegalArgumentException(String.format(Locale.ROOT,
-                        "Expected a list, but recieved (%s)", value.getClass().getName()), e);
+                throw new IllegalArgumentException(
+                        String.format(
+                                Locale.ROOT, "Expected a list, but recieved (%s)", value.getClass().getName()),
+                        e);
             }
             if (!list.stream().allMatch(x -> type.isAssignableFrom(x.getClass()))) {
-                throw new IllegalArgumentException(String.format(Locale.ROOT,
-                        "List elements not assignable to expected type (%s)", type.getName()));
+                throw new IllegalArgumentException(
+                        String.format(
+                                Locale.ROOT, "List elements not assignable to expected type (%s)", type.getName()));
             }
             return list;
         }
     }
 
     /**
-     * Result that shows that the old and new value are close enough that it
-     * isn't worth actually performing the update.
+     * Result that shows that the old and new value are close enough that it isn't worth actually
+     * performing the update.
      */
     final class CloseEnough implements Result {
         public static final Result INSTANCE = new CloseEnough();
@@ -216,8 +204,7 @@ public interface ChangeHandler<T> {
     }
 
     /**
-     * Result that shows that the entire document update should be
-     * canceled and turned into a noop.
+     * Result that shows that the entire document update should be canceled and turned into a noop.
      */
     final class NoopDocument implements Result {
         public static final Result INSTANCE = new NoopDocument();
@@ -249,8 +236,8 @@ public interface ChangeHandler<T> {
         }
     }
     /**
-     * Result that shows that the new value is different enough from the new
-     * value that its worth actually performing the update.
+     * Result that shows that the new value is different enough from the new value that its worth
+     * actually performing the update.
      */
     class Changed implements Result {
         public static Result forBoolean(boolean closeEnough, @Nullable Object newValue) {
