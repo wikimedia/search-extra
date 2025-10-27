@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.wikimedia.search</groupId>
         <artifactId>opensearch-extra-parent</artifactId>
-        <version>1.3.20-wmf8-SNAPSHOT</version>
+        <version>1.3.20-wmf8</version>
     </parent>
     <artifactId>opensearch-extra-common</artifactId>
 
