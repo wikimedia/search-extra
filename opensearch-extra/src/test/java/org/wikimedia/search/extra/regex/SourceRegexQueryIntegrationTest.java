@@ -202,6 +202,20 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         // I can't find any way from here to mark it otherwise.
     }
 
+    private void assertLuceneMatch(String regex, String... docids) {
+        SearchResponse response = search(filter(regex).ngramField("test.trigram_anchored")).get();
+        assertSearchHits(response, docids);
+    }
+
+    private void assertNoLuceneMatch(String regex) {
+        assertLuceneMatch(regex);
+    }
+
+    private void assertRegexFailure(String regex, RestStatus status, org.hamcrest.Matcher<String> matcher) {
+        SearchRequestBuilder builder = search(filter(regex).ngramField("test.trigram_anchored"));
+        assertFailures(builder, status, matcher);
+    }
+
     private void assertPatternMatch(Map<String, String> docs, String regex, String... docids) {
         // First run through java Pattern, to assert validity of the test case
         Pattern pattern = Pattern.compile(regex);
@@ -211,14 +225,14 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
             assertEquals("key: " + entry.getKey(), match.find(), expectMatch);
         }
 
-        // Then run through elastic to make sure we get the same result
-        SearchResponse response = search(filter(regex).ngramField("test.trigram_anchored")).get();
-        assertSearchHits(response, docids);
+        // Then run through the full integration to make sure we get the same result
+        assertLuceneMatch(regex, docids);
     }
 
     private void assertNoPatternMatch(Map<String, String> docs, String regex) {
         assertPatternMatch(docs, regex);
     }
+
 
     /**
      * These patterns are already tested in lucene-regex-rewriter, but we test them
@@ -298,6 +312,34 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         // `.` must not match anchors
         assertNoPatternMatch(docs, ".ab");
         assertNoPatternMatch(docs, "ef.");
+    }
+
+    @Test
+    public void unicodeExpansion() throws InterruptedException, IOException {
+        setup();
+
+        Map<String, String> docs = ImmutableMap.of(
+            "emoji", "😀",
+            "alphanumeric", "abc123",
+            "water", "水"
+        );
+        for (Map.Entry<String, String> entry : docs.entrySet()) {
+            indexRandom(true, doc(entry.getKey(), entry.getValue()));
+        }
+
+        assertPatternMatch(docs, "\\uD83D\\uDE00", "emoji");
+        assertPatternMatch(docs, "[\\uD83D\\uDE00]", "emoji");
+        assertLuceneMatch("\\u{6c34}", "water");
+    }
+
+    @Test
+    public void invalidUnicodeExpansion() throws InterruptedException, IOException {
+        setup();
+        // verify how normal syntax errors are emitted
+        assertRegexFailure("[[[", RestStatus.INTERNAL_SERVER_ERROR, containsString("expected ']' at position 3"));
+        // ours come out differently, although arguably BAD_REQUEST is more accurate than ISE.
+        assertRegexFailure("\\u{QQQ}", RestStatus.BAD_REQUEST, containsString(
+            "Invalid hex content in \\u{...} escape sequence"));
     }
 
     @Test
