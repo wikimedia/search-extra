@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.superdetectnoop;
 
-import static org.apache.lucene.util.TestUtil.randomSimpleString;
+import static org.apache.lucene.tests.util.TestUtil.randomSimpleString;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -3,7 +3,7 @@ package org.wikimedia.search.extra.analysis.khmer;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.apache.lucene.analysis.BaseTokenStreamTestCase;
+import org.apache.lucene.tests.analysis.BaseTokenStreamTestCase;
 import org.apache.lucene.analysis.CharFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.junit.Test;

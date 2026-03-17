@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +35,6 @@ public class PreserveOriginalIntegrationTest extends AbstractPluginIntegrationTe
 
         XContentBuilder mapping = jsonBuilder()
                 .startObject()
-                .startObject("test")
                 .startObject("properties")
                 .startObject("test")
                 .field("type", "text")
@@ -43,10 +42,9 @@ public class PreserveOriginalIntegrationTest extends AbstractPluginIntegrationTe
                 .field("similarity", "BM25")
                 .endObject()
                 .endObject()
-                .endObject()
                 .endObject();
 
-        assertAcked(prepareCreate("test").addMapping("test", mapping).setSettings(settings));
+        assertAcked(prepareCreate("test").setMapping(mapping).setSettings(settings));
         ensureGreen();
         indexRandom(false, doc("all_lower", "hello world"));
         indexRandom(false, doc("mixed", "Hello World with more text"));
@@ -86,6 +84,6 @@ public class PreserveOriginalIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     private IndexRequestBuilder doc(String id, String fieldValue) {
-        return client().prepareIndex("test", "test", id).setSource("test", fieldValue);
+        return client().prepareIndex("test").setId(id).setSource("test", fieldValue);
     }
 }

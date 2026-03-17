@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.similarities.Similarity;
@@ -47,6 +48,11 @@ public class SimSwitcherQuery extends Query {
         this.subQuery = requireNonNull(subQuery);
     }
 
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        subQuery.visit(visitor.getSubVisitor(org.apache.lucene.search.BooleanClause.Occur.MUST, this));
+    }
 
     @Override
     public String toString(String field) {

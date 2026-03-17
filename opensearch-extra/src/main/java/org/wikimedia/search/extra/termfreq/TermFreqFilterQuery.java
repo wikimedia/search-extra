@@ -2,7 +2,6 @@ package org.wikimedia.search.extra.termfreq;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.IntPredicate;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -12,6 +11,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
@@ -65,6 +65,11 @@ public class TermFreqFilterQuery extends Query {
     }
 
     @Override
+    public void visit(QueryVisitor visitor) {
+        visitor.consumeTerms(this, term);
+    }
+
+    @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new TermFreqFilterWeight(this, term, predicate);
     }
@@ -77,11 +82,6 @@ public class TermFreqFilterQuery extends Query {
             super(q);
             this.term = term;
             this.predicate = predicate;
-        }
-
-        @Override
-        public void extractTerms(Set<Term> set) {
-            set.add(term);
         }
 
         @Override

@@ -4,7 +4,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.io.IOException;
 
-import org.apache.lucene.util.LuceneTestCase;
+import org.apache.lucene.tests.util.LuceneTestCase;
 import org.opensearch.index.query.MatchNoneQueryBuilder;
 import org.opensearch.index.query.MatchPhraseQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;

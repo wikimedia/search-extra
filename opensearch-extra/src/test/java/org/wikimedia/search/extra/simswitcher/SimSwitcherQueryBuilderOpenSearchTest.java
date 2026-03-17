@@ -26,8 +26,8 @@ import java.util.Set;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.similarity.LegacyBM25Similarity;
-import org.opensearch.common.ParsingException;
+import org.apache.lucene.misc.search.similarity.LegacyBM25Similarity;
+import org.opensearch.core.common.ParsingException;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.index.mapper.MapperService;

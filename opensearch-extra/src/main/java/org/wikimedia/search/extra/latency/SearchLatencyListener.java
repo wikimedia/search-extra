@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
-import org.opensearch.common.component.AbstractLifecycleComponent;
+import org.opensearch.common.lifecycle.AbstractLifecycleComponent;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.shard.SearchOperationListener;
 import org.opensearch.search.internal.SearchContext;

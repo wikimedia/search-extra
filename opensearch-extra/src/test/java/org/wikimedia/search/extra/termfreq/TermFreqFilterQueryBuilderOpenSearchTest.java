@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
-import org.opensearch.common.ParsingException;
+import org.opensearch.core.common.ParsingException;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.index.mapper.MapperService;
 import org.opensearch.index.query.QueryShardContext;

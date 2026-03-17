@@ -15,14 +15,13 @@ import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrationTest {
     private void init() throws IOException {
         assertAcked(prepareCreate("test")
-                .addMapping(
-                        "type1",
-                        jsonBuilder().startObject().startObject("type1").startObject("properties")
+                .setMapping(
+                        jsonBuilder().startObject().startObject("properties")
                                 .startObject("content")
                                 .field("type", "text")
                                 .field("store", false)
                                 .field("analyzer", "standard")
-                                .endObject().endObject().endObject().endObject())
+                                .endObject().endObject().endObject())
                 .setSettings(jsonBuilder().startObject().startObject("index")
                         .field("number_of_shards", 1)
                         .startObject("analysis").startObject("analyzer")
@@ -33,13 +32,13 @@ public class TokenCountRouterQueryIntegrationTest extends AbstractPluginIntegrat
                         .endObject().endObject()
                         .endObject().endObject()).get());
 
-        client().prepareIndex("test", "type1", "1").setSource("content", "Haste makes waste").get();
-        client().prepareIndex("test", "type1", "2").setSource("content", "A stitch in time saves nine").get();
-        client().prepareIndex("test", "type1", "3").setSource("content", "Ignorance is bliss").get();
-        client().prepareIndex("test", "type1", "4").setSource("content", "Paste makes waste").get();
-        client().prepareIndex("test", "type1", "5").setSource("content", "A stitch in time saves nine essay").get();
-        client().prepareIndex("test", "type1", "6").setSource("content", "Ignorance is strength").get();
-        client().prepareIndex("test", "type1", "7").setSource().get();
+        client().prepareIndex("test").setId("1").setSource("content", "Haste makes waste").get();
+        client().prepareIndex("test").setId("2").setSource("content", "A stitch in time saves nine").get();
+        client().prepareIndex("test").setId("3").setSource("content", "Ignorance is bliss").get();
+        client().prepareIndex("test").setId("4").setSource("content", "Paste makes waste").get();
+        client().prepareIndex("test").setId("5").setSource("content", "A stitch in time saves nine essay").get();
+        client().prepareIndex("test").setId("6").setSource("content", "Ignorance is strength").get();
+        client().prepareIndex("test").setId("7").setSource().get();
         refresh();
     }
 

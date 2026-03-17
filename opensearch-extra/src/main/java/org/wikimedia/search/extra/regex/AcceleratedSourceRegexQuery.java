@@ -17,6 +17,7 @@ import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
 import org.wikimedia.search.extra.util.FieldValues.Loader;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 
 /**
@@ -73,6 +74,7 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
     }
 
     @Override
+    @SuppressFBWarnings(value = "COM_COPIED_OVERRIDDEN_METHOD", justification = "Bad match, the string differs")
     public String toString(String field) {
         return "source_regex(accelerated):" + field;
     }

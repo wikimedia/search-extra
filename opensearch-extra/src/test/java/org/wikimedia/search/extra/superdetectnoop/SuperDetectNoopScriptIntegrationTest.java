@@ -26,11 +26,11 @@ import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.action.update.UpdateRequestBuilder;
 import org.opensearch.action.update.UpdateResponse;
-import org.opensearch.common.bytes.BytesReference;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.common.bytes.BytesReference;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.common.xcontent.XContentHelper;
 import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.rest.RestStatus;
+import org.opensearch.core.rest.RestStatus;
 import org.opensearch.script.Script;
 import org.opensearch.script.ScriptType;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -550,15 +550,12 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         XContentBuilder mapping =
                 jsonBuilder()
                         .startObject()
-                        // We test doc updates we do not care about mapping and types
                         // Disabling dynamic mapping so that we are free to experiment
                         // with edge cases (changing types)
-                        .startObject("test")
                         .field("dynamic", false)
-                        .endObject()
                         .endObject();
 
-        assertAcked(prepareCreate("test").addMapping("test", mapping));
+        assertAcked(prepareCreate("test").setMapping(mapping));
         ensureGreen();
 
         XContentBuilder b = jsonBuilder().startObject();
@@ -578,7 +575,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
 
         IndexResponse ir =
                 client()
-                        .prepareIndex("test", "test", "1")
+                        .prepareIndex("test").setId("1")
                         .setSource(b)
                         .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE)
                         .get();
@@ -590,7 +587,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
         DocWriteResponse.Result expected =
                 shouldUpdate ? DocWriteResponse.Result.UPDATED : DocWriteResponse.Result.NOOP;
         assertEquals(expected, resp.getResult());
-        return client().prepareGet("test", "test", "1").get().getSource();
+        return client().prepareGet("test", "1").get().getSource();
     }
 
     private UpdateRequestBuilder toUpdateRequest(XContentBuilder b) {
@@ -599,7 +596,7 @@ public class SuperDetectNoopScriptIntegrationTest extends AbstractPluginIntegrat
                 XContentHelper.convertToMap(BytesReference.bytes(b), true, XContentType.JSON).v2();
         Script script = new Script(ScriptType.INLINE, "super_detect_noop", "", m);
         return client()
-                .prepareUpdate("test", "test", "1")
+                .prepareUpdate("test", "1")
                 .setScript(script)
                 .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
     }

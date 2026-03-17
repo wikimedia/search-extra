@@ -37,7 +37,7 @@ import org.opensearch.plugins.Plugin;
 import org.opensearch.test.OpenSearchIntegTestCase;
 import org.opensearch.test.OpenSearchIntegTestCase.ClusterScope;
 
-@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE, transportClientRatio = 0.0)
+@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE)
 public class AbstractPluginIntegrationTest extends OpenSearchIntegTestCase {
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {

@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.opensearch.common.settings.Settings;
-import org.opensearch.common.xcontent.DeprecationHandler;
-import org.opensearch.common.xcontent.NamedXContentRegistry;
-import org.opensearch.common.xcontent.XContentParser;
+import org.opensearch.core.xcontent.DeprecationHandler;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
+import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.common.xcontent.json.JsonXContent;
 import org.opensearch.index.query.AbstractQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
@@ -24,7 +24,7 @@ public class QueryBuilderTestUtils {
     private final NamedXContentRegistry xContentRegistry;
 
     private QueryBuilderTestUtils() {
-        SearchModule module = new SearchModule(Settings.EMPTY, false, Collections.singletonList(new ExtraCorePlugin(Settings.EMPTY)));
+        SearchModule module = new SearchModule(Settings.EMPTY, Collections.singletonList(new ExtraCorePlugin(Settings.EMPTY)));
         xContentRegistry = new NamedXContentRegistry(module.getNamedXContents());
     }
 

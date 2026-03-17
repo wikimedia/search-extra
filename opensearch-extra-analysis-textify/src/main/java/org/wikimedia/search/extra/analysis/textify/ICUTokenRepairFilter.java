@@ -40,6 +40,7 @@ public final class ICUTokenRepairFilter extends TokenFilter {
     private final boolean keepCamelSplit;
     private final boolean mergeNumOnly;
     private final boolean isTypeAllowList;
+    @SuppressFBWarnings(value = "WOC_WRITE_ONLY_COLLECTION_FIELD", justification = "Misdetection, mergeableTypes is used in child class")
     private final Set<Integer> mergeableTypes;
     private final boolean filterScriptPairs;
     @Nullable private final Table<Integer, Integer, Boolean> mergeableScriptPairs;

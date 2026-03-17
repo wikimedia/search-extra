@@ -16,7 +16,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.opensearch.common.ParsingException;
+import org.opensearch.core.common.ParsingException;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.index.mapper.MapperService;
 import org.opensearch.index.query.MatchNoneQueryBuilder;

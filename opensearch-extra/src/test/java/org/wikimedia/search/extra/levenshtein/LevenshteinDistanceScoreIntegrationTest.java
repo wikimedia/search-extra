@@ -13,7 +13,7 @@ import java.io.IOException;
 import org.opensearch.OpenSearchException;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.lucene.search.function.CombineFunction;
-import org.opensearch.rest.RestStatus;
+import org.opensearch.core.rest.RestStatus;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -21,23 +21,22 @@ import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 public class LevenshteinDistanceScoreIntegrationTest extends AbstractPluginIntegrationTest {
     @Test
     public void testLevenshteinScore() throws OpenSearchException, IOException {
-        assertAcked(prepareCreate("test").addMapping(
-                "type1",
-                jsonBuilder().startObject().startObject("type1").startObject("properties")
+        assertAcked(prepareCreate("test").setMapping(
+                jsonBuilder().startObject().startObject("properties")
                         .startObject("content").field("type", "text")
                             .field("store", false)
                             .field("copy_to", "content_stored").endObject()
                         .startObject("content_stored")
                             .field("type", "text").field("store", true).endObject()
-                        .endObject().endObject().endObject()).get());
+                        .endObject().endObject()).get());
 
-        client().prepareIndex("test", "type1", "1").setSource("content", "Haste makes waste").get();
-        client().prepareIndex("test", "type1", "2").setSource("content", "A stitch in time saves nine").get();
-        client().prepareIndex("test", "type1", "3").setSource("content", "Ignorance is bliss").get();
-        client().prepareIndex("test", "type1", "4").setSource("content", "Paste makes waste").get();
-        client().prepareIndex("test", "type1", "5").setSource("content", "A stitch in time saves nine essay").get();
-        client().prepareIndex("test", "type1", "6").setSource("content", "Ignorance is strength").get();
-        client().prepareIndex("test", "type1", "7").setSource().get();
+        client().prepareIndex("test").setId("1").setSource("content", "Haste makes waste").get();
+        client().prepareIndex("test").setId("2").setSource("content", "A stitch in time saves nine").get();
+        client().prepareIndex("test").setId("3").setSource("content", "Ignorance is bliss").get();
+        client().prepareIndex("test").setId("4").setSource("content", "Paste makes waste").get();
+        client().prepareIndex("test").setId("5").setSource("content", "A stitch in time saves nine essay").get();
+        client().prepareIndex("test").setId("6").setSource("content", "Ignorance is strength").get();
+        client().prepareIndex("test").setId("7").setSource().get();
 
         refresh();
 

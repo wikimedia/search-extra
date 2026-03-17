@@ -24,8 +24,8 @@ import javax.annotation.Nullable;
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.xcontent.XContentBuilder;
-import org.opensearch.rest.RestStatus;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.core.rest.RestStatus;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
 
@@ -41,7 +41,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         SearchResponse response = search(filter("t..t")).get();
         assertSearchHits(response, "findme");
 
-        client().prepareDelete("test", "test", "findme").get();
+        client().prepareDelete("test", "findme").get();
         deleteChaff(20);
         refresh();
 
@@ -475,7 +475,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     private IndexRequestBuilder doc(String id, String fieldValue) {
-        return client().prepareIndex("test", "test", id).setSource("test", fieldValue);
+        return client().prepareIndex("test").setId(id).setSource("test", fieldValue);
     }
 
     private void indexChaff(int count) throws InterruptedException, ExecutionException {
@@ -488,7 +488,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
 
     private void deleteChaff(int count) throws InterruptedException, ExecutionException {
         for (int i = 0; i < count; i++) {
-            client().prepareDelete("test", "test", Integer.toString(i)).get();
+            client().prepareDelete("test", Integer.toString(i)).get();
         }
     }
 
@@ -499,7 +499,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     private SearchRequestBuilder search(SourceRegexQueryBuilder builder) {
-        return client().prepareSearch("test").setTypes("test").setQuery(builder);
+        return client().prepareSearch("test").setQuery(builder);
     }
 
     private void setup() throws IOException {
@@ -508,7 +508,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
 
     private void setup(String locale) throws IOException {
         XContentBuilder mapping = jsonBuilder().startObject();
-        mapping.startObject("test").startObject("properties");
+        mapping.startObject("properties");
         mapping.startObject("test");
         mapping.field("type", "text");
         mapping.startObject("fields");
@@ -518,7 +518,6 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         buildSubfield(mapping, "spectrigram");
         buildSubfield(mapping, "trigram_anchored", "trigram");
         mapping.endObject()
-            .endObject()
             .endObject()
             .endObject()
             .endObject();
@@ -551,7 +550,7 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         settings.endObject().endObject().endObject();
         // System.err.println(Strings.toString(settings));
         // System.err.println(Strings.toString(mapping));
-        assertAcked(prepareCreate("test").setSettings(settings).addMapping("test", mapping));
+        assertAcked(prepareCreate("test").setSettings(settings).setMapping(mapping));
         ensureYellow();
     }
 

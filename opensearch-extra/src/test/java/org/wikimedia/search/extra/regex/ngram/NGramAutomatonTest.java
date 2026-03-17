@@ -4,7 +4,7 @@ import static org.wikimedia.search.extra.regex.expression.Leaf.leaves;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.util.automaton.Automaton;
-import org.apache.lucene.util.automaton.AutomatonTestUtil;
+import org.apache.lucene.tests.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.junit.Assert;

@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchRequestBuilder;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.test.OpenSearchIntegTestCase;
@@ -20,7 +20,7 @@ import org.opensearch.test.OpenSearchIntegTestCase.ClusterScope;
 import org.junit.Before;
 import org.junit.Test;
 
-@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE, transportClientRatio = 0.0)
+@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE)
 public class ICUTokenRepairIntegrationTest extends OpenSearchIntegTestCase {
 
     String[] allFields = {"preconfig_field", "default_field", "merge_camel_field",
@@ -86,43 +86,41 @@ public class ICUTokenRepairIntegrationTest extends OpenSearchIntegTestCase {
 
         XContentBuilder mapping = jsonBuilder()
                 .startObject()
-                    .startObject("my_mapping")
-                        .startObject("properties")
-                            .startObject("preconfig_field")
-                                .field("type", "text")
-                                .field("analyzer", "preconfig_analyzer")
-                                .field("similarity", "BM25")
-                            .endObject()
-                            .startObject("default_field")
-                                .field("type", "text")
-                                .field("analyzer", "default_analyzer")
-                                .field("similarity", "BM25")
-                            .endObject()
-                            .startObject("merge_camel_field")
-                                .field("type", "text")
-                                .field("analyzer", "merge_camel_analyzer")
-                                .field("similarity", "BM25")
-                            .endObject()
-                            .startObject("merge_no_types_field")
-                                .field("type", "text")
-                                .field("analyzer", "merge_no_types_analyzer")
-                                .field("similarity", "BM25")
-                            .endObject()
-                            .startObject("merge_no_scripts_field")
-                                .field("type", "text")
-                                .field("analyzer", "merge_no_scripts_analyzer")
-                                .field("similarity", "BM25")
-                            .endObject()
-                            .startObject("no_num_field")
-                                .field("type", "text")
-                                .field("analyzer", "no_num_analyzer")
-                                .field("similarity", "BM25")
-                            .endObject()
+                    .startObject("properties")
+                        .startObject("preconfig_field")
+                            .field("type", "text")
+                            .field("analyzer", "preconfig_analyzer")
+                            .field("similarity", "BM25")
+                        .endObject()
+                        .startObject("default_field")
+                            .field("type", "text")
+                            .field("analyzer", "default_analyzer")
+                            .field("similarity", "BM25")
+                        .endObject()
+                        .startObject("merge_camel_field")
+                            .field("type", "text")
+                            .field("analyzer", "merge_camel_analyzer")
+                            .field("similarity", "BM25")
+                        .endObject()
+                        .startObject("merge_no_types_field")
+                            .field("type", "text")
+                            .field("analyzer", "merge_no_types_analyzer")
+                            .field("similarity", "BM25")
+                        .endObject()
+                        .startObject("merge_no_scripts_field")
+                            .field("type", "text")
+                            .field("analyzer", "merge_no_scripts_analyzer")
+                            .field("similarity", "BM25")
+                        .endObject()
+                        .startObject("no_num_field")
+                            .field("type", "text")
+                            .field("analyzer", "no_num_analyzer")
+                            .field("similarity", "BM25")
                         .endObject()
                     .endObject()
                 .endObject();
 
-        assertAcked(prepareCreate("my_index").addMapping("my_mapping", mapping).setSettings(settings));
+        assertAcked(prepareCreate("my_index").setMapping(mapping).setSettings(settings));
         ensureGreen();
         for (String f: allFields) {
             indexRandom(true, doc(f, f + "-mixed", "ж 3x 5д"));
@@ -190,7 +188,7 @@ public class ICUTokenRepairIntegrationTest extends OpenSearchIntegTestCase {
     }
 
     private IndexRequestBuilder doc(String field, String id, String fieldValue) {
-        return client().prepareIndex("my_index", "my_mapping", id).setSource(field, fieldValue);
+        return client().prepareIndex("my_index").setId(id).setSource(field, fieldValue);
     }
 
     private void checkHits(String field, String query, String... resultIDs) {

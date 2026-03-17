@@ -21,8 +21,8 @@
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <includes>
                 <include>com.ibm.icu:icu4j</include>
-                <include>org.apache.lucene:lucene-analyzers-morfologik</include>
-                <include>org.apache.lucene:lucene-analyzers-icu</include>
+                <include>org.apache.lucene:lucene-analysis-morfologik</include>
+                <include>org.apache.lucene:lucene-analysis-icu</include>
                 <include>org.opensearch.plugin:analysis-icu-client</include>
             </includes>
         </dependencySet>

@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.unit.Fuzziness;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -25,15 +25,14 @@ public class FuzzyLikeThisIntegrationTest extends AbstractPluginIntegrationTest 
     @Before
     private void setup() throws IOException, InterruptedException, ExecutionException {
         XContentBuilder mapping = jsonBuilder().startObject();
-        mapping.startObject("test").startObject("properties");
+        mapping.startObject("properties");
         mapping.startObject("test");
         mapping.field("type", "text");
         mapping.endObject()
             .endObject()
-            .endObject()
             .endObject();
 
-        assertAcked(prepareCreate("test").addMapping("test", mapping));
+        assertAcked(prepareCreate("test").setMapping(mapping));
         ensureGreen();
 
         indexRandom(false, doc("image", "There is nothing worse than a sharp image of a fuzzy concept."));
@@ -50,7 +49,7 @@ public class FuzzyLikeThisIntegrationTest extends AbstractPluginIntegrationTest 
     }
 
     private IndexRequestBuilder doc(String id, String fieldValue) {
-        return client().prepareIndex("test", "test", id).setSource("test", fieldValue);
+        return client().prepareIndex("test").setId(id).setSource("test", fieldValue);
     }
 
     @Test
@@ -59,30 +58,30 @@ public class FuzzyLikeThisIntegrationTest extends AbstractPluginIntegrationTest 
         SearchResponse resp;
 
         builder = fuzzyLikeThisQuery("test", "sharp image fuzzy concpt");
-        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        resp = client().prepareSearch("test").setQuery(builder).get();
         assertHitCount(resp, 5);
         assertFirstHit(resp, hasId("image"));
 
         builder = fuzzyLikeThisQuery("test", "sharp image concpt");
-        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        resp = client().prepareSearch("test").setQuery(builder).get();
         assertHitCount(resp, 1);
         assertFirstHit(resp, hasId("image"));
 
         builder = fuzzyLikeThisQuery("test", "nostalagia").fuzziness(Fuzziness.ZERO);
-        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        resp = client().prepareSearch("test").setQuery(builder).get();
         assertNoSearchHits(resp);
 
         builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.ONE);
-        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        resp = client().prepareSearch("test").setQuery(builder).get();
         assertNoSearchHits(resp);
 
         // AUTO is like 1 (auto fuzziness is not really supported)
         builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.AUTO);
-        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        resp = client().prepareSearch("test").setQuery(builder).get();
         assertNoSearchHits(resp);
 
         builder = fuzzyLikeThisQuery("test", "nostalagio").fuzziness(Fuzziness.TWO);
-        resp = client().prepareSearch("test").setTypes("test").setQuery(builder).get();
+        resp = client().prepareSearch("test").setQuery(builder).get();
         assertSearchHits(resp, "nostalgia");
     }
 

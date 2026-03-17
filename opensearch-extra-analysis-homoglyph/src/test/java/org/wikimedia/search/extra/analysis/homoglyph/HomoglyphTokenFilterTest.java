@@ -1,6 +1,6 @@
 package org.wikimedia.search.extra.analysis.homoglyph;
 
-import static org.apache.lucene.analysis.BaseTokenStreamTestCase.assertTokenStreamContents;
+import static org.apache.lucene.tests.analysis.BaseTokenStreamTestCase.assertTokenStreamContents;
 
 import java.io.IOException;
 import java.util.Arrays;

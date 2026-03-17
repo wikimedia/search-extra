@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.analysis.TokenizerFactory;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.indices.analysis.AnalysisModule;
@@ -26,7 +26,7 @@ import org.opensearch.test.OpenSearchIntegTestCase.ClusterScope;
 import org.junit.Before;
 import org.junit.Test;
 
-@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE, transportClientRatio = 0.0)
+@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE)
 public class LimitedMappingIntegrationTest extends OpenSearchIntegTestCase {
     @Before
     public void init() throws IOException, InterruptedException, ExecutionException {
@@ -51,18 +51,16 @@ public class LimitedMappingIntegrationTest extends OpenSearchIntegTestCase {
 
         XContentBuilder mapping = jsonBuilder()
                 .startObject()
-                    .startObject("test")
-                        .startObject("properties")
-                            .startObject("test")
-                                .field("type", "text")
-                                .field("analyzer", "ltdmap")
-                                .field("similarity", "BM25")
-                            .endObject()
+                    .startObject("properties")
+                        .startObject("test")
+                            .field("type", "text")
+                            .field("analyzer", "ltdmap")
+                            .field("similarity", "BM25")
                         .endObject()
                     .endObject()
                 .endObject();
 
-        assertAcked(prepareCreate("test").addMapping("test", mapping).setSettings(settings));
+        assertAcked(prepareCreate("test").setMapping(mapping).setSettings(settings));
         ensureGreen();
         indexRandom(false, doc("curly", "hello w‘orl’d"));
         indexRandom(false, doc("straight", "hello w'orl'd"));
@@ -83,7 +81,7 @@ public class LimitedMappingIntegrationTest extends OpenSearchIntegTestCase {
     }
 
     private IndexRequestBuilder doc(String id, String fieldValue) {
-        return client().prepareIndex("test", "test", id).setSource("test", fieldValue);
+        return client().prepareIndex("test").setId(id).setSource("test", fieldValue);
     }
 
     @Override

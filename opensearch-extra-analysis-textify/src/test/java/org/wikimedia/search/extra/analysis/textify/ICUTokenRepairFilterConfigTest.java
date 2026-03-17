@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 
-import org.apache.lucene.analysis.BaseTokenStreamTestCase;
+import org.apache.lucene.tests.analysis.BaseTokenStreamTestCase;
 import org.junit.Test;
 
 public class ICUTokenRepairFilterConfigTest extends BaseTokenStreamTestCase {

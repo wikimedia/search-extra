@@ -11,13 +11,13 @@ import java.util.concurrent.ExecutionException;
 
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.common.settings.SettingsException;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.test.OpenSearchIntegTestCase;
 import org.opensearch.test.OpenSearchIntegTestCase.ClusterScope;
 import org.junit.Test;
 
-@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE, transportClientRatio = 0.0)
+@ClusterScope(scope = OpenSearchIntegTestCase.Scope.SUITE)
 public class ICUTokenRepairFailingIntegrationTest extends OpenSearchIntegTestCase {
     SearchRequestBuilder srchReqBldr;
 

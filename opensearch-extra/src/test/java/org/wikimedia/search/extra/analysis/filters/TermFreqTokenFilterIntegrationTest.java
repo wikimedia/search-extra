@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,33 +52,31 @@ public class TermFreqTokenFilterIntegrationTest extends AbstractPluginIntegratio
 
         XContentBuilder mapping = jsonBuilder()
                 .startObject()
-                    .startObject("test")
-                        .startObject("properties")
-                            .startObject("test")
-                                .field("type", "text")
-                                .field("analyzer", "term_freq")
-                                .field("index_options", "freqs")
-                                .field("similarity", "BM25")
-                            .endObject()
-                            .startObject("another")
-                                .field("type", "text")
-                                .field("analyzer", "term_freq_test")
-                                .field("index_options", "freqs")
-                                .field("similarity", "BM25")
-                                .startObject("fields")
-                                    .startObject("as_keyword")
-                                        .field("type", "keyword")
-                                        .field("normalizer", "term_freq")
-                                        .field("index_options", "freqs")
-                                        .field("similarity", "BM25")
-                                    .endObject()
+                    .startObject("properties")
+                        .startObject("test")
+                            .field("type", "text")
+                            .field("analyzer", "term_freq")
+                            .field("index_options", "freqs")
+                            .field("similarity", "BM25")
+                        .endObject()
+                        .startObject("another")
+                            .field("type", "text")
+                            .field("analyzer", "term_freq_test")
+                            .field("index_options", "freqs")
+                            .field("similarity", "BM25")
+                            .startObject("fields")
+                                .startObject("as_keyword")
+                                    .field("type", "keyword")
+                                    .field("normalizer", "term_freq")
+                                    .field("index_options", "freqs")
+                                    .field("similarity", "BM25")
                                 .endObject()
                             .endObject()
                         .endObject()
                     .endObject()
                 .endObject();
 
-        assertAcked(prepareCreate("test").addMapping("test", mapping).setSettings(settings));
+        assertAcked(prepareCreate("test").setMapping(mapping).setSettings(settings));
         ensureGreen();
         indexRandom(false, doc("docA", "Q1|2 Q2|10", new String[]{"Q1=1", "Q2=10"}));
         indexRandom(false, doc("docB", "Q1|10 Q2|2", new String[]{"Q1=2", "Q2=3"}));
@@ -114,6 +112,6 @@ public class TermFreqTokenFilterIntegrationTest extends AbstractPluginIntegratio
         Map<String, Object> doc = new HashMap<>();
         doc.put("test", test);
         doc.put("another", another);
-        return client().prepareIndex("test", "test", id).setSource(doc);
+        return client().prepareIndex("test").setId(id).setSource(doc);
     }
 }

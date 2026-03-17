@@ -11,7 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.index.query.TermQueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.wikimedia.search.extra.AbstractPluginIntegrationTest;
@@ -40,19 +40,17 @@ public class TruncateNormIntegrationTest extends AbstractPluginIntegrationTest {
 
         XContentBuilder mapping = jsonBuilder()
                 .startObject()
-                .startObject("test")
                 .startObject("properties")
                 .startObject("test")
                 .field("type", "keyword")
                 .field("normalizer", "my_normalizer")
                 .endObject()
                 .endObject()
-                .endObject()
                 .endObject();
 
 
 
-        assertAcked(prepareCreate("test").addMapping("test", mapping).setSettings(settings));
+        assertAcked(prepareCreate("test").setMapping(mapping).setSettings(settings));
         ensureGreen();
         indexRandom(false, doc("not_truncated", "ABCDE"));
         indexRandom(false, doc("truncated", "ABCDE_ignored"));
@@ -61,7 +59,7 @@ public class TruncateNormIntegrationTest extends AbstractPluginIntegrationTest {
     }
 
     private IndexRequestBuilder doc(String id, String fieldValue) {
-        return client().prepareIndex("test", "test", id).setSource("test", fieldValue);
+        return client().prepareIndex("test").setId(id).setSource("test", fieldValue);
     }
 
     @Test
