@@ -79,21 +79,6 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     }
 
     @Test
-    public void maxStatesTracedLimitsComplexityOfRegexes() throws InterruptedException, ExecutionException, IOException {
-        setup();
-        indexRandom(true, doc("findme", "test"));
-        SearchResponse response = search(filter("te[st]t").maxStatesTraced(30)).get();
-        assertHitCount(response, 1);
-        // maxStatesTraced is used when the regex is just a sequence of
-        // characters
-        assertFailures(search(filter("test").maxStatesTraced(0)), RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
-        // And when there are more complex things in the regex
-        assertFailures(search(filter("te[st]t").maxStatesTraced(0)), RestStatus.INTERNAL_SERVER_ERROR, containsString("complex"));
-        // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
-        // I can't find any way from here to mark it otherwise.
-    }
-
-    @Test
     public void maxDeterminizedStatesLimitsComplexityOfRegexes() throws InterruptedException, ExecutionException, IOException {
         setup();
         indexRandom(true, doc("findme", "test"));
@@ -433,6 +418,19 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
         indexRandom(true, doc("eszett", "außer"));
         SearchResponse response = search(filter("außer").gramSize(3).ngramField("test.spectrigram").rejectUnaccelerated(true)).get();
         assertSearchHits(response, "eszett");
+    }
+
+    @Test
+    public void dotStar() throws InterruptedException, ExecutionException, IOException {
+        setup();
+        Map<String, String> docs = ImmutableMap.of(
+            "good", "Clover, West Virginia"
+        );
+        for (Map.Entry<String, String> entry : docs.entrySet()) {
+            indexRandom(true, doc(entry.getKey(), entry.getValue()));
+        }
+        assertPatternMatch(docs, "Clover.*West Virginia", "good");
+        assertPatternMatch(docs, "Clover.*West.*Virginia", "good");
     }
 
     /**

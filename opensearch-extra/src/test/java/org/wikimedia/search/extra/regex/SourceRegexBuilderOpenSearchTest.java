@@ -124,20 +124,26 @@ public class SourceRegexBuilderOpenSearchTest extends AbstractQueryTestCase<Sour
     }
 
     public void testLuceneRewrite() throws IOException {
-        SourceRegexQueryBuilder builder = new SourceRegexQueryBuilder(MY_FIELD, "ab[0-2]");
+        // Without an ngramField, always unaccelerated
+        SourceRegexQueryBuilder builder = new SourceRegexQueryBuilder(MY_FIELD, "abcdef");
         builder.settings().rejectUnaccelerated(false);
         Query rewritten = buildAndRewrite(builder);
         assertThat(rewritten, instanceOf(UnacceleratedSourceRegexQuery.class));
 
+        // Without an ngramField + rejectUnaccelerated: throws
         builder.settings().rejectUnaccelerated(true);
         expectThrows(UnableToAccelerateRegexException.class, () -> buildAndRewrite(builder));
 
+        // With ngramField + a literal long enough to have mandatory trigrams: accelerated
         builder.ngramField(MY_FIELD_NGRAM);
         rewritten = buildAndRewrite(builder);
         assertThat(rewritten, instanceOf(AcceleratedSourceRegexQuery.class));
 
-        builder.settings().maxExpand(2);
-        expectThrows(UnableToAccelerateRegexException.class, () -> buildAndRewrite(builder));
+        // Pure wildcard has no mandatory trigrams: can't accelerate
+        SourceRegexQueryBuilder wildcardBuilder = new SourceRegexQueryBuilder(MY_FIELD, ".*");
+        wildcardBuilder.ngramField(MY_FIELD_NGRAM);
+        wildcardBuilder.settings().rejectUnaccelerated(true);
+        expectThrows(UnableToAccelerateRegexException.class, () -> buildAndRewrite(wildcardBuilder));
 
         // TODO: move more tests from SourceRegexQueryIntegrationTests here
     }

@@ -7,11 +7,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Locale;
 
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.util.automaton.Automaton;
-import org.apache.lucene.util.automaton.RegExp;
 import org.junit.Test;
-import org.wikimedia.search.extra.regex.ngram.NGramExtractor;
+
+import com.google.common.collect.ImmutableSet;
 
 @SuppressWarnings("unchecked")
 public class ExpressionTest {
@@ -68,40 +66,51 @@ public class ExpressionTest {
 
     @Test
     public void testDegradedDisjunction() {
-        String regex = "[ab]*a[cd]{50,80}";
-        int maxExpand = 4;
-        int maxStatesTraced = 10000;
-        int maxDeterminizedStates = 20000;
-        int maxNgramsExtracted = 100;
-
-        Automaton automaton = new RegExp(regex.toLowerCase(Locale.ENGLISH), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
-        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted, new KeywordAnalyzer());
-
-        Expression<String> expression = extractor.extract(automaton);
-        assertTrue(expression.countClauses() > 1024);
-        expression = new ExpressionRewriter<>(expression).degradeAsDisjunction();
+        // Build an And of many unique Or-pairs from 100 leaves.
+        // C(100,2) = 4950 pairs → clause count 4950 + 4950*2 = 14850 > MAX_BOOLEAN_CLAUSES,
+        // but only 100 unique leaves → degradeAsDisjunction(100) succeeds.
+        int numLeaves = 100;
+        @SuppressWarnings("unchecked")
+        Leaf<String>[] leafArr = new Leaf[numLeaves];
+        for (int i = 0; i < numLeaves; i++) {
+            leafArr[i] = new Leaf<>(String.format(Locale.ROOT, "t%03d", i));
+        }
+        ImmutableSet.Builder<Expression<String>> andBuilder = ImmutableSet.builder();
+        for (int i = 0; i < numLeaves; i++) {
+            for (int j = i + 1; j < numLeaves; j++) {
+                andBuilder.add(new Or<>(leafArr[i], leafArr[j]));
+            }
+        }
+        Expression<String> expression = new And<>(andBuilder.build());
+        assertTrue(expression.countClauses() > ExpressionRewriter.MAX_BOOLEAN_CLAUSES);
+        int maxResultingClauses = 100;
+        expression = new ExpressionRewriter<>(expression).degradeAsDisjunction(maxResultingClauses);
         assertTrue(expression.getClass() == Or.class);
         assertFalse(expression.alwaysFalse());
         assertFalse(expression.alwaysTrue());
-        assertTrue(expression.countClauses() <= maxNgramsExtracted);
+        assertTrue(expression.countClauses() <= maxResultingClauses);
     }
 
     @Test(timeout = 1000)
     public void testBooleanExplosion() {
-        String regex = "[0-9]*a[0-9]{50,80}";
-        int maxExpand = 10;
-        int maxStatesTraced = 10000;
-        int maxDeterminizedStates = 20000;
-        int maxNgramsExtracted = 10000;
+        // Build N And-nodes each sharing the same N-leaf Or. Without the visited-set
+        // optimisation in extractLeaves, traversal would be O(N^2).
+        // N=10000: outer Or clause count = 10000 + 10000*10002 = 100_030_000 (large but fits in int)
+        int n = 10000;
+        ImmutableSet.Builder<Expression<String>> orBuilder = ImmutableSet.builder();
+        for (int i = 0; i < n; i++) {
+            orBuilder.add(new Leaf<>(String.format(Locale.ROOT, "t%05d", i)));
+        }
+        Expression<String> shared = new Or<>(orBuilder.build());
 
-        Automaton automaton = new RegExp(regex.toLowerCase(Locale.ENGLISH), RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(maxDeterminizedStates);
-        NGramExtractor extractor = new NGramExtractor(3, maxExpand, maxStatesTraced, maxNgramsExtracted, new KeywordAnalyzer());
+        ImmutableSet.Builder<Expression<String>> outerBuilder = ImmutableSet.builder();
+        for (int i = 0; i < n; i++) {
+            outerBuilder.add(new And<>(shared, new Leaf<>(String.format(Locale.ROOT, "a%05d", i))));
+        }
+        Expression<String> expression = new Or<>(outerBuilder.build());
 
-        Expression<String> expression = extractor.extract(automaton);
-        // This one is huge... but most of its branches are reused
-        assertTrue(expression.countClauses() == Integer.MAX_VALUE);
-        // Test that the rewritter is sufficiently optimized
-        // to run onthis boolean tree
+        // All n "t" leaves + n "a" leaves, limit high enough to keep them all
+        int maxNgramsExtracted = n * 2;
         expression = new ExpressionRewriter<>(expression).degradeAsDisjunction(maxNgramsExtracted);
         assertTrue(expression.getClass() == Or.class);
         assertFalse(expression.alwaysFalse());
