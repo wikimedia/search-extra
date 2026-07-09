@@ -82,16 +82,16 @@ public class SourceRegexQueryIntegrationTest extends AbstractPluginIntegrationTe
     public void maxDeterminizedStatesLimitsComplexityOfRegexes() throws InterruptedException, ExecutionException, IOException {
         setup();
         indexRandom(true, doc("findme", "test"));
-        // The default is good enough to prevent craziness
+        // The default is good enough to prevent craziness.
         assertFailures(search(filter("[^]]*alt=[^]\\|}]{80,}")), RestStatus.INTERNAL_SERVER_ERROR,
-                containsString("Determinizing [^]]*alt=[^]\\|}]{80,} would require more than"));
+                containsString("would require more than"));
         // Some regexes with explosive state growth still run because they
         // don't explode into too many states.
         SearchResponse response = search(filter("[^]]*s[tabcse]{1,10}")).get();
         assertHitCount(response, 1);
         // But you can stop them by lowering maxStatesTraced
         assertFailures(search(filter("[^]]*s[tabcse]{1,10}").maxDeterminizedStates(100)), RestStatus.INTERNAL_SERVER_ERROR,
-                containsString("Determinizing [^]]*s[tabcse]{1,10} would require more than 100"));
+                containsString("would require more than 100"));
         // Its unfortunate that this comes back as an INTERNAL_SERVER_ERROR but
         // I can't find any way from here to mark it otherwise.
     }

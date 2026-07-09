@@ -12,6 +12,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
@@ -67,9 +68,10 @@ class UnacceleratedSourceRegexQuery extends Query {
             }
 
             @Override
-            public Scorer scorer(final LeafReaderContext context) throws IOException {
+            public ScorerSupplier scorerSupplier(final LeafReaderContext context) throws IOException {
                 final DocIdSetIterator approximation = DocIdSetIterator.all(context.reader().maxDoc());
-                return new ConstantScoreScorer(this, 1f, scoreMode, new RegexTwoPhaseIterator(approximation, context));
+                final Scorer scorer = new ConstantScoreScorer(1f, scoreMode, new RegexTwoPhaseIterator(approximation, context));
+                return new Weight.DefaultScorerSupplier(scorer);
             }
         };
     }

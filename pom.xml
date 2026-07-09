@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.wikimedia</groupId>
         <artifactId>wmf-jvm-parent-pom</artifactId>
-        <version>1.97</version>
+        <version>1.102</version>
     </parent>
 
     <groupId>org.wikimedia.search</groupId>
     <artifactId>opensearch-extra-parent</artifactId>
-    <version>2.19.5-wmf3-SNAPSHOT</version>
+    <version>3.8.0-wmf1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>OpenSearch extra plugins</name>
     <description>Extra queries and filters for Opensearch.</description>
@@ -60,14 +60,8 @@
     <scm>
         <connection>scm:git:https://gerrit.wikimedia.org/r/search/extra</connection>
         <developerConnection>scm:git:ssh://gerrit.wikimedia.org:29418/search/extra</developerConnection>
-        <tag>opensearch-extra-parent-2.19.5-wmf2</tag>
         <url>https://gerrit.wikimedia.org/r/#/admin/projects/search/extra</url>
     </scm>
-
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/wikimedia/extra/issues</url>
-    </issueManagement>
 
     <properties>
         <!-- For publishing to gitlab:repos/wmf-packages -->
@@ -78,12 +72,17 @@
         <!-- Must match the Jackson version bundled by the target OpenSearch release. -->
         <jackson.version>2.18.2</jackson.version>
         <log4j.version>2.25.3</log4j.version>
-        <lucene.version>9.12.3</lucene.version>
+        <lucene.version>10.5.0</lucene.version>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <opensearch.version>2.19.5</opensearch.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <opensearch.version>3.8.0</opensearch.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- The junit4-maven-plugin scans the test classes with a bundled ASM.
+             The 2.7.1 plugin bundles ASM 6.2.1, which cannot read the Java 21
+             class files, thus the plugin stays newer than the runner. The
+             runner keeps the version that org.opensearch.test:framework uses. -->
+        <randomizedtesting.plugin.version>2.9.1</randomizedtesting.plugin.version>
         <randomizedtesting.version>2.7.1</randomizedtesting.version>
         <spotless.ratchetFrom>origin/master</spotless.ratchetFrom>
     </properties>
@@ -268,6 +267,25 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <!-- OpenSearch 3.x replaced the SecurityManager with a Java agent.
+                     BootstrapForTesting self-checks that org.opensearch.javaagent.Agent
+                     is loadable (AgentAttach.agentIsAttached()); the gradle build attaches
+                     it via -javaagent, but under the junit4-maven-plugin we put it on the
+                     test classpath so the check passes. -->
+                <groupId>org.opensearch</groupId>
+                <artifactId>opensearch-agent</artifactId>
+                <version>${opensearch.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <!-- Provides org.opensearch.javaagent.bootstrap.AgentPolicy referenced by
+                     BootstrapForTesting; normally injected via -javaagent. -->
+                <groupId>org.opensearch</groupId>
+                <artifactId>opensearch-agent-bootstrap</artifactId>
+                <version>${opensearch.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.opensearch.test</groupId>
                 <artifactId>framework</artifactId>
                 <version>${opensearch.version}</version>
@@ -297,7 +315,7 @@
                 <plugin>
                     <groupId>com.carrotsearch.randomizedtesting</groupId>
                     <artifactId>junit4-maven-plugin</artifactId>
-                    <version>${randomizedtesting.version}</version>
+                    <version>${randomizedtesting.plugin.version}</version>
                     <configuration>
                         <skipTests>${skip.unit.tests}</skipTests>
                         <listeners>

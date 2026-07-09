@@ -55,7 +55,7 @@ public abstract class FieldValues {
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
             CustomFieldsVisitor visitor = new CustomFieldsVisitor(Collections.emptySet(), true);
-            reader.document(docId, visitor);
+            reader.storedFields().document(docId, visitor);
             BytesReference source = visitor.source();
             // deprecated but still in use in core
             // Monitor how it evolves in core and FetchSubPhase.java
@@ -72,7 +72,7 @@ public abstract class FieldValues {
         @Override
         public List<String> load(String path, IndexReader reader, int docId) throws IOException {
             CustomFieldsVisitor visitor = new CustomFieldsVisitor(ImmutableSet.of(path), false);
-            reader.document(docId, visitor);
+            reader.storedFields().document(docId, visitor);
             return visitor.fields().get(path).stream().map(Object::toString).collect(Collectors.toList());
         }
     }

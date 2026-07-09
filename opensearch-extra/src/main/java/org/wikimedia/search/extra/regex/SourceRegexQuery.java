@@ -10,12 +10,13 @@ import javax.annotation.Nullable;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CharacterRunAutomaton;
+import org.apache.lucene.util.automaton.Operations;
 import org.apache.lucene.util.automaton.RegExp;
 import org.opensearch.common.lucene.search.Queries;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
@@ -135,7 +136,7 @@ public class SourceRegexQuery extends Query {
 
     @Override
     @SuppressWarnings("CyclomaticComplexity")
-    public Query rewrite(IndexReader reader) throws IOException {
+    public Query rewrite(IndexSearcher searcher) throws IOException {
         // TODO: investigate moving this logic inside the Builder
         // Rewrite the query as an AcceleratedSourceRegexQuery or UnacceleratedSourceRegexQuery
         if (ngramFieldPath == null) {
@@ -152,17 +153,22 @@ public class SourceRegexQuery extends Query {
             // The accelerating filter is always assumed to be case
             // insensitive/always lowercased
             RegExp re = new RegExp(regex.toLowerCase(settings.locale()), RegExp.ALL ^ RegExp.AUTOMATON);
-            // We don't need the automaton now, but generate it anyways to early-fail errors determinizing
-            re.toAutomaton(settings.maxDeterminizedStates());
+            // We don't need the automaton now, but determinize anyways to early-fail
+            // errors determinizing. Otherwise a query with 0 results from the
+            // acceleration query would only start failing when the rechecker determinizes
+            // to check potential matches. A query could appear to work and return 0
+            // results for some time, and then start failing because of a potential match.
+            // Better to always fail.
+            Operations.determinize(re.toAutomaton(), settings.maxDeterminizedStates());
 
             Expression<String> expression = new NGramExtractor(gramSize, settings.maxExpand(), ngramAnalyzer).extract(re).simplify();
             if (expression.alwaysTrue()) {
                 if (settings.rejectUnaccelerated()) {
                     throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                 }
-                return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
+                return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(searcher);
             } else if (expression.alwaysFalse()) {
-                return Queries.newMatchNoDocsQuery("Expression is always false").rewrite(reader);
+                return Queries.newMatchNoDocsQuery("Expression is always false").rewrite(searcher);
             } else {
                 if (expression.countClauses() > settings.maxNgramClauses()) {
                     // The expression is too large we will try to use a degraded disjunction
@@ -182,12 +188,12 @@ public class SourceRegexQuery extends Query {
                         if (settings.rejectUnaccelerated()) {
                             throw new UnableToAccelerateRegexException(regex, gramSize, ngramFieldPath);
                         }
-                        return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(reader);
+                        return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings).rewrite(searcher);
                     }
                     assert !expression.alwaysFalse();
                 }
                 return new AcceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings,
-                        expression.transform(new ExpressionToQueryTransformer(ngramFieldPath))).rewrite(reader);
+                        expression.transform(new ExpressionToQueryTransformer(ngramFieldPath))).rewrite(searcher);
             }
         } catch (IllegalArgumentException e) {
             throw new InvalidRegexException(e.getMessage(), e);
@@ -245,8 +251,9 @@ public class SourceRegexQuery extends Query {
                 if (!settings.caseSensitive()) {
                     regexString = regexString.toLowerCase(settings.locale());
                 }
-                Automaton automaton = new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON)
-                    .toAutomaton(settings.maxDeterminizedStates());
+                Automaton automaton = Operations.determinize(
+                    new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(),
+                    settings.maxDeterminizedStates());
                 if (settings.locale().getLanguage().equals("el")) {
                     charRun = new ContainsCharacterRunAutomaton.GreekLowerCasing(automaton);
                 } else {
@@ -294,8 +301,9 @@ public class SourceRegexQuery extends Query {
                 if (!settings.caseSensitive()) {
                     regexString = regexString.toLowerCase(settings.locale());
                 }
-                Automaton automaton = new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON)
-                    .toAutomaton(settings.maxDeterminizedStates());
+                Automaton automaton = Operations.determinize(
+                    new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(),
+                    settings.maxDeterminizedStates());
                 charRun = new ContainsCharacterRunAutomaton(automaton);
             }
             return charRun;
@@ -343,8 +351,9 @@ public class SourceRegexQuery extends Query {
                 if (!settings.caseSensitive()) {
                     regexString = regexString.toLowerCase(settings.locale());
                 }
-                Automaton automaton = new RegExp(".*(" + regexString + ").*", RegExp.ALL ^ RegExp.AUTOMATON)
-                    .toAutomaton(settings.maxDeterminizedStates());
+                Automaton automaton = Operations.determinize(
+                    new RegExp(".*(" + regexString + ").*", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(),
+                    settings.maxDeterminizedStates());
                 charRun = new CharacterRunAutomaton(automaton);
             }
             return charRun;

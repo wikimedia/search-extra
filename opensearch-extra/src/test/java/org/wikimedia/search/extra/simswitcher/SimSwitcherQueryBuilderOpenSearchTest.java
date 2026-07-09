@@ -24,9 +24,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.misc.search.similarity.LegacyBM25Similarity;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.opensearch.core.common.ParsingException;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.common.settings.Settings;
@@ -39,6 +40,7 @@ import org.opensearch.plugins.Plugin;
 import org.opensearch.test.AbstractQueryTestCase;
 import org.opensearch.test.TestGeoShapeFieldMapperPlugin;
 import org.wikimedia.search.extra.ExtraCorePlugin;
+import org.wikimedia.search.extra.QueryBuilderTestUtils.RecordingQueryBuilderVisitor;
 
 public class SimSwitcherQueryBuilderOpenSearchTest extends AbstractQueryTestCase<SimSwitcherQueryBuilder> {
 
@@ -105,13 +107,29 @@ public class SimSwitcherQueryBuilderOpenSearchTest extends AbstractQueryTestCase
         assertEquals(qb, ((SimSwitcherQueryBuilder) rewrite).getSubQuery());
     }
 
+    public void testVisitVisitsTheSubQuery() {
+        SimSwitcherQueryBuilder builder = doCreateTestQueryBuilder();
+        RecordingQueryBuilderVisitor visitor = new RecordingQueryBuilderVisitor();
+        builder.visit(visitor);
+        assertEquals(Arrays.asList(builder, builder.getSubQuery()), visitor.visited());
+        assertEquals(Collections.singletonList(BooleanClause.Occur.MUST), visitor.childOccurs());
+    }
+
+    public void testVisitWithoutSubQuery() {
+        SimSwitcherQueryBuilder builder = new SimSwitcherQueryBuilder();
+        RecordingQueryBuilderVisitor visitor = new RecordingQueryBuilderVisitor();
+        builder.visit(visitor);
+        assertEquals(Collections.singletonList(builder), visitor.visited());
+        assertTrue(visitor.childOccurs().isEmpty());
+    }
+
     @Override
     protected void doAssertLuceneQuery(SimSwitcherQueryBuilder queryBuilder, Query query, QueryShardContext context) throws IOException {
         assertThat(query, instanceOf(SimSwitcherQuery.class));
         SimSwitcherQuery q = (SimSwitcherQuery) query;
-        assertThat(q.getSimilarity(), instanceOf(LegacyBM25Similarity.class));
+        assertThat(q.getSimilarity(), instanceOf(BM25Similarity.class));
         assertThat(q.getSubQuery(), instanceOf(TermQuery.class));
-        assertEquals(0.8F, ((LegacyBM25Similarity)q.getSimilarity()).getB(), Math.ulp(0.8F));
-        assertEquals(1.5F, ((LegacyBM25Similarity)q.getSimilarity()).getK1(), Math.ulp(1.5F));
+        assertEquals(0.8F, ((BM25Similarity)q.getSimilarity()).getB(), Math.ulp(0.8F));
+        assertEquals(1.5F, ((BM25Similarity)q.getSimilarity()).getK1(), Math.ulp(1.5F));
     }
 }

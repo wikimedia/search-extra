@@ -6,6 +6,7 @@ import java.util.Locale;
 
 import org.apache.lucene.tests.util.automaton.AutomatonTestUtil;
 import org.apache.lucene.util.automaton.Automaton;
+import org.apache.lucene.util.automaton.Operations;
 import org.apache.lucene.util.automaton.RegExp;
 import org.apache.lucene.util.automaton.TooComplexToDeterminizeException;
 import org.junit.Test;
@@ -50,7 +51,8 @@ public class NGramExtractorSoundnessTest extends RandomizedTest {
         String rewritten = RegexRewriter.rewrite(randomRegex, true).toString().toLowerCase(Locale.ROOT);
         Automaton automaton;
         try {
-            automaton = new RegExp(rewritten, RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(10000);
+            automaton = Operations.determinize(
+                new RegExp(rewritten, RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(), 10000);
         } catch (IllegalArgumentException e) {
             return; // Generated an illegal regular expression
         } catch (TooComplexToDeterminizeException e) {

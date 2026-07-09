@@ -19,6 +19,7 @@ package org.wikimedia.search.extra.simswitcher;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.Similarity;
 import org.opensearch.Version;
@@ -33,6 +34,7 @@ import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.index.query.AbstractQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilderVisitor;
 import org.opensearch.index.query.QueryRewriteContext;
 import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.index.query.Rewriteable;
@@ -75,8 +77,6 @@ public class SimSwitcherQueryBuilder extends AbstractQueryBuilder<SimSwitcherQue
     /**
      * Build the builder with all its fields.
      */
-    @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER",
-            justification = "Spotbugs wants params to be ToXContent but this makes no sense")
     public SimSwitcherQueryBuilder(QueryBuilder subQuery, String similarityType, Settings params) {
         this.subQuery = subQuery;
         this.similarityType = similarityType;
@@ -140,6 +140,15 @@ public class SimSwitcherQueryBuilder extends AbstractQueryBuilder<SimSwitcherQue
             return new SimSwitcherQueryBuilder(q, similarityType, params);
         }
         return this;
+    }
+
+    @Override
+    public void visit(QueryBuilderVisitor visitor) {
+        visitor.accept(this);
+        if (subQuery != null) {
+            // The subquery gives the scores that this query changes, so it is a MUST clause.
+            subQuery.visit(visitor.getChildVisitor(BooleanClause.Occur.MUST));
+        }
     }
 
     @Override

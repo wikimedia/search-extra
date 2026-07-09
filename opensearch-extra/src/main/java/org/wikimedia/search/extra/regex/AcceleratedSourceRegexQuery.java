@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import javax.annotation.Nullable;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ConstantScoreScorer;
 import org.apache.lucene.search.ConstantScoreWeight;
@@ -12,6 +11,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Weight;
 import org.wikimedia.search.extra.regex.SourceRegexQuery.Rechecker;
 import org.wikimedia.search.extra.regex.SourceRegexQueryBuilder.Settings;
@@ -54,23 +54,24 @@ class AcceleratedSourceRegexQuery extends UnacceleratedSourceRegexQuery {
 
             @Override
             @Nullable
-            public Scorer scorer(final LeafReaderContext context) throws IOException {
+            public ScorerSupplier scorerSupplier(final LeafReaderContext context) throws IOException {
                 final Scorer approxScorer = approxWeight.scorer(context);
                 if (approxScorer == null) {
                     return null;
                 }
-                return new ConstantScoreScorer(this, 1f, scoreMode, new RegexTwoPhaseIterator(approxScorer.iterator(), context));
+                final Scorer scorer = new ConstantScoreScorer(1f, scoreMode, new RegexTwoPhaseIterator(approxScorer.iterator(), context));
+                return new Weight.DefaultScorerSupplier(scorer);
             }
         };
     }
 
     @Override
-    public Query rewrite(IndexReader reader) throws IOException {
-        Query approxRewritten = approximation.rewrite(reader);
+    public Query rewrite(IndexSearcher searcher) throws IOException {
+        Query approxRewritten = approximation.rewrite(searcher);
         if (approxRewritten != approximation) {
             return new AcceleratedSourceRegexQuery(this.rechecker, this.fieldPath, this.loader, this.settings, approxRewritten);
         }
-        return super.rewrite(reader);
+        return super.rewrite(searcher);
     }
 
     @Override

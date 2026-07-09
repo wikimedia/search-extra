@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 import org.apache.lucene.analysis.pattern.PatternReplaceCharFilter;
 import org.opensearch.action.ActionRequest;
 import org.opensearch.core.action.ActionResponse;
-import org.opensearch.client.Client;
+import org.opensearch.transport.client.Client;
 import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
 import org.opensearch.cluster.node.DiscoveryNodes;
 import org.opensearch.cluster.service.ClusterService;

@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
 import org.opensearch.core.ParseField;
 import org.opensearch.core.common.ParsingException;
@@ -23,6 +24,7 @@ import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.index.query.AbstractQueryBuilder;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilderVisitor;
 import org.opensearch.index.query.QueryShardContext;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
@@ -96,6 +98,23 @@ public abstract class AbstractRouterQueryBuilder<C extends Condition, QB extends
         }
         return qb;
 
+    }
+
+    @Override
+    public void visit(QueryBuilderVisitor visitor) {
+        visitor.accept(this);
+        if (conditions.isEmpty() && fallback == null) {
+            return;
+        }
+        // A rewrite keeps only one of the condition queries or the fallback
+        // query. These queries are alternatives, so they are SHOULD clauses.
+        QueryBuilderVisitor subVisitor = visitor.getChildVisitor(BooleanClause.Occur.SHOULD);
+        for (C condition : conditions) {
+            condition.query().visit(subVisitor);
+        }
+        if (fallback != null) {
+            fallback.visit(subVisitor);
+        }
     }
 
     @Override

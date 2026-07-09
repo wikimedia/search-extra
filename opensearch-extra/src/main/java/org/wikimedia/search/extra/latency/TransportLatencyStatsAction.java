@@ -5,13 +5,13 @@ import java.util.List;
 
 import org.opensearch.action.FailedNodeException;
 import org.opensearch.action.support.ActionFilters;
-import org.opensearch.action.support.nodes.BaseNodeRequest;
 import org.opensearch.action.support.nodes.TransportNodesAction;
 import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.threadpool.ThreadPool;
+import org.opensearch.transport.TransportRequest;
 import org.opensearch.transport.TransportService;
 import org.wikimedia.search.extra.latency.LatencyStatsAction.LatencyStatsNodeResponse;
 import org.wikimedia.search.extra.latency.LatencyStatsAction.LatencyStatsNodesRequest;
@@ -54,7 +54,7 @@ public class TransportLatencyStatsAction extends TransportNodesAction<LatencySta
         return new LatencyStatsNodeResponse(clusterService.localNode()).initFromProbe(latencyProbe);
     }
 
-    static class LatencyStatsNodeRequest extends BaseNodeRequest {
+    static class LatencyStatsNodeRequest extends TransportRequest {
         private final LatencyStatsNodesRequest request;
 
         LatencyStatsNodeRequest(StreamInput in) throws IOException {

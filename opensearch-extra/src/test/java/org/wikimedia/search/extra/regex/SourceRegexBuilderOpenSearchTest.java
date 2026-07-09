@@ -7,8 +7,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.index.mapper.MapperService;
@@ -48,7 +48,7 @@ public class SourceRegexBuilderOpenSearchTest extends AbstractQueryTestCase<Sour
             () -> builder.loadFromSource(randomBoolean()),
             () -> builder.settings().maxNgramClauses(randomIntBetween(1, 1000)),
             () -> builder.settings().rejectUnaccelerated(randomBoolean()),
-            () -> builder.settings().locale(randomFrom(Locale.FRENCH, Locale.ENGLISH, new Locale("el"), new Locale("ga"), new Locale("tr"))),
+            () -> builder.settings().locale(randomFrom(Locale.FRENCH, Locale.ENGLISH, Locale.of("el"), Locale.of("ga"), Locale.of("tr"))),
             () -> builder.settings().caseSensitive(randomBoolean()),
             () -> builder.settings().maxDeterminizedStates(randomIntBetween(1, 10000)),
             () -> builder.settings().maxNgramsExtracted(randomIntBetween(1, 200)),
@@ -149,11 +149,11 @@ public class SourceRegexBuilderOpenSearchTest extends AbstractQueryTestCase<Sour
     }
 
     private Query buildAndRewrite(SourceRegexQueryBuilder query) throws IOException {
-        IndexReader ir = new MemoryIndex().createSearcher().getIndexReader();
+        IndexSearcher searcher = new MemoryIndex().createSearcher();
         QueryShardContext context = createShardContext();
         QueryBuilder rewritten = Rewriteable.rewrite(query, context);
         Query lquery = rewritten.toQuery(context);
-        return lquery.rewrite(ir);
+        return lquery.rewrite(searcher);
     }
 
 }

@@ -37,6 +37,7 @@ import org.apache.lucene.search.BoostAttribute;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FuzzyTermsEnum;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.MaxNonCompetitiveBoostAttribute;
 import org.apache.lucene.search.Query;
@@ -197,7 +198,8 @@ public class FuzzyLikeThisQuery extends Query {
     @SuppressFBWarnings(
             value = "PCAIL_POSSIBLE_CONSTANT_ALLOCATION_IN_LOOP",
             justification = "builder should not be reused")
-    public Query rewrite(IndexReader reader) throws IOException {
+    public Query rewrite(IndexSearcher searcher) throws IOException {
+        IndexReader reader = searcher.getIndexReader();
         //load up the list of possible terms
         for (FieldVals f : fieldVals) {
             addTerms(reader, f);

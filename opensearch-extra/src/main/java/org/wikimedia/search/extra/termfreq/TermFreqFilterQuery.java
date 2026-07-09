@@ -14,6 +14,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
 import org.wikimedia.search.extra.util.ConcreteIntPredicate;
@@ -100,7 +101,7 @@ public class TermFreqFilterQuery extends Query {
         }
 
         @Override
-        public Scorer scorer(LeafReaderContext leafReaderContext) throws IOException {
+        public ScorerSupplier scorerSupplier(LeafReaderContext leafReaderContext) throws IOException {
             PostingsEnum innerDocs = leafReaderContext.reader().postings(term);
             if (innerDocs == null) {
                 return null;
@@ -117,7 +118,7 @@ public class TermFreqFilterQuery extends Query {
                 }
             };
 
-            return new Scorer(this) {
+            Scorer scorer = new Scorer() {
                 @Override
                 public int docID() {
                     return innerDocs.docID();
@@ -143,6 +144,7 @@ public class TermFreqFilterQuery extends Query {
                     return Float.MAX_VALUE;
                 }
             };
+            return new Weight.DefaultScorerSupplier(scorer);
         }
 
         @Override

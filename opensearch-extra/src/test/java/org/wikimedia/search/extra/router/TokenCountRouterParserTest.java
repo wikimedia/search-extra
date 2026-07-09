@@ -4,14 +4,19 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.ConditionDefinition.gte;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.tests.util.LuceneTestCase;
+import org.opensearch.index.query.MatchAllQueryBuilder;
 import org.opensearch.index.query.MatchNoneQueryBuilder;
 import org.opensearch.index.query.MatchPhraseQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.junit.Test;
 import org.wikimedia.search.extra.QueryBuilderTestUtils;
+import org.wikimedia.search.extra.QueryBuilderTestUtils.RecordingQueryBuilderVisitor;
 import org.wikimedia.search.extra.router.AbstractRouterQueryBuilder.Condition;
 
 public class TokenCountRouterParserTest extends LuceneTestCase {
@@ -55,5 +60,32 @@ public class TokenCountRouterParserTest extends LuceneTestCase {
         expected.condition(gte, 2, QueryBuilders.matchPhraseQuery("text", "input query"));
         expected.fallback(new MatchNoneQueryBuilder());
         assertEquals(expected, tok);
+    }
+
+    @Test
+    public void testVisitVisitsTheConditionsAndTheFallback() {
+        MatchPhraseQueryBuilder conditionQuery = QueryBuilders.matchPhraseQuery("text", "input query");
+        MatchAllQueryBuilder otherConditionQuery = new MatchAllQueryBuilder();
+        MatchNoneQueryBuilder fallbackQuery = new MatchNoneQueryBuilder();
+        TokenCountRouterQueryBuilder tok = new TokenCountRouterQueryBuilder();
+        tok.field("text");
+        tok.text("input query");
+        tok.condition(gte, 2, conditionQuery);
+        tok.condition(gte, 5, otherConditionQuery);
+        tok.fallback(fallbackQuery);
+
+        RecordingQueryBuilderVisitor visitor = new RecordingQueryBuilderVisitor();
+        tok.visit(visitor);
+        assertEquals(Arrays.asList(tok, conditionQuery, otherConditionQuery, fallbackQuery), visitor.visited());
+        assertEquals(Collections.singletonList(BooleanClause.Occur.SHOULD), visitor.childOccurs());
+    }
+
+    @Test
+    public void testVisitWithoutConditionsOrFallback() {
+        TokenCountRouterQueryBuilder tok = new TokenCountRouterQueryBuilder();
+        RecordingQueryBuilderVisitor visitor = new RecordingQueryBuilderVisitor();
+        tok.visit(visitor);
+        assertEquals(Collections.singletonList(tok), visitor.visited());
+        assertTrue(visitor.childOccurs().isEmpty());
     }
 }

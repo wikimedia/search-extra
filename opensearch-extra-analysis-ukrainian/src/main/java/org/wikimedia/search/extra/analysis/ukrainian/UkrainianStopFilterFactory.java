@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.analysis.ukrainian;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -27,9 +28,11 @@ public class UkrainianStopFilterFactory extends AbstractTokenFilterFactory {
     }
 
     private static CharArraySet getStopwords() {
-        try (
-            Reader reader = IOUtils.getDecodingReader(UkrainianStopFilterFactory.class, "stopwords.txt", StandardCharsets.UTF_8)
-        ) {
+        try (InputStream stream = UkrainianStopFilterFactory.class.getResourceAsStream("stopwords.txt")) {
+            if (stream == null) {
+                throw new IOException("Resource stopwords.txt not found");
+            }
+            Reader reader = IOUtils.getDecodingReader(stream, StandardCharsets.UTF_8);
             return CharArraySet.unmodifiableSet(WordlistLoader.getWordSet(reader, "#"));
         } catch (IOException e) {
             throw new UncheckedIOException("Could not load the Ukrainian stopword list.", e);

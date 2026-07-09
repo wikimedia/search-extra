@@ -136,7 +136,7 @@ public class SimSwitcherQueryTest extends LuceneTestCase {
             Query query = new QueryBuilder(analyzer).createBooleanQuery(entry.getKey(), q);
             Query hacked = new QueryBuilder(analyzer).createBooleanQuery("main_field", q);
             TopDocs docs = searcherUnderTest.search(query, 10);
-            assertThat(docs.totalHits.value, greaterThan(0L));
+            assertThat(docs.totalHits.value(), greaterThan(0L));
             TopDocs hackedDocs = searcherUnderTest.search(new SimSwitcherQuery(entry.getValue(), hacked), 10);
             assertEquals(msg, docs.totalHits, hackedDocs.totalHits);
             IntStream.range(0, docs.scoreDocs.length).forEach((i) -> {

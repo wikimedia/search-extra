@@ -104,7 +104,11 @@ public class RegExpAstNgramExtractor {
                 break;
 
             case REGEXP_CHAR_RANGE:
-                info = fromCharRange(re.from, re.to);
+                info = fromCharRange(re.from[0], re.to[0]);
+                break;
+
+            case REGEXP_CHAR_CLASS:
+                info = fromCharClass(re.from, re.to);
                 break;
 
             case REGEXP_ANYCHAR:
@@ -133,7 +137,6 @@ public class RegExpAstNgramExtractor {
             case REGEXP_REPEAT: // x* - we don't know anything useful
             case REGEXP_COMPLEMENT:
             case REGEXP_INTERSECTION:
-            case REGEXP_PRE_CLASS:
             case REGEXP_INTERVAL:
             case REGEXP_AUTOMATON:
             default:
@@ -162,6 +165,32 @@ public class RegExpAstNgramExtractor {
         ImmutableList.Builder<String> builder = ImmutableList.builderWithExpectedSize(count);
         for (int cp = from; cp <= to; cp++) {
             builder.add(Character.toString(cp));
+        }
+        info.exact = builder.build();
+        info.match = True.instance();
+        return info;
+    }
+
+    /**
+     * Enumerate a character class defined by the parallel from[]/to[] range arrays into an
+     * exact string set, mirroring {@link #fromCharRange}. If the class expands to more than
+     * maxExpand code points it is treated as a wildcard (anyChar), so wide predefined classes
+     * such as \d or \w contribute no ngram constraints.
+     */
+    private RegExpInfo fromCharClass(int[] from, int[] to) {
+        long count = 0;
+        for (int i = 0; i < from.length; i++) {
+            count += (long) to[i] - from[i] + 1;
+            if (count > maxExpand) {
+                return anyChar();
+            }
+        }
+        RegExpInfo info = new RegExpInfo();
+        ImmutableList.Builder<String> builder = ImmutableList.builderWithExpectedSize((int) count);
+        for (int i = 0; i < from.length; i++) {
+            for (int cp = from[i]; cp <= to[i]; cp++) {
+                builder.add(Character.toString(cp));
+            }
         }
         info.exact = builder.build();
         info.match = True.instance();
