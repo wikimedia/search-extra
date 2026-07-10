@@ -75,6 +75,8 @@
         <gitlab.projectName>wmf-packages</gitlab.projectName>
         <gitlab.projectPath>repos</gitlab.projectPath>
         <hamcrest.version>2.1</hamcrest.version>
+        <!-- Must match the Jackson version bundled by the target OpenSearch release. -->
+        <jackson.version>2.18.2</jackson.version>
         <log4j.version>2.25.3</log4j.version>
         <lucene.version>9.12.3</lucene.version>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
@@ -187,6 +189,14 @@
                 <groupId>ua.net.nlp</groupId>
                 <artifactId>morfologik-ukrainian-search</artifactId>
                 <version>4.9.1</version>
+            </dependency>
+            <dependency>
+                <!-- Used by the forked JSON log layout to emit guaranteed-valid JSON.
+                     Provided at runtime by OpenSearch (must match ${jackson.version}). -->
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -376,6 +386,7 @@
                             <toIgnore>org.wikimedia.search.extra.fuzzylike.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.latency.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.levenshtein.package-info</toIgnore>
+                            <toIgnore>org.wikimedia.search.extra.logging.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.regex.expression.package-info</toIgnore>
                             <toIgnore>org.wikimedia.search.extra.regex.ngram.package-info</toIgnore>

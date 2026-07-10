@@ -76,6 +76,21 @@
             <artifactId>lucene-regex-rewriter</artifactId>
         </dependency>
         <dependency>
+            <!-- Used by the forked JSON log layout to build guaranteed-valid JSON. -->
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <!-- Required at compile time by the forked JSON log layout
+                 (org.wikimedia.search.extra.logging.SingleLineJsonLayout). The log4j2
+                 annotation processor also generates Log4j2Plugins.dat from it so the
+                 layout is discoverable by name. Provided at runtime by OpenSearch. -->
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.opensearch</groupId>
             <artifactId>opensearch-core</artifactId>
             <version>${opensearch.version}</version>
@@ -95,11 +110,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
