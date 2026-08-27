@@ -51,7 +51,8 @@ public class SourceRegexQuery extends Query {
         this.fieldPath = fieldPath;
         this.ngramFieldPath = ngramFieldPath;
         boolean supportsAnchors = indexingNgramAnalyzer != null && determineAnchorSupport(indexingNgramAnalyzer);
-        this.regex = RegexRewriter.rewrite(Objects.requireNonNull(regex), supportsAnchors).toString();
+        rejectInvertedCharClasses(Objects.requireNonNull(regex));
+        this.regex = RegexRewriter.rewrite(regex, supportsAnchors).toString();
         if (regex.isEmpty()) {
             throw new IllegalArgumentException("regex must be set");
         }
@@ -67,6 +68,49 @@ public class SourceRegexQuery extends Query {
             rechecker = new NonBacktrackingRechecker(this.regex, settings, valueTransform);
         }
         this.ngramAnalyzer = searchNgramAnalyzer;
+    }
+
+    /**
+     * Reject the inverted shorthand character classes.
+     *
+     * RegexRewriter expands only the lowercase classes, thus the inverted classes go to Lucene
+     * unchanged. Lucene understands them, but two things then make them unsafe. First, the query
+     * lowercases the regex, which turns each inverted class into its own inverse. The
+     * case-insensitive rechecker and the ngram acceleration then use the opposite class. Second,
+     * the inverted classes also match the anchor markers, thus they match outside the value.
+     */
+    private static void rejectInvertedCharClasses(String regex) {
+        boolean inLiteral = false;
+        boolean inCharClass = false;
+        int backslashCount = 0;
+
+        int i = 0;
+        while (i < regex.length()) {
+            int c = regex.codePointAt(i);
+            i += Character.charCount(c);
+            boolean escaped = (backslashCount % 2) != 0;
+            backslashCount = c == '\\' ? backslashCount + 1 : 0;
+
+            if (inLiteral) {
+                inLiteral = c != '"';
+            } else if (escaped) {
+                rejectIfInvertedCharClass(c);
+            } else if (c == '"' && !inCharClass) {
+                inLiteral = true;
+            } else if (c == '[') {
+                inCharClass = true;
+            } else if (c == ']') {
+                inCharClass = false;
+            }
+        }
+    }
+
+    /** Throws when c is the letter of an inverted shorthand character class. */
+    private static void rejectIfInvertedCharClass(int c) {
+        if (c == 'D' || c == 'W' || c == 'S') {
+            throw new InvalidRegexException("Inverted character class \\" + Character.toString(c)
+                    + " is not supported. Use [^\\" + Character.toString(Character.toLowerCase(c)) + "] instead.");
+        }
     }
 
     private boolean determineAnchorSupport(Analyzer indexingNgramAnalyzer) {
