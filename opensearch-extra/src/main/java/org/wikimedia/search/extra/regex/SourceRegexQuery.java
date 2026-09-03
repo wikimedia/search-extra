@@ -14,6 +14,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.util.automaton.Automata;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.CharacterRunAutomaton;
 import org.apache.lucene.util.automaton.Operations;
@@ -27,6 +28,7 @@ import org.wikimedia.search.extra.util.FieldValues;
 import org.wikimedia.utils.regex.RegexRewriter;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -139,28 +141,24 @@ public class SourceRegexQuery extends Query {
     public Query rewrite(IndexSearcher searcher) throws IOException {
         // TODO: investigate moving this logic inside the Builder
         // Rewrite the query as an AcceleratedSourceRegexQuery or UnacceleratedSourceRegexQuery
-        if (ngramFieldPath == null) {
-            assert ngramAnalyzer == null;
-            // Don't bother expanding the regex if there isn't a field to check
-            // it against. Its unlikely to resolve to all false anyway.
-            if (settings.rejectUnaccelerated()) {
-                throw new UnableToAccelerateRegexException(regex, gramSize, null);
-            }
-            return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings);
-        }
-        assert ngramAnalyzer != null;
         try {
+            // If the regex is too complex to determinize the failure then comes from the
+            // shard search and not from the rewrite. A regex could appear valid while it
+            // matches nothing, then fail once a candidate appears. Better to always fail.
+            rechecker.prepare();
+            if (ngramFieldPath == null) {
+                assert ngramAnalyzer == null;
+                // Don't bother expanding the regex if there isn't a field to check
+                // it against. Its unlikely to resolve to all false anyway.
+                if (settings.rejectUnaccelerated()) {
+                    throw new UnableToAccelerateRegexException(regex, gramSize, null);
+                }
+                return new UnacceleratedSourceRegexQuery(rechecker, fieldPath, loader, settings);
+            }
+            assert ngramAnalyzer != null;
             // The accelerating filter is always assumed to be case
             // insensitive/always lowercased
             RegExp re = new RegExp(regex.toLowerCase(settings.locale()), RegExp.ALL ^ RegExp.AUTOMATON);
-            // We don't need the automaton now, but determinize anyways to early-fail
-            // errors determinizing. Otherwise a query with 0 results from the
-            // acceleration query would only start failing when the rechecker determinizes
-            // to check potential matches. A query could appear to work and return 0
-            // results for some time, and then start failing because of a potential match.
-            // Better to always fail.
-            Operations.determinize(re.toAutomaton(), settings.maxDeterminizedStates());
-
             Expression<String> expression = new NGramExtractor(gramSize, settings.maxExpand(), ngramAnalyzer).extract(re).simplify();
             if (expression.alwaysTrue()) {
                 if (settings.rejectUnaccelerated()) {
@@ -217,6 +215,26 @@ public class SourceRegexQuery extends Query {
          * @return the cost
          */
         float getCost();
+
+        /**
+         * Build the automaton of the recheck phase.
+         *
+         * Allows to early-fail any problems with the user regex.
+         */
+        void prepare();
+    }
+
+    /**
+     * Build the automaton of the regex, and lowercase the regex first for a case
+     * insensitive query.
+     *
+     * The recheckers put a {@code .*} prefix on this automaton, and not on the regex
+     * string. Thus the parse reads only the regex of the user, and the message of a
+     * parse error keeps the positions of that regex.
+     */
+    private static Automaton toAutomaton(String regex, Settings settings) {
+        String regexString = settings.caseSensitive() ? regex : regex.toLowerCase(settings.locale());
+        return new RegExp(regexString, RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton();
     }
 
 
@@ -247,12 +265,8 @@ public class SourceRegexQuery extends Query {
 
         private ContainsCharacterRunAutomaton getCharRun() {
             if (charRun == null) {
-                String regexString = regex;
-                if (!settings.caseSensitive()) {
-                    regexString = regexString.toLowerCase(settings.locale());
-                }
                 Automaton automaton = Operations.determinize(
-                    new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(),
+                    Operations.concatenate(Automata.makeAnyString(), toAutomaton(regex, settings)),
                     settings.maxDeterminizedStates());
                 if (settings.locale().getLanguage().equals("el")) {
                     charRun = new ContainsCharacterRunAutomaton.GreekLowerCasing(automaton);
@@ -268,6 +282,10 @@ public class SourceRegexQuery extends Query {
             return getCharRun().getSize();
         }
 
+        @Override
+        public void prepare() {
+            getCharRun();
+        }
     }
 
     /**
@@ -297,12 +315,8 @@ public class SourceRegexQuery extends Query {
 
         private ContainsCharacterRunAutomaton getCharRun() {
             if (charRun == null) {
-                String regexString = regex;
-                if (!settings.caseSensitive()) {
-                    regexString = regexString.toLowerCase(settings.locale());
-                }
                 Automaton automaton = Operations.determinize(
-                    new RegExp(".*(" + regexString + ")", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(),
+                    Operations.concatenate(Automata.makeAnyString(), toAutomaton(regex, settings)),
                     settings.maxDeterminizedStates());
                 charRun = new ContainsCharacterRunAutomaton(automaton);
             }
@@ -314,6 +328,10 @@ public class SourceRegexQuery extends Query {
             return getCharRun().getSize();
         }
 
+        @Override
+        public void prepare() {
+            getCharRun();
+        }
     }
 
     /**
@@ -347,12 +365,9 @@ public class SourceRegexQuery extends Query {
 
         private CharacterRunAutomaton getCharRun() {
             if (charRun == null) {
-                String regexString = regex;
-                if (!settings.caseSensitive()) {
-                    regexString = regexString.toLowerCase(settings.locale());
-                }
                 Automaton automaton = Operations.determinize(
-                    new RegExp(".*(" + regexString + ").*", RegExp.ALL ^ RegExp.AUTOMATON).toAutomaton(),
+                    Operations.concatenate(ImmutableList.of(
+                        Automata.makeAnyString(), toAutomaton(regex, settings), Automata.makeAnyString())),
                     settings.maxDeterminizedStates());
                 charRun = new CharacterRunAutomaton(automaton);
             }
@@ -364,6 +379,10 @@ public class SourceRegexQuery extends Query {
             return getCharRun().getSize();
         }
 
+        @Override
+        public void prepare() {
+            getCharRun();
+        }
     }
 
     @Override

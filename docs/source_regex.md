@@ -153,7 +153,9 @@ the lowercase filter of the index.  Defaults to ```Locale.ROOT```.
 * ```max_determinized_states``` Limits the complexity explosion that comes from
 compiling Lucene Regular Expressions into DFAs.  It defaults to 20,000 states.
 Increasing it allows more complex regexes to take the memory and time that they
-need to compile.  The default allows for reasonably complex regexes.
+need to compile.  The default allows for reasonably complex regexes.  The limit
+applies to the automaton that finds a match at any position in the value, which
+is the regex with a ```.*``` prefix.
 * ```max_ngrams_extracted``` The number of ngrams extracted from the regex to
 accelerate it.  If the regex contains more than that many ngrams they are
 ignored.  Defaults to 100 which makes a lot of term filters but its not _too_

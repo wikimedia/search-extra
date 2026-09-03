@@ -15,7 +15,7 @@ class ContainsCharacterRunAutomaton extends RunAutomaton {
      */
     public boolean contains(String s) {
         /*
-         * By requiring all callers to wrap their regex in `.*(regexp)` we
+         * By requiring all callers to put a `.*` prefix on their automaton we
          * can make a single pass on s to determine if a match exists.
          */
         for (int cp, p = 0, i = 0; i < s.length(); i += Character.charCount(cp)) {
