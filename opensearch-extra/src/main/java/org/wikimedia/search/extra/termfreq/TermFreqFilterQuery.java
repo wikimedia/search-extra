@@ -118,6 +118,11 @@ public class TermFreqFilterQuery extends Query {
                 }
             };
 
+            // Lucene calls iterator() for the matching documents. The bulk scorers
+            // use it together with score(), and they do not look at
+            // twoPhaseIterator(). Thus iterator() must apply the frequency test.
+            DocIdSetIterator matchingDocs = TwoPhaseIterator.asDocIdSetIterator(iter);
+
             Scorer scorer = new Scorer() {
                 @Override
                 public int docID() {
@@ -131,7 +136,7 @@ public class TermFreqFilterQuery extends Query {
 
                 @Override
                 public DocIdSetIterator iterator() {
-                    return innerDocs;
+                    return matchingDocs;
                 }
 
                 @Override

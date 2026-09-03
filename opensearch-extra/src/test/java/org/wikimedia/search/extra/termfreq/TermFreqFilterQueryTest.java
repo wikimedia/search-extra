@@ -19,14 +19,19 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.tests.index.RandomIndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.tests.util.LuceneTestCase;
 import org.hamcrest.Matchers;
@@ -157,6 +162,29 @@ public class TermFreqFilterQueryTest extends LuceneTestCase {
             assertThat(nfreq, Matchers.greaterThan(freq));
             freq = nfreq;
         }
+    }
+
+    /**
+     * The bulk scorers of Lucene use iterator() together with score(), and they
+     * do not look at twoPhaseIterator(). Thus iterator() must give only the
+     * documents that agree with the frequency test.
+     */
+    public void testIteratorOnlyGivesMatches() throws IOException {
+        Term word1 = new Term("main_field", "word1");
+        TermFreqFilterQuery tQuery = new TermFreqFilterQuery(word1, eq(1));
+        Weight weight = searcherUnderTest.createWeight(searcherUnderTest.rewrite(tQuery), ScoreMode.COMPLETE, 1f);
+        int matches = 0;
+        for (LeafReaderContext ctx : searcherUnderTest.getIndexReader().leaves()) {
+            ScorerSupplier supplier = weight.scorerSupplier(ctx);
+            if (supplier == null) {
+                continue;
+            }
+            DocIdSetIterator iterator = supplier.get(Long.MAX_VALUE).iterator();
+            for (int doc = iterator.nextDoc(); doc != DocIdSetIterator.NO_MORE_DOCS; doc = iterator.nextDoc()) {
+                matches++;
+            }
+        }
+        assertEquals(1, matches);
     }
 
     public void testsUnknown() throws IOException {
