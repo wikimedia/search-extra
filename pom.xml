@@ -502,6 +502,25 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <!-- Nobody reads these javadocs. Build them, but do not let a
+                         bad comment stop the release. -->
+                    <doclint>none</doclint>
+                </configuration>
+                <executions>
+                    <!-- The parent POM does not attach a javadoc JAR. Maven Central
+                         refuses the deployment without it. -->
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

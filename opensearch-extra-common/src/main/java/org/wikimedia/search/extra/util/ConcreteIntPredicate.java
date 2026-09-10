@@ -52,6 +52,9 @@ public abstract class ConcreteIntPredicate implements IntPredicate {
 
     /**
      * Greater than i.
+     *
+     * @param i the value for the comparison
+     * @return a predicate that is true if the input is greater than i
      */
     public static ConcreteIntPredicate gt(int i) {
         return new GTIntPredicate(i);
@@ -59,6 +62,9 @@ public abstract class ConcreteIntPredicate implements IntPredicate {
 
     /**
      * Greater than or equal i.
+     *
+     * @param i the value for the comparison
+     * @return a predicate that is true if the input is greater than i or equal to i
      */
     public static ConcreteIntPredicate gte(int i) {
         return new GTEIntPredicate(i);
@@ -66,6 +72,9 @@ public abstract class ConcreteIntPredicate implements IntPredicate {
 
     /**
      * Lesser than or equal i.
+     *
+     * @param i the value for the comparison
+     * @return a predicate that is true if the input is less than i or equal to i
      */
     public static ConcreteIntPredicate lte(int i) {
         return new LTEIntPredicate(i);
@@ -73,13 +82,19 @@ public abstract class ConcreteIntPredicate implements IntPredicate {
 
     /**
      * Lesser than i.
+     *
+     * @param i the value for the comparison
+     * @return a predicate that is true if the input is less than i
      */
     public static ConcreteIntPredicate lt(int i) {
         return new LTIntPredicate(i);
     }
 
     /**
-     * Lesser than i.
+     * Equal to i.
+     *
+     * @param i the value for the comparison
+     * @return a predicate that is true if the input is equal to i
      */
     public static ConcreteIntPredicate eq(int i) {
         return new EqualsIntPredicate(i);
