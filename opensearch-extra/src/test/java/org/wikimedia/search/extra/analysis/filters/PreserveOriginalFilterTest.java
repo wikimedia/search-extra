@@ -106,6 +106,27 @@ public class PreserveOriginalFilterTest extends BaseTokenStreamTestCase {
     }
 
 
+    @Test
+    public void testResetClearsPendingOriginal() throws IOException {
+        try (Analyzer a = stopGenericPreserveAsciiFolding()) {
+            // Stop after a folded token, so that its original is still pending.
+            try (TokenStream ts = a.tokenStream("", "obecní dům")) {
+                CharTermAttribute cattr = ts.addAttribute(CharTermAttribute.class);
+                ts.reset();
+                do {
+                    assertTrue(ts.incrementToken());
+                } while (!"dum".contentEquals(cattr));
+                ts.end();
+            }
+            // The analyzer reuses the same components on this thread.
+            assertTokenStreamContents(a.tokenStream("", "municipal house"),
+                    new String[]{"municipal", "house"},
+                    new int[]{0, 10}, // start offsets
+                    new int[]{9, 15}, // end offsets
+                    new int[]{1, 1}); // pos increments
+        }
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testBadSetup() throws IOException {
         try (Analyzer a = new Analyzer() {

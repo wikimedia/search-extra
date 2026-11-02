@@ -81,6 +81,15 @@ public class HomoglyphTokenFilter extends TokenFilter {
         return true;
     }
 
+    @Override
+    public void reset() throws IOException {
+        super.reset();
+        // A consumer can stop before we emit the pending variants, and Lucene reuses this filter.
+        state = null;
+        scriptOne.setLength(0);
+        scriptTwo.setLength(0);
+    }
+
     private void replayTerm(StringBuilder term) {
         termAtt.setEmpty();
         termAtt.append(term);
