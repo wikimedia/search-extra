@@ -1,6 +1,7 @@
 package org.wikimedia.search.extra.analysis.homoglyph;
 
 import static org.apache.lucene.tests.analysis.BaseTokenStreamTestCase.assertTokenStreamContents;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -60,6 +61,21 @@ public class HomoglyphTokenFilterTest {
             assertTokenStreamContents(ts,
                     new String[]{"All", "оf", "of", "Ме", "іs", "іѕ", "is", "fаke", "fake"},
                     new int[]{1, 1, 0, 1, 1, 0, 0, 1, 0});
+        }
+    }
+
+    @Test
+    public void testResetClearsPendingVariants() throws IOException {
+        try (Analyzer ws = newHomoglyphFilter()) {
+            // Stop after the first token, so that both of its variants are still pending.
+            try (TokenStream ts = ws.tokenStream("", "aа")) {
+                ts.reset();
+                assertTrue(ts.incrementToken());
+                ts.end();
+            }
+            // The analyzer reuses the same components on this thread.
+            assertTokenStreamContents(ws.tokenStream("", "dog"),
+                    new String[]{"dog"});
         }
     }
 

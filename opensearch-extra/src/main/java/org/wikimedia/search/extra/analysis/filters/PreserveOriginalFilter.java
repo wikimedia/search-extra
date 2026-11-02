@@ -78,6 +78,13 @@ public class PreserveOriginalFilter extends TokenFilter {
         }
     }
 
+    @Override
+    public void reset() throws IOException {
+        super.reset();
+        // A consumer can stop before we emit the pending original, and Lucene reuses this filter.
+        preserve = null;
+    }
+
     /**
      * A simple filter that records a copy of the current token in the OriginalTermAttribute attribute.
      */
