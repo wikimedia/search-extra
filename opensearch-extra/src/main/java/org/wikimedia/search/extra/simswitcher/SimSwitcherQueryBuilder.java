@@ -75,8 +75,6 @@ public class SimSwitcherQueryBuilder extends AbstractQueryBuilder<SimSwitcherQue
     /**
      * Build the builder with all its fields.
      */
-    @SuppressFBWarnings(value = "OCP_OVERLY_CONCRETE_PARAMETER",
-            justification = "Spotbugs wants params to be ToXContent but this makes no sense")
     public SimSwitcherQueryBuilder(QueryBuilder subQuery, String similarityType, Settings params) {
         this.subQuery = subQuery;
         this.similarityType = similarityType;

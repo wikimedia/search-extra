@@ -117,9 +117,6 @@ public final class LatencyStatsAction extends ActionType<LatencyStatsAction.Late
         LatencyStatsNodeResponse(DiscoveryNode node) {
             super(node);
         }
-        @SuppressFBWarnings(
-                value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
-                justification = "readFrom has a well understood contract")
         LatencyStatsNodeResponse(StreamInput in) throws IOException {
             super(in);
             statDetails.readFrom(in);
@@ -176,9 +173,6 @@ public final class LatencyStatsAction extends ActionType<LatencyStatsAction.Late
                     .collect(toList());
         }
 
-        @SuppressFBWarnings(
-                value = "PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS",
-                justification = "readFrom has a well understood contract")
         StatDetails(StreamInput in) throws IOException {
             latencies = requireNonNull(in.readList(LatencyStat::new));
         }
